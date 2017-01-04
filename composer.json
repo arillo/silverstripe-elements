@@ -1,0 +1,28 @@
+{
+	"name": "arillo/silverstripe-elements",
+	"description": "Elements",
+	"type": "silverstripe-module",
+	"homepage": "https://github.com/arillo/silverstripe-elements",
+	"keywords": [
+		"silverstripe",
+		"elements"
+	],
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Daniel Murcia",
+			"email": "dm@arillo.net"
+		}
+	],
+    "extra": {
+        "installer-name": "elements"
+    },
+	"require": {
+		"silverstripe/framework": "~3.1",
+		"arillo/silverstripe-dataobject-preview": "^1.0",
+		"arillo/silverstripe-gridfield-is-published": "dev-master"
+	},
+	"support": {
+        "issues": "https://github.com/arillo/silverstripe-elements/issues"
+    }
+}

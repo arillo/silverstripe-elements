@@ -11,7 +11,7 @@ BetterButtonsActions:
     Group_Versioning: false
     BetterButtonFrontendLinksAction: false
 
-ElementBase:
-  extensions:
-    - FluentExtension
-    - FluentFilteredExtension
+# ElementBase:
+#   extensions:
+#     - FluentExtension
+#     - FluentFilteredExtension

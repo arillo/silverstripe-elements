@@ -50,6 +50,18 @@ $pageInst->getItemsByRelation('Elements');
 ```
 
 
+There is a helper function to move a gridfield into an other tab in the cms:
+
+```
+public function getCMSFields()
+{
+    $fields = parent::getCMSFields();
+    // move the elements gridfield to a tab called 'PageElements'..
+    $fields = ElementsExtension::move_elements_manager($fields, 'Elements', 'Root.PageElements');
+    return $fields;
+}
+```
+
 ### Translation
 Naming of `Tab` and `GridField` labels can be done through silverstripes i18n.
 There is a special key called `Element_Relations` reserved to accomplish this task, e.g. in de.yml:

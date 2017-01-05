@@ -36,6 +36,23 @@ class ElementsExtension extends DataExtension
     protected $_elementBaseClass;
 
     /**
+     * Move an elements gridfield to an other tab.
+     * 
+     * @param  FieldList $fields
+     * @param  string    $relationName
+     * @param  string    $newTabName
+     * @param  string    $insertBefore      optional: insert before an other field
+     * @return FieldList                    the altered fields
+     */
+    public static function move_elements_manager(FieldList $fields, $relationName, $newTabName = 'Root.Main', $insertBefore = null)
+    {
+        $itemsGf = $fields->dataFieldByName($relationName);
+        $fields->removeByName($relationName);
+        $fields->addFieldToTab($newTabName, $itemsGf, $insertBefore);
+        return $fields;
+    }
+
+    /**
      * Sets up the extension with a given element base class
      * @param string $elementBaseClass
      */

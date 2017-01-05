@@ -9,7 +9,7 @@ use \GridField;
 use \GridFieldConfig_RelationEditor;
 
 /**
- * Establishes multiple has many elements relations, which can be set up via the config system
+ * Establishes multiple has_many elements relations, which can be set up via the config system
  * e.g:
  *   Page:
  *     extensions:
@@ -29,6 +29,10 @@ use \GridFieldConfig_RelationEditor;
  */
 class ElementsExtension extends DataExtension
 {
+    /**
+     * Holds element base class. Will be set in constructor.
+     * @var string
+     */
     protected $_elementBaseClass;
 
     /**
@@ -222,14 +226,21 @@ class ElementsExtension extends DataExtension
                 ->setDisplayFields($columns)
             ;
 
-            $fields->addFieldToTab('Root.' . $relationName,
+            $tabName = "Root.{$relationName}";
+            $label = _t("Element_Relations.{$relationName}", $relationName);
+            $fields->addFieldToTab($tabName,
                 $gridfieldItems = GridField::create(
                     $relationName,
-                    $relationName,
+                    $label,
                     $this->owner->getItemsByRelation($relationName),
                     $config
                 )
             );
+
+            $fields
+                ->findOrMakeTab($tabName)
+                ->setTitle($label)
+            ;
         }
         return $this->owner;
     }

@@ -3,6 +3,7 @@ class ElementBase extends DataObject implements CMSPreviewable
 {
     private static $db = array(
         'URLSegment' => 'Varchar(255)',
+        'RelationName' => 'Varchar(255)',
         'Sort' => 'Int'
     );
 
@@ -30,15 +31,19 @@ class ElementBase extends DataObject implements CMSPreviewable
         if (!$this->Sort)
         {
             $this->Sort = ElementBase::get()
-                ->filter(array('PageID' => $this->PageID))
+                ->filter('PageID', $this->PageID)
                 ->max('Sort') + 1;
         }
     }
 
     public function addCMSFieldsHeader($fields, $page)
     {
-        // @todo use $page->stat('elements') or $page->config()->elements to make it inheritable?
-        $recordClassesMap = ElementsExtension::parse_classes($page->stat('elements'));
+        // ONLY works in CMS 
+        $relationName = Controller::curr()->request->param('OtherID');
+
+        $recordClassesMap = $page->elementClassesForRelation($relationName);
+        $recordClassesMap = $page->elementClassesForDropdown($recordClassesMap);
+
         $description = '<div class="cms-page-info"><b>'. $this->i18n_singular_name() . '</b> – ID: ' . $this->ID;
         if (ClassInfo::exists('Fluent'))
         {
@@ -48,14 +53,14 @@ class ElementBase extends DataObject implements CMSPreviewable
         $fields->addFieldsToTab('Root.Main', [
             LiteralField::create('ClassNameDescription', $description),
             DropdownField::create('ClassName', _t('ElementBase.Type', 'Type'), $recordClassesMap),
-            TextField::create('Title', _t('ElementBase.Title', 'Title'), null, 255)
+            TextField::create('Title', _t('ElementBase.Title', 'Title'), null, 255),
+            HiddenField::create('RelationName', $relationName, $relationName),
         ]);
     }
 
     public function getCMSFields()
     {
         $fields = FieldList::create(TabSet::create('Root'));
-
         $page = $this->getHolder();
 
         // if no page reference available, try to get it from the session
@@ -77,7 +82,10 @@ class ElementBase extends DataObject implements CMSPreviewable
         return false;
     }
 
-    // remove Save & Publish to make the handling easier for the editor. Elements get published when the page gets published.
+    /**
+     * Remove Save & Publish to make the handling easier for the editor.
+     * Elements get published when the page gets published.
+     */
     public function getBetterButtonsActions()
     {
         $fields = parent::getBetterButtonsActions();
@@ -88,7 +96,6 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     public function getLanguages()
     {
-        // TODO: check fluent dependency
         $icons = '';
         if (ClassInfo::exists('Fluent'))
         {

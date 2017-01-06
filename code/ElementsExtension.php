@@ -22,9 +22,9 @@ use \GridFieldConfig_RelationEditor;
  *          - DownloadElement
  *
  * Adds a getter function to access the elements by relation name
- * 
+ *
  *   $pageInst->getItemsByRelation('Downloads');
- *   
+ *
  * @package webtoolkit\elements
  */
 class ElementsExtension extends DataExtension
@@ -37,7 +37,7 @@ class ElementsExtension extends DataExtension
 
     /**
      * Move an elements gridfield to an other tab.
-     * 
+     *
      * @param  FieldList $fields
      * @param  string    $relationName
      * @param  string    $newTabName
@@ -102,7 +102,7 @@ class ElementsExtension extends DataExtension
 
     /**
      * Getter for items by relation name
-     * 
+     *
      * @param  string $relationName
      * @return DataList
      */
@@ -117,7 +117,7 @@ class ElementsExtension extends DataExtension
     /**
      * Extracts element classes for a relation from the config.
      * Filters out non existent class names
-     * 
+     *
      * @param  string $relationName
      * @return array
      */
@@ -141,10 +141,10 @@ class ElementsExtension extends DataExtension
 
     /**
      * Creates a element classes map for use in a Dropdown.
-     * 
+     *
      * Expects a flat array of class names e.g.:
      *   ['BaseElement', 'DownloadElement']
-     *   
+     *
      * Returns a map in folowing format:
      *   [
      *       'ClassName' => '<ClassName> or <class.singular_name>'
@@ -154,7 +154,7 @@ class ElementsExtension extends DataExtension
      *     'BaseElement' => 'Title',
      *     'DownloadElement' => 'Download'
      *   ]
-     *   
+     *
      * @param  array $elementClasses
      * @return array
      */
@@ -174,7 +174,7 @@ class ElementsExtension extends DataExtension
 
     /**
      * Returns an array of all element relation names.
-     * 
+     *
      * @return mixed array | bool
      */
     public function elementRelationNames()
@@ -188,7 +188,7 @@ class ElementsExtension extends DataExtension
 
     /**
      * Adds a GridField for a elements relation
-     * 
+     *
      * @param  FieldList $fields
      * @param  string    $relationName
      * @return DataObject
@@ -228,9 +228,13 @@ class ElementsExtension extends DataExtension
             $columns = [
                 // 'Icon' => 'Icon',
                 'singular_name'=> 'Type',
-                'Title' => 'Title',
-                'Languages' => 'Lang'
+                'Title' => 'Title'
             ];
+
+            if (ClassInfo::exists('Fluent'))
+            {
+            	$columns['Languages'] = 'Lang';
+        	}
 
             if (count($elementClasses) == 1
                 && $summaryFields = singleton($elementClasses[0])->summaryFields()

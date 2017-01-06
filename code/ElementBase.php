@@ -6,37 +6,39 @@ class ElementBase extends DataObject implements CMSPreviewable
 {
 	protected static $_cached_get_by_url = array();
 
-    private static $db = array(
-    	'Title' => 'Text',
-        'URLSegment' => 'Varchar(255)',
-        'RelationName' => 'Varchar(255)',
-        'Sort' => 'Int'
-    );
+	private static $db = array(
+		'Title' => 'Text',
+		'URLSegment' => 'Varchar(255)',
+		'RelationName' => 'Varchar(255)',
+		'Sort' => 'Int'
+	);
 
-    private static $has_one = array(
-        'Page' => 'Page',
-        'Element' => 'ElementBase'
-    );
+	private static $has_one = array(
+		'Page' => 'Page',
+		'Element' => 'ElementBase'
+	);
 
-    private static $default_sort = 'Sort ASC';
+	private static $default_sort = 'Sort ASC';
 
-    private static $extensions = array(
-        'GridFieldIsPublishedExtension',
-        'Versioned("Stage","Live")'
-    );
+	private static $extensions = array(
+		'GridFieldIsPublishedExtension',
+		'Versioned("Stage","Live")'
+	);
 
-    private static $translate = 'none';
+	private static $translate = array(
+		'Title'
+	);
 
-    private static $searchable_fields = array(
-        'ClassName',
-        'URLSegment'
-    );
+	private static $searchable_fields = array(
+		'ClassName',
+		'URLSegment'
+	);
 
-    public function onBeforeWrite()
-    {
-        parent::onBeforeWrite();
+	public function onBeforeWrite()
+	{
+		parent::onBeforeWrite();
 
-        $filter = URLSegmentFilter::create();
+		$filter = URLSegmentFilter::create();
 
 		if (!$this->URLSegment) {
 			$this->URLSegment = $this->Title;
@@ -55,100 +57,100 @@ class ElementBase extends DataObject implements CMSPreviewable
 			$count++;
 		}
 
-        if (!$this->Sort)
-        {
+		if (!$this->Sort)
+		{
 			$holder_filter = array('PageID' => $this->PageID);
 			if($this->ElementID) $holder_filter = array('ElementID' => $this->ElementID);
-            $this->Sort = ElementBase::get()
-                ->filter($holder_filter)
-                ->max('Sort') + 1;
-        }
-    }
+			$this->Sort = ElementBase::get()
+				->filter($holder_filter)
+				->max('Sort') + 1;
+		}
+	}
 
-    public function addCMSFieldsHeader($fields, $pageOrElement)
-    {
+	public function addCMSFieldsHeader($fields, $pageOrElement)
+	{
 
-        $relationName = Controller::curr()->request->param('FieldName');
-        $recordClassesMap = ElementsExtension::relation_classes_map($pageOrElement, $relationName);
+		$relationName = Controller::curr()->request->param('FieldName');
+		$recordClassesMap = ElementsExtension::relation_classes_map($pageOrElement, $relationName);
 
-        $description = '<div class="cms-page-info"><b>'. $this->i18n_singular_name() . '</b> – ID: ' . $this->ID;
-        $description .= ' PageID: ' . $this->PageID . ' ElementID: ' . $this->ElementID;
+		$description = '<div class="cms-page-info"><b>'. $this->i18n_singular_name() . '</b> – ID: ' . $this->ID;
+		$description .= ' PageID: ' . $this->PageID . ' ElementID: ' . $this->ElementID;
 
-        if (ClassInfo::exists('Fluent')) $description .= ' – Locale: <img src="'. ELEMENTS_DIR . '/images/languages/'
-        	. Fluent::current_locale() .'.gif"> ' . Fluent::current_locale() . '</div>';
+		if (ClassInfo::exists('Fluent')) $description .= ' – Locale: <img src="'. ELEMENTS_DIR . '/images/languages/'
+			. Fluent::current_locale() .'.gif"> ' . Fluent::current_locale() . '</div>';
 
-        $fields->addFieldsToTab('Root.Main', [
-            LiteralField::create('ClassNameDescription', $description),
-            DropdownField::create('ClassName', _t('ElementBase.Type', 'Type'), $recordClassesMap),
-            TextField::create('Title', _t('ElementBase.Title', 'Title'), null, 255),
-            HiddenField::create('RelationName', $relationName, $relationName)
-        ]);
-    }
+		$fields->addFieldsToTab('Root.Main', [
+			LiteralField::create('ClassNameDescription', $description),
+			DropdownField::create('ClassName', _t('ElementBase.Type', 'Type'), $recordClassesMap),
+			TextField::create('Title', _t('ElementBase.Title', 'Title'), null, 255),
+			HiddenField::create('RelationName', $relationName, $relationName)
+		]);
+	}
 
-    public function getCMSFields()
-    {
-        $fields = FieldList::create(TabSet::create('Root'));
-        $pageOrElement = $this->getHolder();
-        if ($pageOrElement) $this->addCMSFieldsHeader($fields, $pageOrElement);
-        return $fields;
-    }
+	public function getCMSFields()
+	{
+		$fields = FieldList::create(TabSet::create('Root'));
+		$pageOrElement = $this->getHolder();
+		if ($pageOrElement) $this->addCMSFieldsHeader($fields, $pageOrElement);
+		return $fields;
+	}
 
-    public function getHolder()
-    {
-        if ($this->Element()->exists()) return $this->Element();
-        if ($this->Page()->exists()) return $this->Page();
-        return false;
-    }
+	public function getHolder()
+	{
+		if ($this->Element()->exists()) return $this->Element();
+		if ($this->Page()->exists()) return $this->Page();
+		return false;
+	}
 
-    /**
-     * Remove Save & Publish to make the handling easier for the editor.
-     * Elements get published when the page gets published.
-     */
-    public function getBetterButtonsActions()
-    {
-        $fields = parent::getBetterButtonsActions();
-        // $fields->removeByName('action_publish');
-        // $fields->removeByName('action_unpublish');
-        return $fields;
-    }
+	/**
+	 * Remove Save & Publish to make the handling easier for the editor.
+	 * Elements get published when the page gets published.
+	 */
+	public function getBetterButtonsActions()
+	{
+		$fields = parent::getBetterButtonsActions();
+		// $fields->removeByName('action_publish');
+		// $fields->removeByName('action_unpublish');
+		return $fields;
+	}
 
-    public function getLanguages()
-    {
-        $icons = '';
-        if (ClassInfo::exists('Fluent'))
-        {
-            $locales = $this->getFilteredLocales();
-            foreach ($locales as $key)
-            {
-                $icons .= '<img src="'.ELEMENTS_DIR.'/images/languages/'.$key.'.gif"/><br>';
-            }
-        }
-        return DBField::create_field('HTMLVarchar', $icons);
-    }
+	public function getLanguages()
+	{
+		$icons = '';
+		if (ClassInfo::exists('Fluent'))
+		{
+			$locales = $this->getFilteredLocales();
+			foreach ($locales as $key)
+			{
+				$icons .= '<img src="'.ELEMENTS_DIR.'/images/languages/'.$key.'.gif"/><br>';
+			}
+		}
+		return DBField::create_field('HTMLVarchar', $icons);
+	}
 
-    public function PreviewLink($action = null)
-    {
-        return Controller::join_links(Director::baseURL(), 'cms-preview', 'show', $this->ClassName, $this->ID);
-    }
+	public function PreviewLink($action = null)
+	{
+		return Controller::join_links(Director::baseURL(), 'cms-preview', 'show', $this->ClassName, $this->ID);
+	}
 
-    public function Link()
-    {
-        return $this->Page()->Link($this->URLSegment);
-    }
+	public function Link()
+	{
+		return $this->Page()->Link($this->URLSegment);
+	}
 
-    public function CMSEditLink()
-    {
-        return $this->Link();
-    }
+	public function CMSEditLink()
+	{
+		return $this->Link();
+	}
 
-    public function Render()
-    {
-        $controller = Controller::curr();
-        return $controller
-            ->customise($this)
-            ->renderWith($this->ClassName)
-        ;
-    }
+	public function Render()
+	{
+		$controller = Controller::curr();
+		return $controller
+			->customise($this)
+			->renderWith($this->ClassName)
+		;
+	}
 
 	/**
 	 * @param $str

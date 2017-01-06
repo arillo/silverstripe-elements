@@ -210,13 +210,9 @@ class ElementsExtension extends DataExtension
 
             $config = GridFieldConfig_RelationEditor::create()
                 ->removeComponentsByType('GridFieldDeleteAction')
-                ->removeComponentsByType('GridFieldAddExistingAutocompleter');
-
-            // CHECK: needs check if composer dependency set?
-            if (ClassInfo::exists('GridFieldOrderableRows'))
-            {
-                $config->addComponent(new \GridFieldOrderableRows('Sort'));
-            }
+                ->removeComponentsByType('GridFieldAddExistingAutocompleter')
+                ->addComponent(new \GridFieldOrderableRows('Sort'))
+            ;
 
             if (count($elementClasses) > 1)
             {

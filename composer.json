@@ -18,9 +18,12 @@
         "installer-name": "elements"
     },
 	"require": {
+		"silverstripe/cms": "3.4.1",
 		"silverstripe/framework": "~3.1",
 		"arillo/silverstripe-dataobject-preview": "^1.0",
-		"arillo/silverstripe-gridfield-is-published": "dev-master"
+		"arillo/silverstripe-gridfield-is-published": "dev-master",
+		"silverstripe-australia/gridfieldextensions": "^1.4",
+		"silverstripe/display-logic": "^1.4"
 	},
 	"support": {
         "issues": "https://github.com/arillo/silverstripe-elements/issues"

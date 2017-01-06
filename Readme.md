@@ -1,4 +1,4 @@
-# webtoolkit\elements
+# arillo\elements
 
 Decorates a SiteTree class with multiple named element relations through a has_many "Elements" relation.
 
@@ -14,7 +14,7 @@ Add the extension to a SiteTree class and set up you relation types, e.g:
 ```
 Page:
   extensions:
-    - webtoolkit\elements\ElementsExtension("Element")
+    - arillo\elements\ElementsExtension("Element")
 
   element_relations:
     Elements:
@@ -77,7 +77,7 @@ Apply the same extension to the Element
 
 ElementBase:
   extensions:
-    - webtoolkit\elements\ElementsExtension("Element")
+    - arillo\elements\ElementsExtension("Element")
 
 TeasersElement:
   element_relations:

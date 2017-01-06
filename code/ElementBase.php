@@ -1,6 +1,6 @@
 <?php
 
-use webtoolkit\elements\ElementsExtension;
+use arillo\elements\ElementsExtension;
 
 class ElementBase extends DataObject implements CMSPreviewable
 {
@@ -107,8 +107,8 @@ class ElementBase extends DataObject implements CMSPreviewable
     public function getBetterButtonsActions()
     {
         $fields = parent::getBetterButtonsActions();
-        $fields->removeByName('action_publish');
-        $fields->removeByName('action_unpublish');
+        // $fields->removeByName('action_publish');
+        // $fields->removeByName('action_unpublish');
         return $fields;
     }
 

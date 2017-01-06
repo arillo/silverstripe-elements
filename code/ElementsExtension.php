@@ -1,5 +1,5 @@
 <?php
-namespace webtoolkit\elements;
+namespace arillo\elements;
 
 use \DataExtension;
 use \FieldList;
@@ -13,7 +13,7 @@ use \GridFieldConfig_RelationEditor;
  * e.g:
  *   Page:
  *     extensions:
- *        - webtoolkit\elements\ElementsExtension("Element")
+ *        - arillo\elements\ElementsExtension("Element")
  *     element_relations:
  *        Elements:
  *          - Element
@@ -25,7 +25,7 @@ use \GridFieldConfig_RelationEditor;
  *
  *   $pageInst->ElementsByRelation('Downloads');
  *
- * @package webtoolkit\elements
+ * @package arillo\elements
  */
 class ElementsExtension extends DataExtension
 {
@@ -249,6 +249,12 @@ class ElementsExtension extends DataExtension
                 ->setDisplayFields($columns);
 
             $tabName = "Root.{$relationName}";
+
+            // if only one relation is set, add gridfield to main tab
+            if(count(self::relation_names($this->owner)) == 1){
+                $tabName = "Root.Main";
+            }
+            
             $label = _t("Element_Relations.{$relationName}", $relationName);
             $fields->addFieldToTab($tabName,
                 $gridField = GridField::create(

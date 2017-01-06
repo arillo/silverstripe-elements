@@ -23,7 +23,7 @@ use \GridFieldConfig_RelationEditor;
  *
  * Adds a getter function to access the elements by relation name
  *
- *   $pageInst->getItemsByRelation('Downloads');
+ *   $pageInst->getElementsByRelation('Downloads');
  *
  * @package webtoolkit\elements
  */
@@ -79,9 +79,9 @@ class ElementsExtension extends DataExtension
     {
         if (!$this->owner->exists()) return;
 
-        if ($realtionNames = $this->elementRelationNames())
+        if ($relationNames = $this->elementRelationNames())
         {
-            foreach ($realtionNames as $key => $relationName)
+            foreach ($relationNames as $key => $relationName)
             {
                 $this->gridFieldForElementRelation($fields, $relationName);
             }
@@ -106,12 +106,11 @@ class ElementsExtension extends DataExtension
      * @param  string $relationName
      * @return DataList
      */
-    public function getItemsByRelation($relationName)
+    public function getElementsByRelation($relationName)
     {
         return $this->owner
             ->Elements()
-            ->filter('RelationName', $relationName)
-        ;
+            ->filter('RelationName', $relationName);
     }
 
     /**
@@ -202,9 +201,9 @@ class ElementsExtension extends DataExtension
 
             $config = GridFieldConfig_RelationEditor::create()
                 ->removeComponentsByType('GridFieldDeleteAction')
-                ->removeComponentsByType('GridFieldAddExistingAutocompleter')
-            ;
+                ->removeComponentsByType('GridFieldAddExistingAutocompleter');
 
+            // CHECK: needs check if composer dependency set?
             if (ClassInfo::exists('GridFieldOrderableRows'))
             {
                 $config->addComponent(new \GridFieldOrderableRows('Sort'));
@@ -214,16 +213,14 @@ class ElementsExtension extends DataExtension
             {
                 $config
                     ->removeComponentsByType('GridFieldAddNewButton')
-                    ->addComponent($multiClass = new \GridFieldAddNewMultiClass())
-                ;
+                    ->addComponent($multiClass = new \GridFieldAddNewMultiClass());
 
                 $multiClass->setClasses($this->elementClassesForDropdown($elementClasses));
             }
 
             $config
                 ->getComponentByType('GridFieldPaginator')
-                ->setItemsPerPage(50)
-            ;
+                ->setItemsPerPage(150);
 
             $columns = [
                 // 'Icon' => 'Icon',
@@ -244,8 +241,7 @@ class ElementsExtension extends DataExtension
 
             $config
                 ->getComponentByType('GridFieldDataColumns')
-                ->setDisplayFields($columns)
-            ;
+                ->setDisplayFields($columns);
 
             $tabName = "Root.{$relationName}";
             $label = _t("Element_Relations.{$relationName}", $relationName);
@@ -253,7 +249,7 @@ class ElementsExtension extends DataExtension
                 $gridField = GridField::create(
                     $relationName,
                     $label,
-                    $this->owner->getItemsByRelation($relationName),
+                    $this->owner->getElementsByRelation($relationName),
                     $config
                 )
             );
@@ -265,8 +261,7 @@ class ElementsExtension extends DataExtension
 
             $fields
                 ->findOrMakeTab($tabName)
-                ->setTitle($label)
-            ;
+                ->setTitle($label);
         }
         return $this->owner;
     }

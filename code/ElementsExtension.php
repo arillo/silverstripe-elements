@@ -23,7 +23,7 @@ use \GridFieldConfig_RelationEditor;
  *
  * Adds a getter function to access the elements by relation name
  *
- *   $pageInst->getElementsByRelation('Downloads');
+ *   $pageInst->ElementsByRelation('Downloads');
  *
  * @package webtoolkit\elements
  */
@@ -53,82 +53,22 @@ class ElementsExtension extends DataExtension
     }
 
     /**
-     * Sets up the extension with a given element base class
-     * @param string $elementBaseClass
-     */
-    public function __construct($elementBaseClass = 'ElementBase')
-    {
-        parent::__construct();
-        $this->_elementBaseClass = $elementBaseClass;
-    }
-
-    /**
-     * Adds a has_many relation called "Elements" to the extended object.
-     * @param  string $class
-     * @param  class $extension
-     * @return array
-     */
-    public function extraStatics($class = null, $extension = null)
-    {
-        return [
-            'has_many' => [ 'Elements' => $this->_elementBaseClass ]
-        ];
-    }
-
-    public function updateCMSFields(FieldList $fields)
-    {
-        if (!$this->owner->exists()) return;
-
-        if ($relationNames = $this->elementRelationNames())
-        {
-            foreach ($relationNames as $key => $relationName)
-            {
-                $this->gridFieldForElementRelation($fields, $relationName);
-            }
-        }
-    }
-
-    /**
-     * Publish all related elements.
-     */
-    public function onAfterPublish()
-    {
-        foreach($this->owner->Elements() as $element)
-        {
-            $element->write();
-            $element->publish('Stage', 'Live');
-        }
-    }
-
-    /**
-     * Getter for items by relation name
-     *
-     * @param  string $relationName
-     * @return DataList
-     */
-    public function getElementsByRelation($relationName)
-    {
-        return $this->owner
-            ->Elements()
-            ->filter('RelationName', $relationName);
-    }
-
-    /**
      * Extracts element classes for a relation from the config.
      * Filters out non existent class names
      *
      * @param  string $relationName
      * @return array
      */
-    public function elementClassesForRelation($relationName)
+    public static function relation_classes($owner, $relationName)
     {
-        if ($elementRelations = $this->owner->config()->element_relations)
+        if ($elementRelations = $owner->config()->element_relations)
         {
             if (isset($elementRelations[$relationName]))
             {
-                return array_filter($elementRelations[$relationName], function($className)
+            	$baseClass = $owner->getElementBaseClass();
+                return array_filter($elementRelations[$relationName], function($className) use ($baseClass)
                 {
-                    if (ClassInfo::exists($className) && (is_a(singleton($className), $this->_elementBaseClass)))
+                    if (ClassInfo::exists($className) && (is_a(singleton($className), $baseClass)))
                     {
                         return $className;
                     }
@@ -157,8 +97,9 @@ class ElementsExtension extends DataExtension
      * @param  array $elementClasses
      * @return array
      */
-    public function elementClassesForDropdown(array $elementClasses)
+    public static function relation_classes_map($owner, $relationName)
     {
+    	$elementClasses = ElementsExtension::relation_classes($owner, $relationName);
         $result = [];
         foreach ($elementClasses as $elementClass)
         {
@@ -171,19 +112,87 @@ class ElementsExtension extends DataExtension
         return $result;
     }
 
+
     /**
      * Returns an array of all element relation names.
      *
      * @return mixed array | bool
      */
-    public function elementRelationNames()
+    public static function relation_names($owner)
     {
-        if ($elementRelations = $this->owner->config()->element_relations)
+        if ($elementRelations = $owner->config()->element_relations)
         {
             return array_keys($elementRelations);
         }
         return false;
     }
+
+    /**
+     * Sets up the extension with a given element base class
+     * @param string $elementBaseClass
+     */
+    public function __construct($elementBaseClass = 'ElementBase')
+    {
+        parent::__construct();
+        $this->_elementBaseClass = $elementBaseClass;
+    }
+
+    /**
+     * Adds a has_many relation called "Elements" to the extended object.
+     * @param  string $class
+     * @param  class $extension
+     * @return array
+     */
+    public function extraStatics($class = null, $extension = null)
+    {
+        return [
+            'has_many' => [ 'Elements' => $this->_elementBaseClass ]
+        ];
+    }
+
+    public function updateCMSFields(FieldList $fields)
+    {
+        if (!$this->owner->exists()) return;
+
+        if ($relationNames = self::relation_names($this->owner))
+        {
+            foreach ($relationNames as $key => $relationName)
+            {
+                $this->gridFieldForElementRelation($fields, $relationName);
+            }
+        }
+    }
+
+    /**
+     * Publish all related elements.
+     */
+    public function onAfterPublish()
+    {
+        foreach($this->owner->Elements() as $element)
+        {
+            $element->write();
+            $element->publish('Stage', 'Live');
+        }
+    }
+
+    public function getElementBaseClass()
+    {
+    	return $this->_elementBaseClass;
+    }
+
+    /**
+     * Getter for items by relation name
+     *
+     * @param  string $relationName
+     * @return DataList
+     */
+    public function ElementsByRelation($relationName)
+    {
+        return $this->owner
+            ->Elements()
+            ->filter('RelationName', $relationName);
+    }
+
 
     /**
      * Adds a GridField for a elements relation
@@ -194,7 +203,7 @@ class ElementsExtension extends DataExtension
      */
     public function gridFieldForElementRelation(FieldList $fields, $relationName)
     {
-        if ($elementClasses = $this->elementClassesForRelation($relationName))
+        if ($elementClasses = self::relation_classes($this->owner, $relationName))
         {
             // sort relations
             asort($elementClasses);
@@ -215,7 +224,7 @@ class ElementsExtension extends DataExtension
                     ->removeComponentsByType('GridFieldAddNewButton')
                     ->addComponent($multiClass = new \GridFieldAddNewMultiClass());
 
-                $multiClass->setClasses($this->elementClassesForDropdown($elementClasses));
+                $multiClass->setClasses(self::relation_classes_map($this->owner, $relationName));
             }
 
             $config
@@ -249,7 +258,7 @@ class ElementsExtension extends DataExtension
                 $gridField = GridField::create(
                     $relationName,
                     $label,
-                    $this->owner->getElementsByRelation($relationName),
+                    $this->owner->ElementsByRelation($relationName),
                     $config
                 )
             );

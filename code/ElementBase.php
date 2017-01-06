@@ -1,14 +1,21 @@
 <?php
+
+use webtoolkit\elements\ElementsExtension;
+
 class ElementBase extends DataObject implements CMSPreviewable
 {
+	protected static $_cached_get_by_url = array();
+
     private static $db = array(
+    	'Title' => 'Text',
         'URLSegment' => 'Varchar(255)',
         'RelationName' => 'Varchar(255)',
         'Sort' => 'Int'
     );
 
     private static $has_one = array(
-        'Page' => 'Page'
+        'Page' => 'Page',
+        'Element' => 'ElementBase'
     );
 
     private static $default_sort = 'Sort ASC';
@@ -28,56 +35,67 @@ class ElementBase extends DataObject implements CMSPreviewable
     public function onBeforeWrite()
     {
         parent::onBeforeWrite();
+
+        $filter = URLSegmentFilter::create();
+
+		if (!$this->URLSegment) {
+			$this->URLSegment = $this->Title;
+		}
+		$this->URLSegment = $filter->filter($this->URLSegment);
+
+		if (!$this->URLSegment) {
+			$this->URLSegment = uniqid();
+		}
+
+		$class = $this->ClassName;
+		$count = 2;
+		while ($this->getByUrlSegment($class, $this->URLSegment, $this->ID)) {
+			// add a -n to the URLSegment if it already existed
+			$this->URLSegment = preg_replace('/-[0-9]+$/', null, $this->URLSegment) . '-' . $count;
+			$count++;
+		}
+
         if (!$this->Sort)
         {
+			$holder_filter = array('PageID' => $this->PageID);
+			if($this->ElementID) $holder_filter = array('ElementID' => $this->ElementID);
             $this->Sort = ElementBase::get()
-                ->filter('PageID', $this->PageID)
+                ->filter($holder_filter)
                 ->max('Sort') + 1;
         }
     }
 
-    public function addCMSFieldsHeader($fields, $page)
+    public function addCMSFieldsHeader($fields, $pageOrElement)
     {
-        // ONLY works in CMS 
-        $relationName = Controller::curr()->request->param('OtherID');
 
-        $recordClassesMap = $page->elementClassesForRelation($relationName);
-        $recordClassesMap = $page->elementClassesForDropdown($recordClassesMap);
+        $relationName = Controller::curr()->request->param('FieldName');
+        $recordClassesMap = ElementsExtension::relation_classes_map($pageOrElement, $relationName);
 
         $description = '<div class="cms-page-info"><b>'. $this->i18n_singular_name() . '</b> – ID: ' . $this->ID;
-        if (ClassInfo::exists('Fluent'))
-        {
-            $description .= ' – Locale: <img src="'. ELEMENTS_DIR . '/images/languages/'. Fluent::current_locale() .'.gif"> ' . Fluent::current_locale() . '</div>';
-        }
+        $description .= ' PageID: ' . $this->PageID . ' ElementID: ' . $this->ElementID;
+
+        if (ClassInfo::exists('Fluent')) $description .= ' – Locale: <img src="'. ELEMENTS_DIR . '/images/languages/'
+        	. Fluent::current_locale() .'.gif"> ' . Fluent::current_locale() . '</div>';
 
         $fields->addFieldsToTab('Root.Main', [
             LiteralField::create('ClassNameDescription', $description),
             DropdownField::create('ClassName', _t('ElementBase.Type', 'Type'), $recordClassesMap),
             TextField::create('Title', _t('ElementBase.Title', 'Title'), null, 255),
-            HiddenField::create('RelationName', $relationName, $relationName),
+            HiddenField::create('RelationName', $relationName, $relationName)
         ]);
     }
 
     public function getCMSFields()
     {
         $fields = FieldList::create(TabSet::create('Root'));
-        $page = $this->getHolder();
-
-        // if no page reference available, try to get it from the session
-        if (!$page && $currentPageID = Session::get('CMSMain.currentPage'))
-        {
-            $page = Page::get_by_id('Page', $currentPageID);
-        }
-
-        if ($page)
-        {
-            $this->addCMSFieldsHeader($fields, $page);
-        }
+        $pageOrElement = $this->getHolder();
+        if ($pageOrElement) $this->addCMSFieldsHeader($fields, $pageOrElement);
         return $fields;
     }
 
     public function getHolder()
     {
+        if ($this->Element()->exists()) return $this->Element();
         if ($this->Page()->exists()) return $this->Page();
         return false;
     }
@@ -108,13 +126,6 @@ class ElementBase extends DataObject implements CMSPreviewable
         return DBField::create_field('HTMLVarchar', $icons);
     }
 
-    // public function Parent(){
-    //  return DataObject::get_by_id('SiteTree', $this->PageID);
-    // }
-    // public function Link($action = null) {
-    //  return Controller::join_links(Director::baseURL(), $this->RelativeLink($action));
-    // }
-
     public function PreviewLink($action = null)
     {
         return Controller::join_links(Director::baseURL(), 'cms-preview', 'show', $this->ClassName, $this->ID);
@@ -138,4 +149,21 @@ class ElementBase extends DataObject implements CMSPreviewable
             ->renderWith($this->ClassName)
         ;
     }
+
+	/**
+	 * @param $str
+	 * @return Product|Boolean
+	 */
+	protected function getByUrlSegment($class, $str, $excludeID = null) {
+		if (!isset(static::$_cached_get_by_url[$str])) {
+			$list = $class::get()->filter('URLSegment', $str);
+			if ($excludeID) {
+				$list = $list->exclude('ID', $excludeID);
+			}
+			$obj = $list->First();
+			static::$_cached_get_by_url[$str] = ($obj && $obj->exists()) ? $obj : false;
+		}
+		return static::$_cached_get_by_url[$str];
+	}
+
 }

@@ -46,9 +46,16 @@ class Element extends ElementBase
 In the SiteTree instance the realtions elements are now accessable through:
 
 ```
-$pageInst->getItemsByRelation('Elements');
+$pageInst->ElementsByRelation('Elements');
+$elementInst->ElementsByRelation('Elements');
 ```
 
+For use in Template:
+```
+	<% loop $ElementsByRelation(Elements) %>
+		$Render
+	<% end_loop %>
+```
 
 There is a helper function to move a gridfield into an other tab in the cms:
 
@@ -60,6 +67,22 @@ public function getCMSFields()
     $fields = ElementsExtension::move_elements_manager($fields, 'Elements', 'Root.PageElements');
     return $fields;
 }
+```
+
+### Nested Element relations
+
+Apply the same extension to the Element
+
+```
+
+ElementBase:
+  extensions:
+    - webtoolkit\elements\ElementsExtension("Element")
+
+TeasersElement:
+  element_relations:
+    Teasers:
+      - TeaserElement
 ```
 
 ### Translation

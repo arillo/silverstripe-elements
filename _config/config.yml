@@ -10,8 +10,3 @@ BetterButtonsActions:
     BetterButton_Unpublish: true
     Group_Versioning: false
     BetterButtonFrontendLinksAction: false
-
-# ElementBase:
-#   extensions:
-#     - FluentExtension
-#     - FluentFilteredExtension

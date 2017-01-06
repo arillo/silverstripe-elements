@@ -72,6 +72,14 @@ de:
     Downloads: 'Dateien'
 ```
 
+### Fluent integration
+
+```
+ElementBase:
+  extensions:
+    - FluentExtension
+    - FluentFilteredExtension
+```
 
 ### Betterbuttons integration
 

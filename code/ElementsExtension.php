@@ -246,13 +246,18 @@ class ElementsExtension extends DataExtension
             $tabName = "Root.{$relationName}";
             $label = _t("Element_Relations.{$relationName}", $relationName);
             $fields->addFieldToTab($tabName,
-                $gridfieldItems = GridField::create(
+                $gridField = GridField::create(
                     $relationName,
                     $label,
                     $this->owner->getItemsByRelation($relationName),
                     $config
                 )
             );
+
+            if (count($elementClasses) == 1)
+            {
+                $gridField->setModelClass($elementClasses[0]);
+            }
 
             $fields
                 ->findOrMakeTab($tabName)

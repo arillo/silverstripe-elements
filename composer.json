@@ -21,7 +21,8 @@
 		"arillo/silverstripe-dataobject-preview": "^1.0",
 		"arillo/silverstripe-gridfield-is-published": "dev-master",
 		"silverstripe-australia/gridfieldextensions": "^1.4",
-		"silverstripe/display-logic": "^1.4"
+		"silverstripe/display-logic": "^1.4",
+		"unclecheese/betterbuttons": "^1.3"
 	},
 	"support": {
         "issues": "https://github.com/arillo/silverstripe-elements/issues"

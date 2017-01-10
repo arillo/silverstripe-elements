@@ -11,28 +11,46 @@ class ElementBase extends DataObject implements CMSPreviewable
 		'URLSegment' => 'Varchar(255)',
 		'RelationName' => 'Varchar(255)',
 		'Sort' => 'Int'
-	);
+		);
 
 	private static $has_one = array(
 		'Page' => 'Page',
 		'Element' => 'ElementBase'
-	);
+		);
 
 	private static $default_sort = 'Sort ASC';
 
 	private static $extensions = array(
 		'GridFieldIsPublishedExtension',
 		'Versioned("Stage","Live")'
-	);
+		);
 
 	private static $translate = array(
 		'Title'
-	);
+		);
 
 	private static $searchable_fields = array(
 		'ClassName',
 		'URLSegment'
-	);
+		);
+
+	private static $better_buttons_actions = array (
+		'unpublishAndDelete'
+		);
+
+	// BetterButtons custom action
+	public function unpublishAndDelete(){
+		$origStage = Versioned::current_stage();
+		Versioned::reading_stage('Live');
+
+        // This way our ID won't be unset
+		$clone = clone $this;
+		$clone->delete();
+
+		Versioned::reading_stage($origStage);
+
+		$this->owner->delete();
+	}
 
 	public function onBeforeWrite()
 	{
@@ -62,9 +80,21 @@ class ElementBase extends DataObject implements CMSPreviewable
 			$holder_filter = array('PageID' => $this->PageID);
 			if($this->ElementID) $holder_filter = array('ElementID' => $this->ElementID);
 			$this->Sort = ElementBase::get()
-				->filter($holder_filter)
-				->max('Sort') + 1;
+			->filter($holder_filter)
+			->max('Sort') + 1;
 		}
+	}
+
+	public function onAfterDelete() {
+
+		foreach($this->owner->Elements() as $element)
+		{
+			$element->deleteFromStage('Live');
+			$element->deleteFromStage('Stage');
+			$element->delete();
+		}
+
+		parent::onAfterDelete();
 	}
 
 	public function addCMSFieldsHeader($fields, $pageOrElement)
@@ -81,10 +111,10 @@ class ElementBase extends DataObject implements CMSPreviewable
 
 		$fields->addFieldsToTab('Root.Main', [
 			LiteralField::create('ClassNameDescription', $description),
-			DropdownField::create('ClassName', _t('ElementBase.Type', 'Type'), $recordClassesMap),
+			// DropdownField::create('ClassName', _t('ElementBase.Type', 'Type'), $recordClassesMap),
 			TextField::create('Title', _t('ElementBase.Title', 'Title'), null, 255),
 			HiddenField::create('RelationName', $relationName, $relationName)
-		]);
+			]);
 	}
 
 	public function getCMSFields()
@@ -109,8 +139,9 @@ class ElementBase extends DataObject implements CMSPreviewable
 	public function getBetterButtonsActions()
 	{
 		$fields = parent::getBetterButtonsActions();
-		// $fields->removeByName('action_publish');
-		// $fields->removeByName('action_unpublish');
+		$fields->removeByName('action_publish');
+		$fields->removeByName('action_unpublish');
+		$fields->push(BetterButton_UnpublishAndDelete::create()->setRedirectType(BetterButtonCustomAction::GOBACK));
 		return $fields;
 	}
 
@@ -147,8 +178,8 @@ class ElementBase extends DataObject implements CMSPreviewable
 	{
 		$controller = Controller::curr();
 		return $controller
-			->customise($this)
-			->renderWith($this->ClassName)
+		->customise($this)
+		->renderWith($this->ClassName)
 		;
 	}
 

@@ -164,6 +164,21 @@ class ElementsExtension extends DataExtension
 	}
 
 	/**
+	 * Remove all related elements
+	 */
+	public function onAfterDelete() {
+
+		foreach($this->owner->Elements() as $element)
+		{
+			$element->deleteFromStage('Live');
+			$element->deleteFromStage('Stage');
+			$element->delete();
+		}
+
+		parent::onAfterDelete();
+	}
+
+	/**
 	 * Publish all related elements.
 	 */
 	public function onAfterPublish()

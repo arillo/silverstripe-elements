@@ -7,6 +7,7 @@ use \Config;
 use \ClassInfo;
 use \GridField;
 use \GridFieldConfig_RelationEditor;
+use \FormAction;
 
 /**
  * Establishes multiple has_many elements relations, which can be set up via the config system
@@ -29,6 +30,7 @@ use \GridFieldConfig_RelationEditor;
  */
 class ElementsExtension extends DataExtension
 {
+
 	/**
 	 * Holds element base class. Will be set in constructor.
 	 * @var string
@@ -59,9 +61,9 @@ class ElementsExtension extends DataExtension
 	 * @param  string $relationName
 	 * @return array
 	 */
-	public static function relation_classes($owner, $relationName)
+	public static function relation_classes($owner, $relationName, $yamlentry = 'element_relations')
 	{
-		if ($elementRelations = $owner->config()->element_relations)
+		if ($elementRelations = $owner->config()->$yamlentry)
 		{
 			if (isset($elementRelations[$relationName]))
 			{
@@ -97,9 +99,9 @@ class ElementsExtension extends DataExtension
 	 * @param  array $elementClasses
 	 * @return array
 	 */
-	public static function relation_classes_map($owner, $relationName)
+	public static function relation_classes_map($owner, $relationName, $yamlentry = 'element_relations')
 	{
-		$elementClasses = ElementsExtension::relation_classes($owner, $relationName);
+		$elementClasses = ElementsExtension::relation_classes($owner, $relationName, $yamlentry);
 		$result = [];
 		foreach ($elementClasses as $elementClass)
 		{
@@ -146,13 +148,20 @@ class ElementsExtension extends DataExtension
 	public function extraStatics($class = null, $extension = null)
 	{
 		return [
-			'has_many' => [ 'Elements' => $this->_elementBaseClass ]
+		'has_many' => [ 'Elements' => $this->_elementBaseClass ]
 		];
+	}
+
+	public function updateCMSActions(FieldList $fields){
+		if($this->owner->canEdit()){
+			$fields->addFieldToTab('ActionMenus.MoreOptions', FormAction::create('doCreateDefaults', _t('ElementsExtension.CreateDefaults','Create default elements')));
+		}
 	}
 
 	public function updateCMSFields(FieldList $fields)
 	{
 		if (!$this->owner->exists()) return;
+
 
 		if ($relationNames = self::relation_names($this->owner))
 		{
@@ -212,8 +221,8 @@ class ElementsExtension extends DataExtension
 	public function ElementsByRelation($relationName)
 	{
 		return $this->owner
-			->Elements()
-			->filter('RelationName', $relationName);
+		->Elements()
+		->filter('RelationName', $relationName);
 	}
 
 
@@ -232,28 +241,28 @@ class ElementsExtension extends DataExtension
 			asort($elementClasses);
 
 			$config = GridFieldConfig_RelationEditor::create()
-				->removeComponentsByType('GridFieldDeleteAction')
-				->removeComponentsByType('GridFieldAddExistingAutocompleter')
-				->addComponent(new \GridFieldOrderableRows('Sort'))
+			->removeComponentsByType('GridFieldDeleteAction')
+			->removeComponentsByType('GridFieldAddExistingAutocompleter')
+			->addComponent(new \GridFieldOrderableRows('Sort'))
 			;
 
 			if (count($elementClasses) > 1)
 			{
 				$config
-					->removeComponentsByType('GridFieldAddNewButton')
-					->addComponent($multiClass = new \GridFieldAddNewMultiClass());
+				->removeComponentsByType('GridFieldAddNewButton')
+				->addComponent($multiClass = new \GridFieldAddNewMultiClass());
 
 				$multiClass->setClasses(self::relation_classes_map($this->owner, $relationName));
 			}
 
 			$config
-				->getComponentByType('GridFieldPaginator')
-				->setItemsPerPage(150);
+			->getComponentByType('GridFieldPaginator')
+			->setItemsPerPage(150);
 
 			$columns = [
 				// 'Icon' => 'Icon',
-				'singular_name'=> 'Type',
-				'Title' => 'Title'
+			'singular_name'=> 'Type',
+			'Title' => 'Title'
 			];
 
 			if (ClassInfo::exists('Fluent'))
@@ -263,40 +272,40 @@ class ElementsExtension extends DataExtension
 
 			if (count($elementClasses) == 1
 				&& $summaryFields = singleton($elementClasses[0])->summaryFields()
-			) {
+				) {
 				$columns = array_merge($columns, $summaryFields);
-			}
+		}
 
-			$config
-				->getComponentByType('GridFieldDataColumns')
-				->setDisplayFields($columns);
+		$config
+		->getComponentByType('GridFieldDataColumns')
+		->setDisplayFields($columns);
 
-			$tabName = "Root.{$relationName}";
+		$tabName = "Root.{$relationName}";
 
 			// if only one relation is set, add gridfield to main tab
-			if(count(self::relation_names($this->owner)) == 1){
-				$tabName = "Root.Main";
-			}
+		if(count(self::relation_names($this->owner)) == 1){
+			$tabName = "Root.Main";
+		}
 
-			$label = _t("Element_Relations.{$relationName}", $relationName);
-			$fields->addFieldToTab($tabName,
-				$gridField = GridField::create(
-					$relationName,
-					$label,
-					$this->owner->ElementsByRelation($relationName),
-					$config
+		$label = _t("Element_Relations.{$relationName}", $relationName);
+		$fields->addFieldToTab($tabName,
+			$gridField = GridField::create(
+				$relationName,
+				$label,
+				$this->owner->ElementsByRelation($relationName),
+				$config
 				)
 			);
 
-			if (count($elementClasses) == 1)
-			{
-				$gridField->setModelClass($elementClasses[0]);
-			}
-
-			$fields
-				->findOrMakeTab($tabName)
-				->setTitle($label);
+		if (count($elementClasses) == 1)
+		{
+			$gridField->setModelClass($elementClasses[0]);
 		}
-		return $this->owner;
+
+		$fields
+		->findOrMakeTab($tabName)
+		->setTitle($label);
 	}
+	return $this->owner;
+}
 }

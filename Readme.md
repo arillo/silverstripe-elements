@@ -3,10 +3,8 @@
 Decorates a SiteTree class with multiple named element relations through a has_many "Elements" relation.
 
 ### Todo
-
-+ make composer ready
 + write tests
-+ ElementBase -> has_many: Elements
++ write better docs
 
 ### Usage
 Add the extension to a SiteTree class and set up you relation types, e.g:
@@ -23,6 +21,8 @@ Page:
     Downloads:
       - DownloadElement
 ```
+
+In this example we are creating 2 element relationships to the Page, one called Elements, the other called Downloads.
 
 To make it work `Element` class should subclass `ElementBase`, where all additional fields can be defined, e.g.:
 
@@ -43,21 +43,21 @@ class Element extends ElementBase
 ```
 
 
-In the SiteTree instance the realtions elements are now accessable through:
+In the SiteTree instance the element relations are now accessable through:
 
 ```
 $pageInst->ElementsByRelation('Elements');
 $elementInst->ElementsByRelation('Elements');
 ```
 
-For use in Template:
+To use them in a template:
 ```
 	<% loop $ElementsByRelation(Elements) %>
 		$Render
 	<% end_loop %>
 ```
 
-There is a helper function to move a gridfield into an other tab in the cms:
+There is also a helper function to move a gridfield into another tab if you prefer:
 
 ```
 public function getCMSFields()
@@ -70,8 +70,7 @@ public function getCMSFields()
 ```
 
 ### Nested Element relations
-
-Apply the same extension to the Element
+Apply the same extension to the Element instead of the Page.
 
 ```
 
@@ -95,26 +94,37 @@ de:
     Downloads: 'Dateien'
 ```
 
+### Populate default elements
+You will get a new action called "Create default elements" which will be hidden inside the "More Options" button next to the Publish button in the CMS.
+It will populate the default elements defined in your _config.yml as empty elements in your page. If you trigger the action again it will check for existance of the element Class and won't add Classes that are already created.
+
+To use the populate defaults behaviour add the following extension in your _config.yml
+
+```
+LeftAndMain:
+  extensions:
+    - DefaultElementsExtension
+```
+
+Then you can define the element_defaults for each of your relations like this:
+
+```
+Page:
+  element_relations:
+    Teasers:
+      - TeaserElement
+  element_defaults:
+    Teasers:
+      - TeaserElement
+```
+
+
 ### Fluent integration
+To use fluent with elements just add the Fluent extensions to the ElementBase:
 
 ```
 ElementBase:
   extensions:
     - FluentExtension
     - FluentFilteredExtension
-```
-
-### Betterbuttons integration
-
-Add to your _config.yml:
-
-```
-BetterButtonsActions:
-  edit:
-    BetterButtonFrontendLinksAction: false
-  versioned_edit:
-    BetterButton_Rollback: true
-    BetterButton_Unpublish: true
-    Group_Versioning: false
-    BetterButtonFrontendLinksAction: false
 ```

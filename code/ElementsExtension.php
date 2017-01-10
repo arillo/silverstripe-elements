@@ -172,6 +172,14 @@ class ElementsExtension extends DataExtension
 		{
 			$element->write();
 			$element->publish('Stage', 'Live');
+			// check subelements
+			if($element->Elements()->Count()>0){
+				foreach($element->Elements() as $subelement)
+				{
+					$subelement->write();
+					$subelement->publish('Stage', 'Live');
+				}
+			}
 		}
 	}
 

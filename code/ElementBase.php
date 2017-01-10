@@ -117,6 +117,11 @@ class ElementBase extends DataObject implements CMSPreviewable
 			]);
 	}
 
+	public function populate($type, $id, $relation){
+		$this->Title = $this->i18n_singular_name() . ' title';
+		$this->PageID = $id;
+		$this->RelationName = $relation;
+	}
 	public function getCMSFields()
 	{
 		$fields = FieldList::create(TabSet::create('Root'));

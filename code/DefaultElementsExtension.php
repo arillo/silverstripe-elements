@@ -1,5 +1,10 @@
 <?php
-use arillo\elements\ElementsExtension;
+namespace arillo\elements;
+
+use \LeftAndMainExtension;
+use \Convert;
+use \DataObject;
+use \SS_HTTPResponse_Exception;
 
 class DefaultElementsExtension extends LeftAndMainExtension
 {
@@ -28,9 +33,7 @@ class DefaultElementsExtension extends LeftAndMainExtension
 				foreach ($elementClasses as $key => $value) {
 					if(!isset($definedElements[$key])){
 						$element = new $key;
-						$element->Title = $value.' title';
-						$element->PageID = $SQL_id;
-						$element->RelationName = $relationName;
+						$element->populate('PageID', $SQL_id, $relationName);
 						$element->write();
 						$count++;
 					}

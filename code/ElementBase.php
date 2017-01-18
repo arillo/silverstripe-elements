@@ -34,24 +34,6 @@ class ElementBase extends DataObject implements CMSPreviewable
 		'URLSegment'
 		);
 
-	private static $better_buttons_actions = array (
-		'unpublishAndDelete'
-		);
-
-	// BetterButtons custom action
-	public function unpublishAndDelete(){
-		$origStage = Versioned::current_stage();
-		Versioned::reading_stage('Live');
-
-        // This way our ID won't be unset
-		$clone = clone $this;
-		$clone->delete();
-
-		Versioned::reading_stage($origStage);
-
-		$this->owner->delete();
-	}
-
 	public function onBeforeWrite()
 	{
 		parent::onBeforeWrite();
@@ -122,6 +104,7 @@ class ElementBase extends DataObject implements CMSPreviewable
 		$this->PageID = $id;
 		$this->RelationName = $relation;
 	}
+
 	public function getCMSFields()
 	{
 		$fields = FieldList::create(TabSet::create('Root'));
@@ -145,8 +128,6 @@ class ElementBase extends DataObject implements CMSPreviewable
 	{
 		$fields = parent::getBetterButtonsActions();
 		$fields->removeByName('action_publish');
-		$fields->removeByName('action_unpublish');
-		$fields->push(BetterButton_UnpublishAndDelete::create()->setRedirectType(BetterButtonCustomAction::GOBACK));
 		return $fields;
 	}
 

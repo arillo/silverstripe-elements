@@ -63,7 +63,7 @@ class ElementsExtension extends DataExtension
 	 */
 	public static function relation_classes($owner, $relationName, $yamlentry = 'element_relations')
 	{
-		if ($elementRelations = $owner->config()->$yamlentry)
+		if ($elementRelations = $owner->stat($yamlentry))
 		{
 			if (isset($elementRelations[$relationName]))
 			{

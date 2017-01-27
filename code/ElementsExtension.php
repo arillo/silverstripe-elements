@@ -62,81 +62,6 @@ class ElementsExtension extends DataExtension
 	}
 
 	/**
-	 * Extracts element classes for a relation from the config.
-	 * Filters out non existent class names
-	 *
-	 * @param  string $relationName
-	 * @return array
-	 */
-	public static function relation_classes($owner, $relationName, $yamlentry = 'element_relations')
-	{
-		if ($elementRelations = $owner->uninherited($yamlentry))
-		{
-			if (isset($elementRelations[$relationName]))
-			{
-				$baseClass = $owner->getElementBaseClass();
-				return array_filter($elementRelations[$relationName], function($className) use ($baseClass)
-				{
-					if (ClassInfo::exists($className) && (is_a(singleton($className), $baseClass)))
-					{
-						return $className;
-					}
-				});
-			}
-		}
-		return [];
-	}
-
-	/**
-	 * Creates a element classes map for use in a Dropdown.
-	 *
-	 * Expects a flat array of class names e.g.:
-	 *   ['BaseElement', 'DownloadElement']
-	 *
-	 * Returns a map in folowing format:
-	 *   [
-	 *       'ClassName' => '<ClassName> or <class.singular_name>'
-	 *   ]
-	 *  E.g:
-	 *   [
-	 *     'BaseElement' => 'Title',
-	 *     'DownloadElement' => 'Download'
-	 *   ]
-	 *
-	 * @param  array $elementClasses
-	 * @return array
-	 */
-	public static function relation_classes_map($owner, $relationName, $yamlentry = 'element_relations')
-	{
-		$elementClasses = ElementsExtension::relation_classes($owner, $relationName, $yamlentry);
-		$result = [];
-		foreach ($elementClasses as $elementClass)
-		{
-			$result[$elementClass] = $elementClass;
-			if ($label = singleton($elementClass)->stat('singular_name'))
-			{
-				$result[$elementClass] = $label;
-			}
-		}
-		return $result;
-	}
-
-
-	/**
-	 * Returns an array of all element relation names.
-	 *
-	 * @return mixed array | bool
-	 */
-	public static function relation_names($owner)
-	{
-		if ($elementRelations = $owner->uninherited('element_relations'))
-		{
-			return array_keys($elementRelations);
-		}
-		return array();
-	}
-
-	/**
 	 * Sets up the extension with a given element base class
 	 * @param string $elementBaseClass
 	 */
@@ -169,30 +94,22 @@ class ElementsExtension extends DataExtension
 	{
 		if (!$this->owner->exists()) return;
 
-		$ownRelations = $this->owner->uninherited('element_relations');
-		\Debug::dump($ownRelations);
+		$relations = $this->owner->uninherited('element_relations');
+		if(!$relations) $relations = array();
 
 		// inherit relations from another PageType
 		if($inherit_relations_from = $this->owner->uninherited('element_relations_inherit_from')){
 			if($inherit_relations = Config::inst()->get($inherit_relations_from, 'element_relations', Config::UNINHERITED)){
-				\Debug::dump($inherit_relations);
-				// $inherit_relations = array_keys($inherit_relations);
-				$relationNames = array_merge_recursive($ownRelations, $inherit_relations);
-				\Debug::dump($relationNames);
+				$relations = array_merge_recursive($relations, $inherit_relations);
 			}
 		}
 
-		die();
-
-		// $relationNames = self::relation_names($this->owner);
-
-		if ($relationNames)
+		if ($relations)
 		{
-			\Debug::dump($relationNames);
-			die();
-			foreach ($relationNames as $key => $relationName)
+			$this->_elementRelations = array_keys($relations);
+			foreach ($relations as $key => $relation)
 			{
-				$this->gridFieldForElementRelation($fields, $relationName);
+				$this->gridFieldForElementRelation($fields, $key, $this->checkClasses($relation));
 			}
 		}
 	}
@@ -251,6 +168,29 @@ class ElementsExtension extends DataExtension
 	}
 
 
+	public function checkClasses($relation){
+		$baseClass = $this->owner->getElementBaseClass();
+		return array_filter($relation, function($className) use ($baseClass)
+		{
+			if (ClassInfo::exists($className) && (is_a(singleton($className), $baseClass)))
+			{
+				return $className;
+			}
+		});
+	}
+
+	public function getClassNames($elementClasses){
+		$result = [];
+		foreach ($elementClasses as $elementClass)
+		{
+			$result[$elementClass] = $elementClass;
+			if ($label = singleton($elementClass)->stat('singular_name'))
+			{
+				$result[$elementClass] = $label;
+			}
+		}
+		return $result;
+	}
 	/**
 	 * Adds a GridField for a elements relation
 	 *
@@ -258,79 +198,78 @@ class ElementsExtension extends DataExtension
 	 * @param  string    $relationName
 	 * @return DataObject
 	 */
-	public function gridFieldForElementRelation(FieldList $fields, $relationName)
+	public function gridFieldForElementRelation(FieldList $fields, $relationName, $relation)
 	{
-		if ($elementClasses = self::relation_classes($this->owner, $relationName))
-		{
-			// sort relations
-			asort($elementClasses);
+		// sort relations
+		asort($relation);
 
-			$config = GridFieldConfig_RelationEditor::create()
+		$config = GridFieldConfig_RelationEditor::create()
 			->removeComponentsByType('GridFieldDeleteAction')
 			->removeComponentsByType('GridFieldAddExistingAutocompleter')
 			->addComponent(new \GridFieldOrderableRows('Sort'))
-			;
+		;
 
-			if (count($elementClasses) > 1)
-			{
-				$config
-				->removeComponentsByType('GridFieldAddNewButton')
-				->addComponent($multiClass = new \GridFieldAddNewMultiClass());
-
-				$multiClass->setClasses(self::relation_classes_map($this->owner, $relationName));
-			}
-
+		if (count($relation) > 1)
+		{
 			$config
-			->getComponentByType('GridFieldPaginator')
-			->setItemsPerPage(150);
+			->removeComponentsByType('GridFieldAddNewButton')
+			->addComponent($multiClass = new \GridFieldAddNewMultiClass());
 
-			$columns = [
-				// 'Icon' => 'Icon',
-			'singular_name'=> 'Type',
-			'Title' => 'Title'
-			];
-
-			if (ClassInfo::exists('Fluent'))
-			{
-				$columns['Languages'] = 'Lang';
-			}
-
-			if (count($elementClasses) == 1
-				&& $summaryFields = singleton($elementClasses[0])->summaryFields()
-				) {
-				$columns = array_merge($columns, $summaryFields);
+			$multiClass->setClasses($this->getClassNames($relation));
 		}
 
 		$config
-		->getComponentByType('GridFieldDataColumns')
-		->setDisplayFields($columns);
+		->getComponentByType('GridFieldPaginator')
+		->setItemsPerPage(150);
 
-		$tabName = "Root.{$relationName}";
+		$columns = [
+			// 'Icon' => 'Icon',
+		'singular_name'=> 'Type',
+		'Title' => 'Title'
+		];
 
-			// if only one relation is set, add gridfield to main tab
-		if(count(self::relation_names($this->owner)) == 1){
-			$tabName = "Root.Main";
-		}
-
-		$label = _t("Element_Relations.{$relationName}", $relationName);
-		$fields->addFieldToTab($tabName,
-			$gridField = GridField::create(
-				$relationName,
-				$label,
-				$this->owner->ElementsByRelation($relationName),
-				$config
-				)
-			);
-
-		if (count($elementClasses) == 1)
+		if (ClassInfo::exists('Fluent'))
 		{
-			$gridField->setModelClass($elementClasses[0]);
+			$columns['Languages'] = 'Lang';
 		}
 
-		$fields
-		->findOrMakeTab($tabName)
-		->setTitle($label);
+		if (count($relation) == 1
+			&& $summaryFields = singleton($relation[0])->summaryFields()
+			) {
+			$columns = array_merge($columns, $summaryFields);
 	}
+
+	$config
+		->getComponentByType('GridFieldDataColumns')
+		->setDisplayFields($columns)
+	;
+
+	$tabName = "Root.{$relationName}";
+
+	// if only one relation is set, add gridfield to main tab
+	if(count($this->_elementRelations) == 1){
+		$tabName = "Root.Main";
+	}
+
+	$label = _t("Element_Relations.{$relationName}", $relationName);
+	$fields->addFieldToTab($tabName,
+		$gridField = GridField::create(
+			$relationName,
+			$label,
+			$this->owner->ElementsByRelation($relationName),
+			$config
+			)
+		);
+
+	if (count($relation) == 1)
+	{
+		$gridField->setModelClass($relation[0]);
+	}
+
+	$fields
+		->findOrMakeTab($tabName)
+		->setTitle($label)
+	;
 	return $this->owner;
 }
 }

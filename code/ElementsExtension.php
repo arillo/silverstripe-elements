@@ -37,6 +37,13 @@ class ElementsExtension extends DataExtension
 	 */
 	protected $_elementBaseClass;
 
+
+	/**
+	 * Holds parsed relations taking into consideration the inheritance.
+	 * @var string
+	 */
+	protected $_elementRelations;
+
 	/**
 	 * Move an elements gridfield to an other tab.
 	 *
@@ -63,7 +70,7 @@ class ElementsExtension extends DataExtension
 	 */
 	public static function relation_classes($owner, $relationName, $yamlentry = 'element_relations')
 	{
-		if ($elementRelations = $owner->stat($yamlentry))
+		if ($elementRelations = $owner->uninherited($yamlentry))
 		{
 			if (isset($elementRelations[$relationName]))
 			{
@@ -122,11 +129,11 @@ class ElementsExtension extends DataExtension
 	 */
 	public static function relation_names($owner)
 	{
-		if ($elementRelations = $owner->config()->element_relations)
+		if ($elementRelations = $owner->uninherited('element_relations'))
 		{
 			return array_keys($elementRelations);
 		}
-		return false;
+		return array();
 	}
 
 	/**
@@ -162,9 +169,27 @@ class ElementsExtension extends DataExtension
 	{
 		if (!$this->owner->exists()) return;
 
+		$ownRelations = $this->owner->uninherited('element_relations');
+		\Debug::dump($ownRelations);
 
-		if ($relationNames = self::relation_names($this->owner))
+		// inherit relations from another PageType
+		if($inherit_relations_from = $this->owner->uninherited('element_relations_inherit_from')){
+			if($inherit_relations = Config::inst()->get($inherit_relations_from, 'element_relations', Config::UNINHERITED)){
+				\Debug::dump($inherit_relations);
+				// $inherit_relations = array_keys($inherit_relations);
+				$relationNames = array_merge_recursive($ownRelations, $inherit_relations);
+				\Debug::dump($relationNames);
+			}
+		}
+
+		die();
+
+		// $relationNames = self::relation_names($this->owner);
+
+		if ($relationNames)
 		{
+			\Debug::dump($relationNames);
+			die();
 			foreach ($relationNames as $key => $relationName)
 			{
 				$this->gridFieldForElementRelation($fields, $relationName);

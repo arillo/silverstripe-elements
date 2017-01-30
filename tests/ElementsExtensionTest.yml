@@ -1,0 +1,87 @@
+# ---
+# Name: elementstest
+# After:
+#   - 'framework/*'
+#   - 'cms/*'
+# ---
+
+HomePage:
+  home:
+    Title: Home page
+    URLSegment: home
+    Content: My home page body
+
+# LeftAndMain:
+#   extensions:
+#     - arillo\elements\DefaultElementsExtension
+
+# ElementBase:
+#   extensions:
+#     - FluentExtension
+#     - FluentFilteredExtension
+#     - arillo\elements\ElementsExtension("Element")
+#     - arillo\arbitrarysettings\SettingsExtension("Settings")
+
+# MainElements:
+#   element_relations:
+#     Elements:
+#       - SlideshowElement
+#       - HeroElement
+#       - MarqueeElement
+#       - TeasersElement
+#       - TestimonialsElement
+#       - RoomsSliderElement
+#   element_defaults:
+#     Elements:
+#       - HeroElement
+#       - TextBlockElement
+# BasicElements:
+#   element_relations:
+#     Elements:
+#       - SlideshowElement
+#       - HeroElement
+
+# Page:
+#   extensions:
+#     - arillo\elements\ElementsExtension("Element")
+#   # element_relations_inherit_from: TestPage
+#   element_relations:
+#     Elements:
+#       - BlocksElement
+#       - HeroElement
+#       - ImageBlockElement
+#       - MarqueeElement
+#       - ReservationLinkElement
+#       - RoomBasePriceElement
+#       - RoomFeaturesElement
+#       - RoomPricesElement
+#       - RoomsOverviewElement
+#       - RoomsSliderElement
+#       - SlideshowElement
+#       - SubmenuElement
+#       - ParallaxElement
+#       - TeasersElement
+#       - TestimonialsElement
+#       - TextBlockElement
+#       - TextImageBlockElement
+#   element_defaults:
+#     Elements:
+#       - HeroElement
+#       - TextBlockElement
+
+# HomePage:
+#   element_relations_inherit_from: MainElements
+#   element_defaults_inherit_from: BasicElements
+#   element_relations:
+#     Elements:
+#       - TextBlockElement
+#     Teasers:
+#       - HeroElement
+#   element_defaults:
+#     Elements:
+#       - SlideshowElement
+#       - HeroElement
+#       - MarqueeElement
+#       - TeasersElement
+#       - TestimonialsElement
+#       - RoomsSliderElement

@@ -94,6 +94,19 @@ class ElementsExtension extends DataExtension
 	{
 		if (!$this->owner->exists()) return;
 
+		$relations = $this->getRelations();
+
+		if ($relations)
+		{
+			$this->_elementRelations = array_keys($relations);
+			foreach ($relations as $key => $relation)
+			{
+				$this->gridFieldForElementRelation($fields, $key, $this->checkClassNames($relation));
+			}
+		}
+	}
+
+	public function getRelations(){
 		$relations = $this->owner->uninherited('element_relations');
 		if(!$relations) $relations = array();
 
@@ -103,15 +116,31 @@ class ElementsExtension extends DataExtension
 				$relations = array_merge_recursive($relations, $inherit_relations);
 			}
 		}
+		return $relations;
+	}
 
-		if ($relations)
+	public function checkClassNames($relation){
+		$baseClass = $this->owner->getElementBaseClass();
+		return array_filter($relation, function($className) use ($baseClass)
 		{
-			$this->_elementRelations = array_keys($relations);
-			foreach ($relations as $key => $relation)
+			if (ClassInfo::exists($className) && (is_a(singleton($className), $baseClass)))
 			{
-				$this->gridFieldForElementRelation($fields, $key, $this->checkClasses($relation));
+				return $className;
+			}
+		});
+	}
+
+	public function getClassNames($elementClasses){
+		$result = [];
+		foreach ($elementClasses as $elementClass)
+		{
+			$result[$elementClass] = $elementClass;
+			if ($label = singleton($elementClass)->stat('singular_name'))
+			{
+				$result[$elementClass] = $label;
 			}
 		}
+		return $result;
 	}
 
 	/**
@@ -167,30 +196,6 @@ class ElementsExtension extends DataExtension
 		->filter('RelationName', $relationName);
 	}
 
-
-	public function checkClasses($relation){
-		$baseClass = $this->owner->getElementBaseClass();
-		return array_filter($relation, function($className) use ($baseClass)
-		{
-			if (ClassInfo::exists($className) && (is_a(singleton($className), $baseClass)))
-			{
-				return $className;
-			}
-		});
-	}
-
-	public function getClassNames($elementClasses){
-		$result = [];
-		foreach ($elementClasses as $elementClass)
-		{
-			$result[$elementClass] = $elementClass;
-			if ($label = singleton($elementClass)->stat('singular_name'))
-			{
-				$result[$elementClass] = $label;
-			}
-		}
-		return $result;
-	}
 	/**
 	 * Adds a GridField for a elements relation
 	 *

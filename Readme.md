@@ -84,6 +84,27 @@ TeasersElement:
       - TeaserElement
 ```
 
+### Element inheritance
+If you would like to have the same elements applied to different Pagetypes you can use the ```element_relations_inherit_from``` definition referencing a arbitrary setup in the yml file. For example if we want the HomePage and the EventsPage to inherit the same elements we can define the .yml like this:
+
+```
+HomePage:
+	element_relations_inherit_from: MainElements
+EventsPage:
+	element_relations_inherit_from: MainElements
+```
+
+They both reference the MainElements defined in the yml where you have defined the element_relations, like this:
+
+```
+MainElements:
+  element_relations:
+    Elements:
+      - HeroElement
+      - DownloadElement
+      - TeasersElement
+```
+
 ### Translation
 Naming of `Tab` and `GridField` labels can be done through silverstripes i18n.
 There is a special key called `Element_Relations` reserved to accomplish this task, e.g. in de.yml:

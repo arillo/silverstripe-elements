@@ -9,3 +9,7 @@ BetterButtonsActions:
     BetterButton_Unpublish: true
     Group_Versioning: false
     BetterButtonFrontendLinksAction: false
+
+LeftAndMain:
+  extra_requirements_css:
+    - elements/css/Admin.css

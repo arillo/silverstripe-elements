@@ -133,16 +133,16 @@ class ElementBase extends DataObject implements CMSPreviewable
 
 	public function getLanguages()
 	{
-		$icons = '';
+		$pills = '';
 		if (ClassInfo::exists('Fluent'))
 		{
 			$locales = $this->getFilteredLocales();
 			foreach ($locales as $key)
 			{
-				$icons .= '<img src="'.ELEMENTS_DIR.'/images/languages/'.$key.'.gif"/><br>';
+				$pills .= '<span class="cms-elements cms-elements-'.$key.'">'.$key.'</span>';
 			}
 		}
-		return DBField::create_field('HTMLVarchar', $icons);
+		return DBField::create_field('HTMLVarchar', $pills);
 	}
 
 	public function PreviewLink($action = null)

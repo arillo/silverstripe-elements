@@ -8,6 +8,8 @@ use \ClassInfo;
 use \GridField;
 use \GridFieldConfig_RelationEditor;
 use \FormAction;
+use \GridFieldOrderableRows;
+use \GridFieldAddNewMultiClass;
 
 /**
  * Establishes multiple has_many elements relations, which can be set up via the config system
@@ -31,250 +33,271 @@ use \FormAction;
 class ElementsExtension extends DataExtension
 {
 
-	/**
-	 * Holds element base class. Will be set in constructor.
-	 * @var string
-	 */
-	protected $_elementBaseClass;
+    /**
+     * Holds element base class. Will be set in constructor.
+     * @var string
+     */
+    protected $_elementBaseClass;
 
 
-	/**
-	 * Holds parsed relations taking into consideration the inheritance.
-	 * @var string
-	 */
-	protected $_elementRelations;
+    /**
+     * Holds parsed relations taking into consideration the inheritance.
+     * @var string
+     */
+    protected $_elementRelations;
 
-	/**
-	 * Move an elements gridfield to an other tab.
-	 *
-	 * @param  FieldList $fields
-	 * @param  string    $relationName
-	 * @param  string    $newTabName
-	 * @param  string    $insertBefore      optional: insert before an other field
-	 * @return FieldList                    the altered fields
-	 */
-	public static function move_elements_manager(FieldList $fields, $relationName, $newTabName = 'Root.Main', $insertBefore = null)
-	{
-		$itemsGf = $fields->dataFieldByName($relationName);
-		$fields->removeByName($relationName);
-		$fields->addFieldToTab($newTabName, $itemsGf, $insertBefore);
-		return $fields;
-	}
+    /**
+     * Move an elements gridfield to an other tab.
+     *
+     * @param  FieldList $fields
+     * @param  string    $relationName
+     * @param  string    $newTabName
+     * @param  string    $insertBefore      optional: insert before an other field
+     * @return FieldList                    the altered fields
+     */
+    public static function move_elements_manager(FieldList $fields, $relationName, $newTabName = 'Root.Main', $insertBefore = null)
+    {
+        $itemsGf = $fields->dataFieldByName($relationName);
+        $fields->removeByName($relationName);
+        $fields->addFieldToTab($newTabName, $itemsGf, $insertBefore);
+        return $fields;
+    }
 
-	/**
-	 * Sets up the extension with a given element base class
-	 * @param string $elementBaseClass
-	 */
-	public function __construct($elementBaseClass = 'ElementBase')
-	{
-		parent::__construct();
-		$this->_elementBaseClass = $elementBaseClass;
-	}
+    /**
+     * Sets up the extension with a given element base class
+     * @param string $elementBaseClass
+     */
+    public function __construct($elementBaseClass = 'ElementBase')
+    {
+        parent::__construct();
+        $this->_elementBaseClass = $elementBaseClass;
+    }
 
-	/**
-	 * Adds a has_many relation called "Elements" to the extended object.
-	 * @param  string $class
-	 * @param  class $extension
-	 * @return array
-	 */
-	public function extraStatics($class = null, $extension = null)
-	{
-		return [
-		'has_many' => [ 'Elements' => $this->_elementBaseClass ]
-		];
-	}
+    /**
+     * Adds a has_many relation called "Elements" to the extended object.
+     * @param  string $class
+     * @param  class $extension
+     * @return array
+     */
+    public function extraStatics($class = null, $extension = null)
+    {
+        return [
+            'has_many' => [ 'Elements' => $this->_elementBaseClass ]
+        ];
+    }
 
-	public function updateCMSActions(FieldList $fields){
-		if($this->owner->canEdit()){
-			$fields->addFieldToTab('ActionMenus.MoreOptions', FormAction::create('doCreateDefaults', _t('ElementsExtension.CreateDefaults','Create default elements')));
-		}
-	}
+    public function updateCMSActions(FieldList $fields)
+    {
+        if($this->owner->canEdit()){
+            $fields->addFieldToTab('ActionMenus.MoreOptions', FormAction::create('doCreateDefaults', _t('ElementsExtension.CreateDefaults','Create default elements')));
+        }
+    }
 
-	public function updateCMSFields(FieldList $fields)
-	{
-		if (!$this->owner->exists()) return;
+    public function updateCMSFields(FieldList $fields)
+    {
+        if (!$this->owner->exists()) return;
 
-		$relations = $this->getRelations();
+        $relations = $this->getElementRelationNames();
 
-		if ($relations)
-		{
-			$this->_elementRelations = array_keys($relations);
-			foreach ($relations as $key => $relation)
-			{
-				$this->gridFieldForElementRelation($fields, $key, $this->checkClassNames($relation));
-			}
-		}
-	}
+        if ($relations)
+        {
+            $this->_elementRelations = array_keys($relations);
+            foreach ($relations as $key => $relation)
+            {
+                $this->gridFieldForElementRelation($fields, $key, $this->checkClassNames($relation));
+            }
+        }
+    }
 
-	public function getRelations(){
-		$relations = $this->owner->uninherited('element_relations');
-		if(!$relations) $relations = array();
+    public function getElementRelationNames()
+    {
+        $relations = $this->owner->uninherited('element_relations');
+        if (!$relations) $relations = [];
 
-		// inherit relations from another PageType
-		if($inherit_relations_from = $this->owner->uninherited('element_relations_inherit_from')){
-			if($inherit_relations = Config::inst()->get($inherit_relations_from, 'element_relations', Config::UNINHERITED)){
-				$relations = array_merge_recursive($relations, $inherit_relations);
-			}
-		}
-		return $relations;
-	}
+        // inherit relations from another PageType
+        if ($inherit_relations_from = $this->owner->uninherited('element_relations_inherit_from'))
+        {
+            if ($inherit_relations = Config::inst()->get($inherit_relations_from, 'element_relations', Config::UNINHERITED))
+            {
+                $relations = array_merge_recursive($relations, $inherit_relations);
+            }
+        }
+        return $relations;
+    }
 
-	public function checkClassNames($relation){
-		$baseClass = $this->owner->getElementBaseClass();
-		return array_filter($relation, function($className) use ($baseClass)
-		{
-			if (ClassInfo::exists($className) && (is_a(singleton($className), $baseClass)))
-			{
-				return $className;
-			}
-		});
-	}
+    public function getDefaultElements()
+    {
+        $relations = $this->owner->uninherited('element_defaults');
+        if (!$relations) $relations = [];
 
-	public function getClassNames($elementClasses){
-		$result = [];
-		foreach ($elementClasses as $elementClass)
-		{
-			$result[$elementClass] = $elementClass;
-			if ($label = singleton($elementClass)->stat('singular_name'))
-			{
-				$result[$elementClass] = $label;
-			}
-		}
-		return $result;
-	}
+        // inherit relations from another PageType
+        if ($inherit_relations_from = $this->owner->uninherited('element_relations_inherit_from'))
+        {
+            if ($inherit_relations = Config::inst()->get($inherit_relations_from, 'element_defaults', Config::UNINHERITED))
+            {
+                $relations = array_merge_recursive($relations, $inherit_relations);
+            }
+        }
+        return $relations;
+    }
 
-	/**
-	 * Remove all related elements
-	 */
-	public function onAfterDelete() {
+    public function checkClassNames($relation)
+    {
+        $baseClass = $this->owner->getElementBaseClass();
+        return array_filter($relation, function($className) use ($baseClass)
+        {
+            if (ClassInfo::exists($className) && (is_a(singleton($className), $baseClass)))
+            {
+                return $className;
+            }
+        });
+    }
 
-		foreach($this->owner->Elements() as $element)
-		{
-			$element->deleteFromStage('Live');
-			$element->deleteFromStage('Stage');
-			$element->delete();
-		}
+    public function getClassNames($elementClasses)
+    {
+        $result = [];
+        foreach ($elementClasses as $elementClass)
+        {
+            $result[$elementClass] = $elementClass;
+            if ($label = singleton($elementClass)->stat('singular_name'))
+            {
+                $result[$elementClass] = $label;
+            }
+        }
+        return $result;
+    }
 
-		parent::onAfterDelete();
-	}
+    /**
+     * Remove all related elements
+     */
+    public function onAfterDelete()
+    {
+        foreach($this->owner->Elements() as $element)
+        {
+            $element->deleteFromStage('Live');
+            $element->deleteFromStage('Stage');
+            $element->delete();
+        }
 
-	/**
-	 * Publish all related elements.
-	 */
-	public function onAfterPublish()
-	{
-		foreach($this->owner->Elements() as $element)
-		{
-			$element->write();
-			$element->publish('Stage', 'Live');
-			// check subelements
-			if($element->Elements()->Count()>0){
-				foreach($element->Elements() as $subelement)
-				{
-					$subelement->write();
-					$subelement->publish('Stage', 'Live');
-				}
-			}
-		}
-	}
+        parent::onAfterDelete();
+    }
 
-	public function getElementBaseClass()
-	{
-		return $this->_elementBaseClass;
-	}
+    /**
+     * Publish all related elements.
+     */
+    public function onAfterPublish()
+    {
+        foreach($this->owner->Elements() as $element)
+        {
+            $element->write();
+            $element->publish('Stage', 'Live');
+            // check subelements
+            if($element->Elements()->Count()>0){
+                foreach($element->Elements() as $subelement)
+                {
+                    $subelement->write();
+                    $subelement->publish('Stage', 'Live');
+                }
+            }
+        }
+    }
 
-	/**
-	 * Getter for items by relation name
-	 *
-	 * @param  string $relationName
-	 * @return DataList
-	 */
-	public function ElementsByRelation($relationName)
-	{
-		return $this->owner
-		->Elements()
-		->filter('RelationName', $relationName);
-	}
+    public function getElementBaseClass()
+    {
+        return $this->_elementBaseClass;
+    }
 
-	/**
-	 * Adds a GridField for a elements relation
-	 *
-	 * @param  FieldList $fields
-	 * @param  string    $relationName
-	 * @return DataObject
-	 */
-	public function gridFieldForElementRelation(FieldList $fields, $relationName, $relation)
-	{
-		// sort relations
-		asort($relation);
+    /**
+     * Getter for items by relation name
+     *
+     * @param  string $relationName
+     * @return DataList
+     */
+    public function ElementsByRelation($relationName)
+    {
+        return $this->owner
+            ->Elements()
+            ->filter('RelationName', $relationName)
+        ;
+    }
 
-		$config = GridFieldConfig_RelationEditor::create()
-			->removeComponentsByType('GridFieldDeleteAction')
-			->removeComponentsByType('GridFieldAddExistingAutocompleter')
-			->addComponent(new \GridFieldOrderableRows('Sort'))
-		;
+    /**
+     * Adds a GridField for a elements relation
+     *
+     * @param  FieldList $fields
+     * @param  string    $relationName
+     * @return DataObject
+     */
+    public function gridFieldForElementRelation(FieldList $fields, $relationName, $relation)
+    {
+        // sort relations
+        asort($relation);
 
-		if (count($relation) > 1)
-		{
-			$config
-			->removeComponentsByType('GridFieldAddNewButton')
-			->addComponent($multiClass = new \GridFieldAddNewMultiClass());
+        $config = GridFieldConfig_RelationEditor::create()
+            ->removeComponentsByType('GridFieldDeleteAction')
+            ->removeComponentsByType('GridFieldAddExistingAutocompleter')
+            ->addComponent(new GridFieldOrderableRows('Sort'))
+        ;
 
-			$multiClass->setClasses($this->getClassNames($relation));
-		}
+        if (count($relation) > 1)
+        {
+            $config
+                ->removeComponentsByType('GridFieldAddNewButton')
+                ->addComponent($multiClass = new GridFieldAddNewMultiClass())
+            ;
 
-		$config
-		->getComponentByType('GridFieldPaginator')
-		->setItemsPerPage(150);
+            $multiClass->setClasses($this->getClassNames($relation));
+        }
 
-		$columns = [
-			// 'Icon' => 'Icon',
-		'singular_name'=> 'Type',
-		'Title' => 'Title'
-		];
+        $config
+            ->getComponentByType('GridFieldPaginator')
+            ->setItemsPerPage(150)
+        ;
 
-		if (ClassInfo::exists('Fluent'))
-		{
-			$columns['Languages'] = 'Lang';
-		}
+        $columns = [
+            // 'Icon' => 'Icon',
+            'singular_name'=> 'Type',
+            'Title' => 'Title'
+        ];
 
-		if (count($relation) == 1
-			&& $summaryFields = singleton($relation[0])->summaryFields()
-			) {
-			$columns = array_merge($columns, $summaryFields);
-	}
+        if (ClassInfo::exists('Fluent'))
+        {
+            $columns['Languages'] = 'Lang';
+        }
 
-	$config
-		->getComponentByType('GridFieldDataColumns')
-		->setDisplayFields($columns)
-	;
+        if (count($relation) == 1
+            && $summaryFields = singleton($relation[0])->summaryFields()
+        ) {
+            $columns = array_merge($columns, $summaryFields);
+        }
 
-	$tabName = "Root.{$relationName}";
+        $config
+            ->getComponentByType('GridFieldDataColumns')
+            ->setDisplayFields($columns)
+        ;
 
-	// if only one relation is set, add gridfield to main tab
-	if(count($this->_elementRelations) == 1){
-		$tabName = "Root.Main";
-	}
+        $tabName = "Root.{$relationName}";
 
-	$label = _t("Element_Relations.{$relationName}", $relationName);
-	$fields->addFieldToTab($tabName,
-		$gridField = GridField::create(
-			$relationName,
-			$label,
-			$this->owner->ElementsByRelation($relationName),
-			$config
-			)
-		);
+        // if only one relation is set, add gridfield to main tab
+        if (count($this->_elementRelations) == 1) $tabName = "Root.Main";
 
-	if (count($relation) == 1)
-	{
-		$gridField->setModelClass($relation[0]);
-	}
+        $label = _t("Element_Relations.{$relationName}", $relationName);
+        $fields->addFieldToTab($tabName,
+            $gridField = GridField::create(
+                $relationName,
+                $label,
+                $this->owner->ElementsByRelation($relationName),
+                $config
+            )
+        );
 
-	$fields
-		->findOrMakeTab($tabName)
-		->setTitle($label)
-	;
-	return $this->owner;
-}
+        if (count($relation) == 1) $gridField->setModelClass($relation[0]);
+
+        $fields
+            ->findOrMakeTab($tabName)
+            ->setTitle($label)
+        ;
+
+        return $this->owner;
+    }
 }

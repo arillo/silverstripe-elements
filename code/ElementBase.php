@@ -88,9 +88,10 @@ class ElementBase extends DataObject implements CMSPreviewable
         $description = '<div class="cms-page-info"><b>'. $this->i18n_singular_name() . '</b> – ID: ' . $this->ID;
         $description .= ' PageID: ' . $this->PageID . ' ElementID: ' . $this->ElementID;
 
-        if (ClassInfo::exists('Fluent')) {
-            $locale = Fluent::current_locale();
-            $description .= ' – Locale: <span class="cms-elements cms-elements-'.$locale.'">'.$locale.'</span></div>';
+        if (ClassInfo::exists('Fluent'))
+        {
+            $locale = Fluent::alias(Fluent::current_locale());
+            $description .= ' – Locale: <span class="element-lang element-lang-'.$locale.'">'.$locale.'</span></div>';
         }
 
         $fields->addFieldsToTab('Root.Main', [

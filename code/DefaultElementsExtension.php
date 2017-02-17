@@ -8,46 +8,55 @@ use \SS_HTTPResponse_Exception;
 
 class DefaultElementsExtension extends LeftAndMainExtension
 {
-	private static $allowed_actions = array(
-		'doCreateDefaults'
-	);
+    private static $allowed_actions = [ 'doCreateDefaults' ];
 
-	public function doCreateDefaults($data, $form){
+    public function doCreateDefaults($data, $form)
+    {
+        $className = $this->owner->stat('tree_class');
+        $SQL_id = Convert::raw2sql($data['ID']);
+        $record = DataObject::get_by_id($className, $SQL_id);
+        $count = 0;
 
-		$className = $this->owner->stat('tree_class');
-		$SQL_id = Convert::raw2sql($data['ID']);
-		$record = DataObject::get_by_id($className, $SQL_id);
+        if (!$record || !$record->ID) {
+            throw new SS_HTTPResponse_Exception("Bad record ID #" . (int)$data['ID'], 404);
+        }
 
-		if(!$record || !$record->ID){
-			throw new SS_HTTPResponse_Exception("Bad record ID #" . (int)$data['ID'], 404);
-		}
+        if ($record->hasMethod('getElementRelationNames'))
+        {
+            $definedElements = $record->Elements()->map('ClassName', 'ClassName');
+            $relationNames = $record->getElementRelationNames();
+            $defaultElements = $record->getDefaultElements();
 
-		$definedElements = $record->Elements()->map('ClassName','ClassName');
+            if (count($relationNames) > 0)
+            {
+                foreach ($relationNames as $relationName => $elementsClasses)
+                {
+                    if (isset($defaultElements[$relationName]))
+                    {
+                        $elementClasses = $defaultElements[$relationName];
+                        foreach ($elementClasses as $className)
+                        {
+                            if (!isset($definedElements[$className]))
+                            {
+                                $element = new $className;
+                                $element->populate('PageID', $SQL_id, $relationName);
+                                $element->write();
+                                $count++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-		$relationNames = ElementsExtension::relation_names($record);
+        $this->owner->response->addHeader(
+            'X-Status',
+            rawurlencode("Created {$count} elements.")
+        );
 
-		$count = 0;
-		if(count($relationNames)>0){
-			foreach ($relationNames as $relationName) {
-				$elementClasses = ElementsExtension::relation_classes_map($record, $relationName, 'element_defaults');
-				foreach ($elementClasses as $key => $value) {
-					if(!isset($definedElements[$key])){
-						$element = new $key;
-						$element->populate('PageID', $SQL_id, $relationName);
-						$element->write();
-						$count++;
-					}
-				}
-			}
-		}
-
-		$this->owner->response->addHeader(
-			'X-Status',
-			rawurlencode('Created '.$count.' elements.')
-		);
-
-		return $this->owner
-		->getResponseNegotiator()
-		->respond($this->owner->request);
-	}
+        return $this->owner
+            ->getResponseNegotiator()
+            ->respond($this->owner->request)
+        ;
+    }
 }

@@ -1,30 +1,34 @@
 {
-	"name": "arillo/silverstripe-elements",
-	"description": "Elements",
-	"type": "silverstripe-module",
-	"homepage": "https://github.com/arillo/silverstripe-elements",
-	"keywords": [
-		"silverstripe",
-		"elements"
-	],
-	"license": "MIT",
-	"authors": [
-		{
-			"name": "Daniel Murcia",
-			"email": "dm@arillo.net"
-		}
-	],
+    "name": "arillo/silverstripe-elements",
+    "description": "Elements",
+    "type": "silverstripe-module",
+    "homepage": "https://github.com/arillo/silverstripe-elements",
+    "keywords": [
+        "silverstripe",
+        "elements"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Daniel Murcia",
+            "email": "dm@arillo.net"
+        },
+        {
+            "name": "Sebastian Fischer",
+            "email": "sf@arillo.net"
+        }
+    ],
     "extra": {
         "installer-name": "elements"
     },
-	"require": {
-		"arillo/silverstripe-dataobject-preview": "^1.0",
-		"arillo/silverstripe-gridfield-is-published": "dev-master",
-		"silverstripe-australia/gridfieldextensions": "^1.4",
-		"silverstripe/display-logic": "^1.4",
-		"unclecheese/betterbuttons": "^1.3"
-	},
-	"support": {
+    "require": {
+        "arillo/silverstripe-dataobject-preview": "^1.0",
+        "arillo/silverstripe-gridfield-is-published": "dev-master",
+        "silverstripe-australia/gridfieldextensions": "^1.4",
+        "silverstripe/display-logic": "^1.4",
+        "unclecheese/betterbuttons": "^1.3"
+    },
+    "support": {
         "issues": "https://github.com/arillo/silverstripe-elements/issues"
     }
 }

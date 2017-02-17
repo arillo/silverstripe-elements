@@ -12,4 +12,4 @@ BetterButtonsActions:
 
 LeftAndMain:
   extra_requirements_css:
-    - elements/css/Admin.css
+    - elements/css/cms.css

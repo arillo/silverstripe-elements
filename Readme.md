@@ -1,5 +1,8 @@
 # arillo\elements
 
+[![Latest Stable Version](https://poser.pugx.org/arillo/silverstripe-elements/v/stable?format=flat)](https://packagist.org/packages/arillo/silverstripe-elements)
+[![Total Downloads](https://poser.pugx.org/arillo/silverstripe-elements/downloads?format=flat)](https://packagist.org/packages/arillo/silverstripe-elements)
+
 Decorates a SiteTree class with multiple named element relations through a has_many "Elements" relation.
 
 ### Todo
@@ -104,6 +107,18 @@ MainElements:
       - DownloadElement
       - TeasersElement
 ```
+
+If you inherit elements you can still create your custom relations and also append new Element types to the inherited relation.
+
+```
+HomePage:
+    element_relations_inherit_from: MainElements
+    element_relations:
+    Elements:
+      - ImageElement
+```
+
+In this example ImageElement is added to the list of available Elements defined in MainElements.
 
 ### Translation
 Naming of `Tab` and `GridField` labels can be done through silverstripes i18n.

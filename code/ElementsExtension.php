@@ -88,7 +88,8 @@ class ElementsExtension extends DataExtension
 
     public function updateCMSActions(FieldList $fields)
     {
-        if($this->owner->canEdit()){
+        if ($this->owner->canEdit() && $this->owner->getDefaultElements())
+        {
             $fields->addFieldToTab('ActionMenus.MoreOptions', FormAction::create('doCreateDefaults', _t('ElementsExtension.CreateDefaults','Create default elements')));
         }
     }

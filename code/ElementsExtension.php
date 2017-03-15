@@ -257,7 +257,7 @@ class ElementsExtension extends DataExtension
 
         $columns = [
             // 'Icon' => 'Icon',
-            'singular_name'=> 'Type',
+            'i18n_singular_name'=> 'Type',
             'Title' => 'Title'
         ];
 

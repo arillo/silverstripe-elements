@@ -69,6 +69,14 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     public function onAfterDelete() {
 
+        if(Versioned::current_stage() !== 'Stage') {
+            foreach($this->owner->Elements() as $element)
+            {
+                $element->deleteFromStage('Live');
+            }
+            return;
+        }
+
         foreach($this->owner->Elements() as $element)
         {
             $element->deleteFromStage('Live');

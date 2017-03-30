@@ -188,16 +188,17 @@ class ElementsExtension extends DataExtension
      */
     public function onAfterPublish()
     {
-        foreach($this->owner->Elements() as $element)
-        {
-            $element->write();
-            $element->publish('Stage', 'Live');
-            // check subelements
-            if($element->Elements()->Count()>0){
-                foreach($element->Elements() as $subelement)
-                {
-                    $subelement->write();
-                    $subelement->publish('Stage', 'Live');
+        $this->publishElements($this->owner->Elements());
+    }
+
+    private function publishElements($elements){
+        if($elements->Count()>0){
+            foreach($elements as $subelement)
+            {
+                $subelement->write();
+                $subelement->publish('Stage', 'Live');
+                if($subelement->hasManyComponent('Elements')){
+                    $this->publishElements($subelement->Elements());
                 }
             }
         }

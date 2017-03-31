@@ -1,3 +1,16 @@
+/* =================================== */
+/* Gridfield overflow fix */
+/* =================================== */
+
+.cms .elements-gridfield {
+  overflow: visible;
+}
+
+
+/* =================================== */
+/* Language pills */
+/* =================================== */
+
 .element-lang {
   color: #FFFFFF;
   background: #1f9433;
@@ -12,6 +25,7 @@
   line-height: 1;
   cursor: default;
 }
+
 .element-lang.inactive {
   background: #d31515;
 }

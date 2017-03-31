@@ -293,6 +293,8 @@ class ElementsExtension extends DataExtension
             )
         );
 
+        $gridField->addExtraClass('elements-gridfield');
+
         if (count($relation) == 1) $gridField->setModelClass($relation[0]);
 
         $fields

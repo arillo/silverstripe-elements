@@ -177,12 +177,16 @@ class ElementBase extends DataObject implements CMSPreviewable
         return $this->Link();
     }
 
-    public function Render()
+    public function Render($IsPos = null, $IsFirst = null, $IsLast = null, $IsEvenOdd = null)
     {
+        $this->IsPos = $IsPos;
+        $this->IsFirst = $IsFirst;
+        $this->IsLast = $IsLast;
+        $this->IsEvenOdd = $IsEvenOdd;
         $controller = Controller::curr();
         return $controller
-        ->customise($this)
-        ->renderWith($this->ClassName)
+            ->customise($this)
+            ->renderWith($this->ClassName)
         ;
     }
 

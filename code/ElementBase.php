@@ -172,6 +172,12 @@ class ElementBase extends DataObject implements CMSPreviewable
         if($this->hasModifiedElement($this->owner->Elements())) $modified = true;
 
         if($modified) $html .= " modified content";
+
+        if (!ClassInfo::exists('Fluent'))
+        {
+            if(!$this->Visible) $html .= " not visible";
+        }
+
         return DBField::create_field('HTMLVarchar', $html);
     }
 
@@ -218,10 +224,6 @@ class ElementBase extends DataObject implements CMSPreviewable
                     $pills .= "<span class='element-lang $class'>{$lang}</span><br>";
                 }
             }
-        } else {
-            $class = $this->Visible ? 'active' : 'inactive';
-            $label = $this->Visible ? '&check;' : '&#10006;';
-            $pills .= "<span class='element-lang $class'>{$label}</span><br>";
         }
         return DBField::create_field('HTMLVarchar', $pills);
     }

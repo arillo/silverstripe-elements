@@ -265,7 +265,6 @@ class ElementsExtension extends DataExtension
         ;
 
         $columns = [
-            // 'Icon' => 'Icon',
             'State' => 'State',
             'i18n_singular_name'=> 'Type',
             'Title' => 'Title'
@@ -274,8 +273,6 @@ class ElementsExtension extends DataExtension
         if (ClassInfo::exists('Fluent'))
         {
             $columns['Languages'] = 'Lang';
-        } else {
-            $columns['Languages'] = '';
         }
 
         if (count($relation) == 1

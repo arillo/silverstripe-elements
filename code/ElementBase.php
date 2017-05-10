@@ -21,7 +21,6 @@ class ElementBase extends DataObject implements CMSPreviewable
     private static $default_sort = 'Sort ASC';
 
     private static $extensions = array(
-        'GridFieldIsPublishedExtension',
         'Versioned("Stage","Live")'
         );
 
@@ -140,6 +139,53 @@ class ElementBase extends DataObject implements CMSPreviewable
         $fields = parent::getBetterButtonsActions();
         $fields->removeByName('action_publish');
         return $fields;
+    }
+
+    public function getState()
+    {
+        $modified = false;
+
+        $html = "";
+        if($this->isPublished()){
+            $html .= 'published';
+        } else {
+            $html .= 'draft';
+        }
+
+        if($this->stagesDiffer('Stage','Live')) $modified = true;
+
+        if($this->hasModifiedElement($this->owner->Elements())) $modified = true;
+
+        if($modified) $html .= " modified content";
+        return DBField::create_field('HTMLVarchar', $html);
+    }
+
+    private function hasModifiedElement($elements){
+        if($elements->Count()>0){
+            foreach($elements as $element)
+            {
+                if($element->stagesDiffer('Stage','Live')){
+                    return true;
+                }
+                if($element->hasManyComponent('Elements')){
+                    $this->hasModifiedElement($element->Elements());
+                }
+            }
+        }
+    }
+
+    private function isPublished() {
+        if (!$this->hasExtension('Versioned')) {
+            return false;
+        }
+        if (!$this->isInDB()) {
+            return false;
+        }
+        $table = $this->class;
+        while (($p = get_parent_class($table)) !== 'DataObject') {
+            $table = $p;
+        }
+        return (bool) DB::query("SELECT \"ID\" FROM \"{$table}_Live\" WHERE \"ID\" = {$this->ID}")->value();
     }
 
     public function getLanguages()

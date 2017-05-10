@@ -56,9 +56,11 @@ $elementInst->ElementsByRelation('Elements');
 To use them in a template:
 ```
 	<% loop $ElementsByRelation(Elements) %>
-		$Render
+		$Render($Pos, $First, $Last, $EvenOdd)
 	<% end_loop %>
 ```
+
+__Notice:__ we pass in the $Pos, $First, $Last and $EvenOdd values to have them available inside the template as $IsPos, $IsFirst, $IsLast and $IsEvenOdd.
 
 There is also a helper function to move a gridfield into another tab if you prefer:
 

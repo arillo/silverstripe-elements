@@ -10,7 +10,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         'Title' => 'Text',
         'URLSegment' => 'Varchar(255)',
         'RelationName' => 'Varchar(255)',
-        'Visible' => 'Boolean',
+        'Visible' => 'Boolean(1)',
         'Sort' => 'Int'
         );
 

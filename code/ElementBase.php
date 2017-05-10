@@ -10,6 +10,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         'Title' => 'Text',
         'URLSegment' => 'Varchar(255)',
         'RelationName' => 'Varchar(255)',
+        'Visible' => 'Boolean',
         'Sort' => 'Int'
         );
 
@@ -32,6 +33,10 @@ class ElementBase extends DataObject implements CMSPreviewable
         'ClassName',
         'URLSegment'
         );
+
+    private static $defaults = [
+        'Visible' => true
+    ];
 
     public function onBeforeWrite()
     {
@@ -101,12 +106,22 @@ class ElementBase extends DataObject implements CMSPreviewable
             $description .= ' – Locale: <span class="element-lang element-lang-'.$locale.'">'.$locale.'</span></div>';
         }
 
+
         $fields->addFieldsToTab('Root.Main', [
             LiteralField::create('ClassNameDescription', $description),
             // DropdownField::create('ClassName', _t('ElementBase.Type', 'Type'), $recordClassesMap),
             TextField::create('Title', _t('ElementBase.Title', 'Title'), null, 255),
             HiddenField::create('RelationName', $relationName, $relationName)
-            ]);
+        ]);
+
+        if (!ClassInfo::exists('Fluent'))
+        {
+            $fields->addFieldToTab(
+                'Root.Main',
+                CheckboxField::create('Visible', _t('ElementBase.Visible', 'Is element visible'))
+            );
+        }
+
     }
 
     public function populate($type, $id, $relation){
@@ -157,6 +172,12 @@ class ElementBase extends DataObject implements CMSPreviewable
         if($this->hasModifiedElement($this->owner->Elements())) $modified = true;
 
         if($modified) $html .= " modified content";
+
+        if (!ClassInfo::exists('Fluent'))
+        {
+            if(!$this->Visible) $html .= " not visible";
+        }
+
         return DBField::create_field('HTMLVarchar', $html);
     }
 

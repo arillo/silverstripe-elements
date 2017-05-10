@@ -156,7 +156,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         return $fields;
     }
 
-    public function getState()
+    public function getStatusFlags()
     {
         $modified = false;
 
@@ -169,7 +169,7 @@ class ElementBase extends DataObject implements CMSPreviewable
 
         if($this->stagesDiffer('Stage','Live')) $modified = true;
 
-        if($this->hasModifiedElement($this->owner->Elements())) $modified = true;
+        if(ElementBase::hasModifiedElement($this->owner->Elements())) $modified = true;
 
         if($modified) $html .= " modified content";
 
@@ -181,7 +181,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         return DBField::create_field('HTMLVarchar', $html);
     }
 
-    private function hasModifiedElement($elements){
+    public static function hasModifiedElement($elements){
         if($elements->Count()>0){
             foreach($elements as $element)
             {
@@ -189,7 +189,7 @@ class ElementBase extends DataObject implements CMSPreviewable
                     return true;
                 }
                 if($element->hasManyComponent('Elements')){
-                    $this->hasModifiedElement($element->Elements());
+                    ElementBase::hasModifiedElement($element->Elements());
                 }
             }
         }

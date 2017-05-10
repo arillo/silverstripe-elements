@@ -11,6 +11,7 @@ use \GridFieldConfig_RelationEditor;
 use \FormAction;
 use \GridFieldOrderableRows;
 use \GridFieldAddNewMultiClass;
+use \ElementBase;
 
 /**
  * Establishes multiple has_many elements relations, which can be set up via the config system
@@ -265,7 +266,7 @@ class ElementsExtension extends DataExtension
         ;
 
         $columns = [
-            'State' => 'State',
+            'StatusFlags' => 'Status',
             'i18n_singular_name'=> 'Type',
             'Title' => 'Title'
         ];
@@ -311,5 +312,14 @@ class ElementsExtension extends DataExtension
         ;
 
         return $this->owner;
+    }
+
+    public function updateStatusFlags(&$flags){
+        if(ElementBase::hasModifiedElement($this->owner->Elements())){
+            $flags['modified'] = array(
+                'text' => _t('SiteTree.MODIFIEDONDRAFTSHORT', 'Modified'),
+                'title' => _t('SiteTree.MODIFIEDONDRAFTHELP', 'Page has unpublished changes'),
+            );
+        }
     }
 }

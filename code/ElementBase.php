@@ -135,6 +135,24 @@ class ElementBase extends DataObject implements CMSPreviewable
         $fields = FieldList::create(TabSet::create('Root'));
         $pageOrElement = $this->getHolder();
         if ($pageOrElement) $this->addCMSFieldsHeader($fields, $pageOrElement);
+
+        if (!$this->isInDB()
+            && $this->class === $this->Page()->getExtensionInstance('arillo\elements\ElementsExtension')->getElementBaseClass()
+            && $elementRelation = Controller::curr()->request->param('FieldName')
+        ) {
+            $relationNames = $this->Page()->getElementRelationNames();
+            if (isset($relationNames[$elementRelation]))
+            {
+                $fields->addFieldToTab(
+                    'Root.Main',
+                    DropdownField::create(
+                        'ClassName',
+                        _t('ElementBase.Typ', 'Type'),
+                        $this->getClassNames($relationNames[$elementRelation])
+                    )
+                );
+            }
+        }
         return $fields;
     }
 

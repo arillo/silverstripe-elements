@@ -4,6 +4,7 @@ namespace arillo\elements;
 use \DataExtension;
 use \FieldList;
 use \Config;
+use \Controller;
 use \ClassInfo;
 use \GridField;
 use \GridFieldConfig_RelationEditor;
@@ -217,9 +218,16 @@ class ElementsExtension extends DataExtension
      */
     public function ElementsByRelation($relationName)
     {
+        $filter = [ 'RelationName' => $relationName];
+        if (!ClassInfo::exists('Fluent')
+            && !is_a(Controller::curr(), 'LeftAndMain')
+        ) {
+            $filter['Visible'] = true;
+        }
+
         return $this->owner
             ->Elements()
-            ->filter('RelationName', $relationName)
+            ->filter($filter)
         ;
     }
 

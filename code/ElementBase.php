@@ -172,6 +172,10 @@ class ElementBase extends DataObject implements CMSPreviewable
                     $pills .= "<span class='element-lang $class'>{$lang}</span><br>";
                 }
             }
+        } else {
+            $class = $this->Visible ? 'active' : 'inactive';
+            $label = $this->Visible ? '&check;' : '&#10006;';
+            $pills .= "<span class='element-lang $class'>{$label}</span><br>";
         }
         return DBField::create_field('HTMLVarchar', $pills);
     }

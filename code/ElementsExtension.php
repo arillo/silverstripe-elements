@@ -218,7 +218,7 @@ class ElementsExtension extends DataExtension
      */
     public function ElementsByRelation($relationName)
     {
-        $filter = [ 'RelationName' => $relationName];
+        $filter = [ 'RelationName' => $relationName ];
         if (!ClassInfo::exists('Fluent')
             && !is_a(Controller::curr(), 'LeftAndMain')
         ) {
@@ -273,6 +273,8 @@ class ElementsExtension extends DataExtension
         if (ClassInfo::exists('Fluent'))
         {
             $columns['Languages'] = 'Lang';
+        } else {
+            $columns['Languages'] = '';
         }
 
         if (count($relation) == 1

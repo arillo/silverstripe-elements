@@ -38,6 +38,21 @@ class ElementBase extends DataObject implements CMSPreviewable
         'Visible' => true
     ];
 
+    public static function hasModifiedElement($elements)
+    {
+        if ($elements->Count() > 0)
+        {
+            foreach($elements as $element)
+            {
+                if ($element->stagesDiffer('Stage','Live')) return true;
+                if ($element->hasManyComponent('Elements'))
+                {
+                    ElementBase::hasModifiedElement($element->Elements());
+                }
+            }
+        }
+    }
+
     public function onBeforeWrite()
     {
         parent::onBeforeWrite();
@@ -103,7 +118,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         if (ClassInfo::exists('Fluent'))
         {
             $locale = Fluent::alias(Fluent::current_locale());
-            $description .= ' – Locale: <span class="element-lang element-lang-'.$locale.'">'.$locale.'</span></div>';
+            $description .= ' – Locale: <span class="element-state element-state-'.$locale.'">'.$locale.'</span></div>';
         }
 
 
@@ -177,51 +192,39 @@ class ElementBase extends DataObject implements CMSPreviewable
     public function getStatusFlags()
     {
         $modified = false;
+        $state = [];
+        $published = _t('ElementBase.State_published', 'published');
+        $draft = _t('ElementBase.State_draft', 'draft');
+        $modifiedContent = _t('ElementBase.State_modified', 'modified');
+        $notVisible = _t('ElementBase.State_hidden', 'hidden');
 
-        $html = "";
-        if($this->isPublished()){
-            $html .= 'published';
-        } else {
-            $html .= 'draft';
-        }
+        $state[] = $this->isPublished()
+            ? "<span class='element-state active'>{$published}</span>"
+            : "<span class='element-state modified'>{$draft}</span>"
+        ;
 
-        if($this->stagesDiffer('Stage','Live')) $modified = true;
+        if ($this->stagesDiffer('Stage', 'Live')) $modified = true;
 
-        if(ElementBase::hasModifiedElement($this->owner->Elements())) $modified = true;
+        if (ElementBase::hasModifiedElement($this->owner->Elements())) $modified = true;
 
-        if($modified) $html .= " modified content";
+        if ($modified) $state[] = "<span class='element-state modified'>$modifiedContent</span>";
 
         if (!ClassInfo::exists('Fluent'))
         {
-            if(!$this->Visible) $html .= " not visible";
+            if (!$this->Visible) $state[] = "<span class='element-state inactive'>{$notVisible}</span>";
         }
 
-        return DBField::create_field('HTMLVarchar', $html);
+        return DBField::create_field('HTMLVarchar', implode($state, '<br>'));
     }
 
-    public static function hasModifiedElement($elements){
-        if($elements->Count()>0){
-            foreach($elements as $element)
-            {
-                if($element->stagesDiffer('Stage','Live')){
-                    return true;
-                }
-                if($element->hasManyComponent('Elements')){
-                    ElementBase::hasModifiedElement($element->Elements());
-                }
-            }
-        }
-    }
+    public function isPublished()
+    {
+        if (!$this->hasExtension('Versioned')) return false;
+        if (!$this->isInDB()) return false;
 
-    private function isPublished() {
-        if (!$this->hasExtension('Versioned')) {
-            return false;
-        }
-        if (!$this->isInDB()) {
-            return false;
-        }
         $table = $this->class;
-        while (($p = get_parent_class($table)) !== 'DataObject') {
+        while (($p = get_parent_class($table)) !== 'DataObject')
+        {
             $table = $p;
         }
         return (bool) DB::query("SELECT \"ID\" FROM \"{$table}_Live\" WHERE \"ID\" = {$this->ID}")->value();
@@ -239,13 +242,12 @@ class ElementBase extends DataObject implements CMSPreviewable
                 {
                     $class = in_array($key, $activeLocales) ? 'active' : 'inactive';
                     $lang = Fluent::alias($key);
-                    $pills .= "<span class='element-lang $class'>{$lang}</span><br>";
+                    $pills .= "<span class='element-state $class'>{$lang}</span><br>";
                 }
             }
         }
         return DBField::create_field('HTMLVarchar', $pills);
     }
-
 
     public function PreviewLink($action = null)
     {

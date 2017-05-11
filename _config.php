@@ -1,2 +1,2 @@
 <?php
-define('ELEMENTS_DIR',basename(dirname(__FILE__)));
+define('ELEMENTS_DIR', basename(dirname(__FILE__)));

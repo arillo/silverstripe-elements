@@ -8,10 +8,10 @@
 
 
 /* =================================== */
-/* Language pills */
+/* State pills */
 /* =================================== */
 
-.element-lang {
+.element-state {
   color: #FFFFFF;
   background: #1f9433;
   display: inline-block;
@@ -26,7 +26,11 @@
   cursor: default;
 }
 
-.element-lang.inactive {
-  background: #d31515;
+.element-state.inactive {
+  background: #98aab6;
+}
+
+.element-state.modified {
+  background: #F46B00;
 }
 

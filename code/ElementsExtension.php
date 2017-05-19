@@ -156,7 +156,7 @@ class ElementsExtension extends DataExtension
         });
     }
 
-    public function getClassNames($elementClasses)
+    public static function getClassNames($elementClasses)
     {
         $result = [];
         foreach ($elementClasses as $elementClass)
@@ -257,7 +257,7 @@ class ElementsExtension extends DataExtension
                 ->addComponent($multiClass = new GridFieldAddNewMultiClass())
             ;
 
-            $multiClass->setClasses($this->getClassNames($relation));
+            $multiClass->setClasses(ElementsExtension::getClassNames($relation));
         }
 
         $config

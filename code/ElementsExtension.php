@@ -35,18 +35,16 @@ use \ElementBase;
 class ElementsExtension extends DataExtension
 {
 
-    /**
-     * Holds element base class. Will be set in constructor.
-     * @var string
-     */
-    protected $_elementBaseClass;
-
-
+    private static $has_many = [
+        'Elements' => 'ElementBase'
+    ];
+    
     /**
      * Holds parsed relations taking into consideration the inheritance.
      * @var string
      */
     protected $_elementRelations;
+
 
     /**
      * Move an elements gridfield to an other tab.
@@ -65,27 +63,31 @@ class ElementsExtension extends DataExtension
         return $fields;
     }
 
-    /**
-     * Sets up the extension with a given element base class
-     * @param string $elementBaseClass
-     */
-    public function __construct($elementBaseClass = 'ElementBase')
+    public static function validate_class_inheritance($relation)
     {
-        parent::__construct();
-        $this->_elementBaseClass = $elementBaseClass;
+        return array_filter($relation, function($className)
+        {
+            if (ClassInfo::exists($className) && (is_a(singleton($className), "ElementBase"))) 
+            {
+                return $className;
+            } else {
+                user_error("Your element needs to extend from the ElementBase Class", E_USER_WARNING);
+            }
+        });
     }
 
-    /**
-     * Adds a has_many relation called "Elements" to the extended object.
-     * @param  string $class
-     * @param  class $extension
-     * @return array
-     */
-    public function extraStatics($class = null, $extension = null)
+    public static function map_classnames($elementClasses)
     {
-        return [
-            'has_many' => [ 'Elements' => $this->_elementBaseClass ]
-        ];
+        $result = [];
+        foreach ($elementClasses as $elementClass)
+        {
+            $result[$elementClass] = $elementClass;
+            if ($label = singleton($elementClass)->stat('singular_name'))
+            {
+                $result[$elementClass] = $label;
+            }
+        }
+        return $result;
     }
 
     public function updateCMSActions(FieldList $fields)
@@ -107,7 +109,7 @@ class ElementsExtension extends DataExtension
             $this->_elementRelations = array_keys($relations);
             foreach ($relations as $key => $relation)
             {
-                $this->gridFieldForElementRelation($fields, $key, $this->checkClassNames($relation));
+                $this->gridFieldForElementRelation($fields, $key, self::validate_class_inheritance($relation));
             }
         }
     }
@@ -144,32 +146,6 @@ class ElementsExtension extends DataExtension
         return $relations;
     }
 
-    public function checkClassNames($relation)
-    {
-        $baseClass = $this->owner->getElementBaseClass();
-        return array_filter($relation, function($className) use ($baseClass)
-        {
-            if (ClassInfo::exists($className) && (is_a(singleton($className), $baseClass)))
-            {
-                return $className;
-            }
-        });
-    }
-
-    public static function getClassNames($elementClasses)
-    {
-        $result = [];
-        foreach ($elementClasses as $elementClass)
-        {
-            $result[$elementClass] = $elementClass;
-            if ($label = singleton($elementClass)->stat('singular_name'))
-            {
-                $result[$elementClass] = $label;
-            }
-        }
-        return $result;
-    }
-
     /**
      * Remove all related elements
      */
@@ -204,11 +180,6 @@ class ElementsExtension extends DataExtension
                 }
             }
         }
-    }
-
-    public function getElementBaseClass()
-    {
-        return $this->_elementBaseClass;
     }
 
     /**
@@ -257,7 +228,7 @@ class ElementsExtension extends DataExtension
                 ->addComponent($multiClass = new GridFieldAddNewMultiClass())
             ;
 
-            $multiClass->setClasses(ElementsExtension::getClassNames($relation));
+            $multiClass->setClasses(ElementsExtension::map_classnames($relation));
         }
 
         $config

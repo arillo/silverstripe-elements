@@ -34,6 +34,12 @@ class ElementBase extends DataObject implements CMSPreviewable
         'URLSegment'
         );
 
+    private static $summary_fields = array(
+        'ClassName',
+        'Title',
+        'StatusFlags'
+        );
+
     private static $defaults = [
         'Visible' => true
     ];
@@ -106,7 +112,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         parent::onAfterDelete();
     }
 
-    public function addCMSFieldsHeader($fields, $pageOrElement)
+    public function addCMSFieldsHeader($fields)
     {
 
         $relationName = Controller::curr()->request->param('FieldName');
@@ -147,9 +153,9 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     public function getCMSFields()
     {
+
         $fields = FieldList::create(TabSet::create('Root'));
-        $pageOrElement = $this->getHolder();
-        if ($pageOrElement) $this->addCMSFieldsHeader($fields, $pageOrElement);
+        $this->addCMSFieldsHeader($fields);
 
         if (!$this->isInDB()
             && $this->class === $this->Page()->getExtensionInstance('arillo\elements\ElementsExtension')->getElementBaseClass()
@@ -295,6 +301,14 @@ class ElementBase extends DataObject implements CMSPreviewable
             static::$_cached_get_by_url[$str] = ($obj && $obj->exists()) ? $obj : false;
         }
         return static::$_cached_get_by_url[$str];
+    }
+
+    public function updateCMSActions(FieldList $actions) {
+            $actions->push( FormAction::create(
+                    'publish', _t('CMSMain.BUTTONSAVEPUBLISH', 'Save & Publish') )
+                    ->addExtraClass('ss-ui-action-constructive')
+                    ->setAttribute('data-icon', 'accept')
+            );
     }
 
 }

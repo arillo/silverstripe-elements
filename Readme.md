@@ -15,7 +15,7 @@ Add the extension to a SiteTree class and set up you relation types, e.g:
 ```
 Page:
   extensions:
-    - arillo\elements\ElementsExtension("Element")
+    - arillo\elements\ElementsExtension
 
   element_relations:
     Elements:
@@ -81,7 +81,7 @@ Apply the same extension to the Element instead of the Page.
 
 ElementBase:
   extensions:
-    - arillo\elements\ElementsExtension("Element")
+    - arillo\elements\ElementsExtension
 
 TeasersElement:
   element_relations:

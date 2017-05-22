@@ -134,7 +134,7 @@ To use the populate defaults behaviour add the following extension in your _conf
 ```
 LeftAndMain:
   extensions:
-    - DefaultElementsExtension
+    - arillo\elements\DefaultElementsExtension
 ```
 
 Then you can define the element_defaults for each of your relations like this:

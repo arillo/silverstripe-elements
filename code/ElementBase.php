@@ -191,7 +191,9 @@ class ElementBase extends DataObject implements CMSPreviewable
     public function getBetterButtonsActions()
     {
         $fields = parent::getBetterButtonsActions();
-        $fields->removeByName('action_publish');
+        if(is_a(Controller::curr(),'CMSPageEditController')){
+            $fields->removeByName('action_publish');
+        }
         return $fields;
     }
 
@@ -301,14 +303,6 @@ class ElementBase extends DataObject implements CMSPreviewable
             static::$_cached_get_by_url[$str] = ($obj && $obj->exists()) ? $obj : false;
         }
         return static::$_cached_get_by_url[$str];
-    }
-
-    public function updateCMSActions(FieldList $actions) {
-            $actions->push( FormAction::create(
-                    'publish', _t('CMSMain.BUTTONSAVEPUBLISH', 'Save & Publish') )
-                    ->addExtraClass('ss-ui-action-constructive')
-                    ->setAttribute('data-icon', 'accept')
-            );
     }
 
 }

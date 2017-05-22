@@ -13,3 +13,11 @@ BetterButtonsActions:
 LeftAndMain:
   extra_requirements_css:
     - elements/css/cms.css
+
+ElementBase:
+  extensions:
+    - arillo\elements\ElementsExtension
+
+Page:
+  extensions:
+    - arillo\elements\ElementsExtension

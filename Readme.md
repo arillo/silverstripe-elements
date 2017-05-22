@@ -10,13 +10,10 @@ Decorates a SiteTree class with multiple named element relations through a has_m
 + write better docs
 
 ### Usage
-Add the extension to a SiteTree class and set up you relation types, e.g:
+Set up you relation types in your _config/elements.yml, e.g:
 
 ```
 Page:
-  extensions:
-    - arillo\elements\ElementsExtension
-
   element_relations:
     Elements:
       - Element
@@ -78,10 +75,6 @@ public function getCMSFields()
 Apply the same extension to the Element instead of the Page.
 
 ```
-
-ElementBase:
-  extensions:
-    - arillo\elements\ElementsExtension
 
 TeasersElement:
   element_relations:

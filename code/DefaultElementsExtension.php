@@ -23,7 +23,6 @@ class DefaultElementsExtension extends LeftAndMainExtension
 
         if ($record->hasMethod('getElementRelationNames'))
         {
-            $definedElements = $record->Elements()->map('ClassName', 'ClassName');
             $relationNames = $record->getElementRelationNames();
             $defaultElements = $record->getDefaultElements();
 
@@ -36,6 +35,7 @@ class DefaultElementsExtension extends LeftAndMainExtension
                         $elementClasses = $defaultElements[$relationName];
                         foreach ($elementClasses as $className)
                         {
+                            $definedElements = $record->ElementsByRelation($relationName)->map('ClassName', 'ClassName');
                             if (!isset($definedElements[$className]))
                             {
                                 $element = new $className;

@@ -94,8 +94,37 @@ class ElementsExtension extends DataExtension
     {
         if ($this->owner->canEdit() && $this->owner->getDefaultElements())
         {
-            $fields->addFieldToTab('ActionMenus.MoreOptions', FormAction::create('doCreateDefaults', _t('ElementsExtension.CreateDefaults','Create default elements')));
+            if (!$this->defaultsCreated()) {
+                $fields->addFieldToTab('MajorActions', 
+                    $createDefaults = FormAction::create('doCreateDefaults', _t('ElementsExtension.CreateDefaults','Create default elements'))
+                    ->setAttribute('data-icon', 'add')
+                );
+            }
         }
+    }
+
+    public function defaultsCreated(){
+        $defaultElements = $this->getDefaultElements();
+        $relationNames = $this->getElementRelationNames();
+        if (count($relationNames) > 0)
+        {
+            foreach ($relationNames as $relationName => $elementsClasses)
+            {
+                if (isset($defaultElements[$relationName]))
+                {
+                    $elementClasses = $defaultElements[$relationName];
+                    $definedElements = $this->owner->ElementsByRelation($relationName)->map('ClassName', 'ClassName');
+                    foreach ($elementClasses as $className)
+                    {
+                        if (!isset($definedElements[$className]))
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     public function updateCMSFields(FieldList $fields)

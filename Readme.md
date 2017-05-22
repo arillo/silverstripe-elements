@@ -159,3 +159,14 @@ ElementBase:
     - FluentExtension
     - FluentFilteredExtension
 ```
+
+## Changelog:
+
+0.1.0 - remove extensions from your mysite/_config/elements.yml
+```ElementBase:
+  extensions:
+    - arillo\elements\ElementsExtension
+
+Page:
+  extensions:
+    - arillo\elements\ElementsExtension```

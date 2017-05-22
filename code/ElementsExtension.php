@@ -12,6 +12,7 @@ use \FormAction;
 use \GridFieldOrderableRows;
 use \GridFieldAddNewMultiClass;
 use \ElementBase;
+use \Versioned;
 
 /**
  * Establishes multiple has_many elements relations, which can be set up via the config system
@@ -180,11 +181,19 @@ class ElementsExtension extends DataExtension
      */
     public function onAfterDelete()
     {
-        foreach($this->owner->Elements() as $element)
-        {
-            $element->deleteFromStage('Live');
-            $element->deleteFromStage('Stage');
-            $element->delete();
+        $staged = Versioned::get_by_stage($this->owner->ClassName, 'Stage')
+            ->byID($this->owner->ID);
+
+        $live = Versioned::get_by_stage($this->owner->ClassName, 'Live')
+            ->byID($this->owner->ID);
+
+        if(!$staged && !$live) {
+            foreach($this->owner->Elements() as $element)
+            {
+                $element->deleteFromStage('Live');
+                $element->deleteFromStage('Stage');
+                $element->delete();
+            }
         }
 
         parent::onAfterDelete();

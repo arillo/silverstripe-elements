@@ -189,6 +189,10 @@ class ElementBase extends DataObject implements CMSPreviewable
         return $fields;
     }
 
+    public function getType(){
+        return _t($this->class.'.SINGULARNAME', $this->singular_name());
+    }
+
     public function getStatusFlags()
     {
         $modified = false;

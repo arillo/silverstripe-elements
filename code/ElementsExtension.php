@@ -267,7 +267,7 @@ class ElementsExtension extends DataExtension
 
         $columns = [
             'StatusFlags' => 'Status',
-            'i18n_singular_name'=> 'Type',
+            'Type'=> 'Type',
             'Title' => 'Title'
         ];
 

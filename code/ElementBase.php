@@ -158,7 +158,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         $this->addCMSFieldsHeader($fields);
 
         if (!$this->isInDB()
-            && $this->class === $this->Page()->getExtensionInstance('arillo\elements\ElementsExtension')->getElementBaseClass()
+            && $this->class === "ElementBase"
             && $elementRelation = Controller::curr()->request->param('FieldName')
         ) {
             $relationNames = $this->Page()->getElementRelationNames();

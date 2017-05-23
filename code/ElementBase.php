@@ -116,7 +116,6 @@ class ElementBase extends DataObject implements CMSPreviewable
     {
 
         $relationName = Controller::curr()->request->param('FieldName');
-        // $recordClassesMap = ElementsExtension::relation_classes_map($pageOrElement, $relationName);
 
         $description = '<div class="cms-page-info"><b>'. $this->i18n_singular_name() . '</b> – ID: ' . $this->ID;
         $description .= ' PageID: ' . $this->PageID . ' ElementID: ' . $this->ElementID;
@@ -169,7 +168,7 @@ class ElementBase extends DataObject implements CMSPreviewable
                     DropdownField::create(
                         'ClassName',
                         _t('ElementBase.Typ', 'Type'),
-                        $this->getClassNames($relationNames[$elementRelation])
+                        ElementsExtension::map_classnames($relationNames[$elementRelation])
                     )
                 );
             }

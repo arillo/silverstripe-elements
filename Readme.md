@@ -12,7 +12,7 @@ Decorates a SiteTree class with multiple named element relations through a has_m
 ### Usage
 Set up you relation types in your _config/elements.yml, e.g:
 
-```
+```yml
 Page:
   element_relations:
     Elements:
@@ -26,7 +26,7 @@ In this example we are creating 2 element relationships to the Page, one called 
 
 To make it work `Element` class should subclass `ElementBase`, where all additional fields can be defined, e.g.:
 
-```
+```php
 class Element extends ElementBase
 {
     private static
@@ -45,23 +45,23 @@ class Element extends ElementBase
 
 In the SiteTree instance the element relations are now accessable through:
 
-```
+```php
 $pageInst->ElementsByRelation('Elements');
 $elementInst->ElementsByRelation('Elements');
 ```
 
 To use them in a template:
-```
-	<% loop $ElementsByRelation(Elements) %>
-		$Render($Pos, $First, $Last, $EvenOdd)
-	<% end_loop %>
+```html
+<% loop $ElementsByRelation(Elements) %>
+  $Render($Pos, $First, $Last, $EvenOdd)
+<% end_loop %>
 ```
 
 __Notice:__ we pass in the $Pos, $First, $Last and $EvenOdd values to have them available inside the template as $IsPos, $IsFirst, $IsLast and $IsEvenOdd.
 
 There is also a helper function to move a gridfield into another tab if you prefer:
 
-```
+```php
 public function getCMSFields()
 {
     $fields = parent::getCMSFields();
@@ -74,8 +74,7 @@ public function getCMSFields()
 ### Nested Element relations
 Apply the same extension to the Element instead of the Page.
 
-```
-
+```yml
 TeasersElement:
   element_relations:
     Teasers:
@@ -83,18 +82,18 @@ TeasersElement:
 ```
 
 ### Element inheritance
-If you would like to have the same elements applied to different Pagetypes you can use the ```element_relations_inherit_from``` definition referencing a arbitrary setup in the yml file. For example if we want the HomePage and the EventsPage to inherit the same elements we can define the .yml like this:
+If you would like to have the same elements applied to different Pagetypes you can use the `element_relations_inherit_from` definition referencing a arbitrary setup in the yml file. For example if we want the HomePage and the EventsPage to inherit the same elements we can define the .yml like this:
 
-```
+```yml
 HomePage:
-	element_relations_inherit_from: MainElements
+  element_relations_inherit_from: MainElements
 EventsPage:
-	element_relations_inherit_from: MainElements
+  element_relations_inherit_from: MainElements
 ```
 
 They both reference the MainElements defined in the yml where you have defined the element_relations, like this:
 
-```
+```yml
 MainElements:
   element_relations:
     Elements:
@@ -105,12 +104,12 @@ MainElements:
 
 If you inherit elements you can still create your custom relations and also append new Element types to the inherited relation.
 
-```
+```yml
 HomePage:
-    element_relations_inherit_from: MainElements
-    element_relations:
-    Elements:
-      - ImageElement
+  element_relations_inherit_from: MainElements
+  element_relations:
+  Elements:
+    - ImageElement
 ```
 
 In this example ImageElement is added to the list of available Elements defined in MainElements.
@@ -119,7 +118,7 @@ In this example ImageElement is added to the list of available Elements defined 
 Naming of `Tab` and `GridField` labels can be done through silverstripes i18n.
 There is a special key called `Element_Relations` reserved to accomplish this task, e.g. in de.yml:
 
-```
+```yml
 de:
   Element_Relations:
     Downloads: 'Dateien'
@@ -131,7 +130,7 @@ It will populate the default elements defined in your _config.yml as empty eleme
 
 To use the populate defaults behaviour add the following extension in your _config.yml
 
-```
+```yml
 LeftAndMain:
   extensions:
     - arillo\elements\DefaultElementsExtension
@@ -139,7 +138,7 @@ LeftAndMain:
 
 Then you can define the element_defaults for each of your relations like this:
 
-```
+```yml
 Page:
   element_relations:
     Teasers:
@@ -149,11 +148,10 @@ Page:
       - TeaserElement
 ```
 
-
 ### Fluent integration
 To use fluent with elements just add the Fluent extensions to the ElementBase:
 
-```
+```yml
 ElementBase:
   extensions:
     - FluentExtension
@@ -163,10 +161,13 @@ ElementBase:
 ## Changelog:
 
 0.1.0 - remove extensions from your mysite/_config/elements.yml
-```ElementBase:
+
+```yml
+ElementBase:
   extensions:
     - arillo\elements\ElementsExtension
 
 Page:
   extensions:
-    - arillo\elements\ElementsExtension```
+    - arillo\elements\ElementsExtension
+```

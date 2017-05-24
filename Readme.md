@@ -53,7 +53,7 @@ $elementInst->ElementsByRelation('Elements');
 To use them in a template:
 ```html
 <% loop $ElementsByRelation(Elements) %>
-    $Render($Pos, $First, $Last, $EvenOdd)
+  $Render($Pos, $First, $Last, $EvenOdd)
 <% end_loop %>
 ```
 
@@ -82,13 +82,13 @@ TeasersElement:
 ```
 
 ### Element inheritance
-If you would like to have the same elements applied to different Pagetypes you can use the ```element_relations_inherit_from``` definition referencing a arbitrary setup in the yml file. For example if we want the HomePage and the EventsPage to inherit the same elements we can define the .yml like this:
+If you would like to have the same elements applied to different Pagetypes you can use the `element_relations_inherit_from` definition referencing a arbitrary setup in the yml file. For example if we want the HomePage and the EventsPage to inherit the same elements we can define the .yml like this:
 
 ```yml
 HomePage:
-	element_relations_inherit_from: MainElements
+  element_relations_inherit_from: MainElements
 EventsPage:
-	element_relations_inherit_from: MainElements
+  element_relations_inherit_from: MainElements
 ```
 
 They both reference the MainElements defined in the yml where you have defined the element_relations, like this:
@@ -106,10 +106,10 @@ If you inherit elements you can still create your custom relations and also appe
 
 ```yml
 HomePage:
-    element_relations_inherit_from: MainElements
-    element_relations:
-    Elements:
-      - ImageElement
+  element_relations_inherit_from: MainElements
+  element_relations:
+  Elements:
+    - ImageElement
 ```
 
 In this example ImageElement is added to the list of available Elements defined in MainElements.
@@ -148,7 +148,6 @@ Page:
       - TeaserElement
 ```
 
-
 ### Fluent integration
 To use fluent with elements just add the Fluent extensions to the ElementBase:
 
@@ -162,6 +161,7 @@ ElementBase:
 ## Changelog:
 
 0.1.0 - remove extensions from your mysite/_config/elements.yml
+
 ```yml
 ElementBase:
   extensions:

@@ -2,8 +2,9 @@
   "Readme.md": {
     "page": {
       "layout": "index",
-      "title": "Elements",
-      "intro": "Customizable Layout elements for the SilverStripe CMS"
+      "theme": "blue",
+      "title": "SilverStripe Elements",
+      "intro": "Customizable layout elements for the SilverStripe CMS"
     }
   },
   "menu": false,

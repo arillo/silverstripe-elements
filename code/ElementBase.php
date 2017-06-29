@@ -160,7 +160,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             && $this->class === "ElementBase"
             && $elementRelation = Controller::curr()->request->param('FieldName')
         ) {
-            $relationNames = $this->Page()->getElementRelationNames();
+            $relationNames = ElementsExtension::page_element_relation_names($this->Page());
             if (isset($relationNames[$elementRelation]))
             {
                 $fields->addFieldToTab(

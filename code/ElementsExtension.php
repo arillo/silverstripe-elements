@@ -39,7 +39,7 @@ class ElementsExtension extends DataExtension
     private static $has_many = [
         'Elements' => 'ElementBase'
     ];
-    
+
     /**
      * Holds parsed relations taking into consideration the inheritance.
      * @var string
@@ -68,7 +68,7 @@ class ElementsExtension extends DataExtension
     {
         return array_filter($relation, function($className)
         {
-            if (ClassInfo::exists($className) && (is_a(singleton($className), "ElementBase"))) 
+            if (ClassInfo::exists($className) && (is_a(singleton($className), "ElementBase")))
             {
                 return $className;
             } else {
@@ -91,12 +91,28 @@ class ElementsExtension extends DataExtension
         return $result;
     }
 
+    public static function page_element_relation_names($page)
+    {
+        $relations = $page->uninherited('element_relations');
+        if (!$relations) $relations = [];
+
+        // inherit relations from another PageType
+        if ($inherit_relations_from = $page->uninherited('element_relations_inherit_from'))
+        {
+            if ($inherit_relations = Config::inst()->get($inherit_relations_from, 'element_relations', Config::UNINHERITED))
+            {
+                $relations = array_merge_recursive($relations, $inherit_relations);
+            }
+        }
+        return $relations;
+    }
+
     public function updateCMSActions(FieldList $fields)
     {
         if ($this->owner->canEdit() && $this->owner->getDefaultElements())
         {
             if (!$this->defaultsCreated()) {
-                $fields->addFieldToTab('MajorActions', 
+                $fields->addFieldToTab('MajorActions',
                     $createDefaults = FormAction::create('doCreateDefaults', _t('ElementsExtension.CreateDefaults','Create default elements'))
                     ->setAttribute('data-icon', 'add')
                 );
@@ -106,7 +122,7 @@ class ElementsExtension extends DataExtension
 
     public function defaultsCreated(){
         $defaultElements = $this->getDefaultElements();
-        $relationNames = $this->getElementRelationNames();
+        $relationNames = ElementsExtension::page_element_relation_names($this->owner);
         if (count($relationNames) > 0)
         {
             foreach ($relationNames as $relationName => $elementsClasses)
@@ -132,7 +148,7 @@ class ElementsExtension extends DataExtension
     {
         if (!$this->owner->exists()) return;
 
-        $relations = $this->getElementRelationNames();
+        $relations = ElementsExtension::page_element_relation_names($this->owner);
 
         if ($relations)
         {
@@ -142,22 +158,6 @@ class ElementsExtension extends DataExtension
                 $this->gridFieldForElementRelation($fields, $key, self::validate_class_inheritance($relation));
             }
         }
-    }
-
-    public function getElementRelationNames()
-    {
-        $relations = $this->owner->uninherited('element_relations');
-        if (!$relations) $relations = [];
-
-        // inherit relations from another PageType
-        if ($inherit_relations_from = $this->owner->uninherited('element_relations_inherit_from'))
-        {
-            if ($inherit_relations = Config::inst()->get($inherit_relations_from, 'element_relations', Config::UNINHERITED))
-            {
-                $relations = array_merge_recursive($relations, $inherit_relations);
-            }
-        }
-        return $relations;
     }
 
     public function getDefaultElements()

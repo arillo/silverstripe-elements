@@ -21,9 +21,8 @@ class DefaultElementsExtension extends LeftAndMainExtension
             throw new SS_HTTPResponse_Exception("Bad record ID #" . (int)$data['ID'], 404);
         }
 
-        if ($record->hasMethod('getElementRelationNames'))
+        if ($relationNames = ElementsExtension::page_element_relation_names($record))
         {
-            $relationNames = $record->getElementRelationNames();
             $defaultElements = $record->getDefaultElements();
 
             if (count($relationNames) > 0)

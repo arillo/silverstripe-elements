@@ -201,6 +201,24 @@ class ElementsExtension extends DataExtension
         parent::onAfterDelete();
     }
 
+    public function onAfterDuplicate($sourceObject, $doWrite = true) {
+
+        // @CHECK: Why do we still need to call write() ?
+        if(is_a($sourceObject, 'SiteTree')) $this->owner->write();
+
+        if($doWrite){
+            //duplicate has many elements
+            $relationID = is_a($sourceObject, 'SiteTree') ? "PageID" : "ElementID";
+            foreach ($sourceObject->Elements() as $key => $className) {
+                foreach ($sourceObject->{$key}() as $item) {
+                    $newField = $item->duplicate();
+                    $newField->{$relationID} = $this->owner->ID;
+                    $newField->write();
+                }
+            }
+        }
+    }
+
     /**
      * Publish all related elements.
      */

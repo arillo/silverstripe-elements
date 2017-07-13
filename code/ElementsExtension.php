@@ -277,8 +277,8 @@ class ElementsExtension extends DataExtension
             ->removeComponentsByType('GridFieldDeleteAction')
             ->removeComponentsByType('GridFieldAddExistingAutocompleter')
             ->addComponent(new GridFieldOrderableRows('Sort'))
-            ->addComponent(new GridFieldDeleteAction())
             ->addComponent(new GridFieldDuplicateAction())
+            ->addComponent(new GridFieldDeleteAction())
         ;
 
         if (count($relation) > 1)

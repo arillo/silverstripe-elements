@@ -94,6 +94,8 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     public function onAfterDelete() {
 
+        // This is done in order to unpublish sub-elements when unpublishing an element,
+        // since unpublishing an element also calls the onAfterDelete callback
         if(Versioned::current_stage() !== 'Stage') {
             foreach($this->owner->Elements() as $element)
             {
@@ -102,6 +104,8 @@ class ElementBase extends DataObject implements CMSPreviewable
             return;
         }
 
+        // Delete own element from live if called from GridFieldDeleteAction
+        $this->deleteFromStage('Live');
         foreach($this->owner->Elements() as $element)
         {
             $element->deleteFromStage('Live');

@@ -11,6 +11,7 @@ use \GridFieldConfig_RelationEditor;
 use \FormAction;
 use \GridFieldOrderableRows;
 use \GridFieldDeleteAction;
+use \GridFieldDuplicateAction;
 use \GridFieldAddNewMultiClass;
 use \ElementBase;
 use \Versioned;
@@ -259,6 +260,7 @@ class ElementsExtension extends DataExtension
             ->removeComponentsByType('GridFieldAddExistingAutocompleter')
             ->addComponent(new GridFieldOrderableRows('Sort'))
             ->addComponent(new GridFieldDeleteAction())
+            ->addComponent(new GridFieldDuplicateAction())
         ;
 
         if (count($relation) > 1)

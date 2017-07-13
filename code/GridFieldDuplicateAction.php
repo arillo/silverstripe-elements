@@ -90,9 +90,9 @@ class GridFieldDuplicateAction implements GridField_ColumnProvider, GridField_Ac
 
         $field = GridField_FormAction::create($gridField,  'DuplicateRecord'.$record->ID, false, "duplicaterecord",
                 array('RecordID' => $record->ID))
-            ->addExtraClass('gridfield-button-duplicate')
+            ->addExtraClass('gridfield-button-delete')
             ->setAttribute('title', _t('GridAction.Duplicate', "Duplicate"))
-            ->setAttribute('data-icon', 'cross-circle')
+            ->setAttribute('data-icon', 'addpage')
             ->setDescription(_t('GridAction.DUPLICATE_DESCRIPTION','Duplicate'));
         return $field->Field();
     }

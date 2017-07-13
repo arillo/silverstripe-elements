@@ -90,7 +90,7 @@ class GridFieldDuplicateAction implements GridField_ColumnProvider, GridField_Ac
 
         $field = GridField_FormAction::create($gridField,  'DuplicateRecord'.$record->ID, false, "duplicaterecord",
                 array('RecordID' => $record->ID))
-            ->addExtraClass('gridfield-button-delete')
+            ->addExtraClass('gridfield-button-duplicate')
             ->setAttribute('title', _t('GridAction.Duplicate', "Duplicate"))
             ->setAttribute('data-icon', 'addpage')
             ->setDescription(_t('GridAction.DUPLICATE_DESCRIPTION','Duplicate'));
@@ -118,7 +118,7 @@ class GridFieldDuplicateAction implements GridField_ColumnProvider, GridField_Ac
                     _t('GridFieldAction_Delete.DeletePermissionsFailure',"No delete permissions"),0);
             }
 
-            $clone = $item->duplicate();
+            $clone = $item->duplicate(true);
             if (!$clone || $clone->ID < 1) {
                 user_error("Error Duplicating!", E_USER_ERROR);
             }

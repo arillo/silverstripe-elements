@@ -127,8 +127,10 @@ class ElementBase extends DataObject implements CMSPreviewable
         if (ClassInfo::exists('Fluent'))
         {
             $locale = Fluent::alias(Fluent::current_locale());
-            $description .= ' – Locale: <span class="element-state element-state-'.$locale.'">'.$locale.'</span></div>';
+            $description .= ' – Locale: <span class="element-state element-state-'.$locale.'">'.$locale.'</span>';
         }
+
+        $description .= '</div>';
 
 
         $fields->addFieldsToTab('Root.Main', [

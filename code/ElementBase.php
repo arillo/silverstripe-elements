@@ -44,6 +44,27 @@ class ElementBase extends DataObject implements CMSPreviewable
         'Visible' => true
     ];
 
+    private static $element_fields = [
+        'Title',
+        'Visible',
+        'RelationName',
+        'Elements'
+    ];
+
+    public static function element_fields(){
+        return self::$element_fields;
+    }
+
+    protected function setup_element_fields(&$fields, $element_fields){
+        $base = ClassInfo::baseDataClass($this->ClassName);
+        $element_fields = array_merge($base::element_fields(), $element_fields);
+        foreach ($fields->dataFields() as $key => $value) {
+            if(!in_array($key, $element_fields)){
+                $fields->removeByName($key);
+            }
+        }
+    }
+
     public static function hasModifiedElement($elements)
     {
         if ($elements->Count() > 0)
@@ -130,6 +151,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             $description .= ' – Locale: <span class="element-state element-state-'.$locale.'">'.$locale.'</span></div>';
         }
 
+        $description .= " " . $this->getStatusFlags(' ');
 
         $fields->addFieldsToTab('Root.Main', [
             LiteralField::create('ClassNameDescription', $description),
@@ -204,7 +226,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         return _t($this->class.'.SINGULARNAME', $this->singular_name());
     }
 
-    public function getStatusFlags()
+    public function getStatusFlags($separator = '<br>')
     {
         $modified = false;
         $state = [];
@@ -229,7 +251,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             if (!$this->Visible) $state[] = "<span class='element-state inactive'>{$notVisible}</span>";
         }
 
-        return DBField::create_field('HTMLVarchar', implode($state, '<br>'));
+        return DBField::create_field('HTMLVarchar', implode($state, $separator));
     }
 
     public function isPublished()

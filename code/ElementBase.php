@@ -44,6 +44,10 @@ class ElementBase extends DataObject implements CMSPreviewable
         'Visible' => true
     ];
 
+    private static $better_buttons_actions = array (
+        'publishPage'
+    );
+
     public static function hasModifiedElement($elements)
     {
         if ($elements->Count() > 0)
@@ -130,7 +134,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             $description .= ' – Locale: <span class="element-state element-state-'.$locale.'">'.$locale.'</span>';
         }
 
-        $description .= '</div>';
+        $description .= " " . $this->getStatusFlags('') . '</div>';
 
 
         $fields->addFieldsToTab('Root.Main', [
@@ -202,11 +206,41 @@ class ElementBase extends DataObject implements CMSPreviewable
         return $fields;
     }
 
+    public function getBetterButtonsUtils(){
+        $fields = parent::getBetterButtonsUtils();
+        if($this->ID && ($this->stagesDiffer('Stage','Live') || $this->hasModifiedElement($this->Elements()))){
+            $fields->unshift($publish_action = BetterButtonCustomAction::create('publishPage', 'Publish page'));
+            $publish_action
+            ->addExtraClass("ss-ui-action-constructive")
+            ->setAttribute('data-icon', 'disk')
+            // ->setAttribute('data-icon', 'accept')
+            // ->setAttribute('data-icon-alternate', 'disk')
+            ->setAttribute('data-text-alternate', _t('SiteTree.BUTTONSAVEPUBLISH', 'Save & publish'));
+        }
+        return $fields;
+    }
+
+    public function publishPage() {
+        $look = true;
+        $parent = $this;
+        while($look){
+            if($parent = $parent->getHolder()){
+                if(is_a($parent, 'SiteTree')){
+                    $look = false;
+                }
+            };
+        }
+        if($parent->doPublish()){
+            return _t('ElementBase.PageAndElementsPublished', "Page & elements published");
+        }
+        return _t('ElementBase.PageAndElementsPublishError', "There was an error publishing the page");
+    }
+
     public function getType(){
         return _t($this->class.'.SINGULARNAME', $this->singular_name());
     }
 
-    public function getStatusFlags()
+    public function getStatusFlags($separator = '<br>')
     {
         $modified = false;
         $state = [];
@@ -231,7 +265,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             if (!$this->Visible) $state[] = "<span class='element-state inactive'>{$notVisible}</span>";
         }
 
-        return DBField::create_field('HTMLVarchar', implode($state, '<br>'));
+        return DBField::create_field('HTMLVarchar', implode($state, $separator));
     }
 
     public function isPublished()

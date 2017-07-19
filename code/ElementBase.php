@@ -228,7 +228,9 @@ class ElementBase extends DataObject implements CMSPreviewable
                 if(is_a($parent, 'SiteTree')){
                     $look = false;
                 }
-            };
+            } else {
+                $look = false;
+            }
         }
         if($parent->doPublish()){
             return _t('ElementBase.PageAndElementsPublished', "Page & elements published");

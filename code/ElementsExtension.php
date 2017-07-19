@@ -65,6 +65,44 @@ class ElementsExtension extends DataExtension
         return $fields;
     }
 
+    public static function create_default_elements($record){
+
+        $count = 0;
+
+        if (!$record || !$record->ID) {
+            throw new SS_HTTPResponse_Exception("Bad record ID #" . (int)$data['ID'], 404);
+        }
+
+        if ($relationNames = ElementsExtension::page_element_relation_names($record))
+        {
+            $defaultElements = $record->getDefaultElements();
+
+            if (count($relationNames) > 0)
+            {
+                foreach ($relationNames as $relationName => $elementsClasses)
+                {
+                    if (isset($defaultElements[$relationName]))
+                    {
+                        $elementClasses = $defaultElements[$relationName];
+                        foreach ($elementClasses as $className)
+                        {
+                            $definedElements = $record->ElementsByRelation($relationName)->map('ClassName', 'ClassName');
+                            if (!isset($definedElements[$className]))
+                            {
+                                $element = new $className;
+                                $element->populate('PageID', $record->ID, $relationName);
+                                $element->write();
+                                $count++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return $count;
+    }
+
     public static function validate_class_inheritance($relation)
     {
         return array_filter($relation, function($className)
@@ -106,19 +144,6 @@ class ElementsExtension extends DataExtension
             }
         }
         return $relations;
-    }
-
-    public function updateCMSActions(FieldList $fields)
-    {
-        if ($this->owner->canEdit() && $this->owner->getDefaultElements())
-        {
-            if (!$this->defaultsCreated()) {
-                $fields->addFieldToTab('MajorActions',
-                    $createDefaults = FormAction::create('doCreateDefaults', _t('ElementsExtension.CreateDefaults','Create default elements'))
-                    ->setAttribute('data-icon', 'add')
-                );
-            }
-        }
     }
 
     public function defaultsCreated(){
@@ -260,6 +285,13 @@ class ElementsExtension extends DataExtension
             ->addComponent(new GridFieldOrderableRows('Sort'))
             ->addComponent(new GridFieldDeleteAction())
         ;
+
+        if ($this->owner->canEdit() && $this->owner->getDefaultElements())
+        {
+            if (!$this->defaultsCreated()) {
+                $config->addComponent(new GridFieldDefaultElementsButton());
+            }
+        }
 
         if (count($relation) > 1)
         {

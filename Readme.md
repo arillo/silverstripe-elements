@@ -125,18 +125,9 @@ de:
 ```
 
 ### Populate default elements
-You will get a new action called "Create default elements" which will be hidden inside the "More Options" button next to the Publish button in the CMS.
-It will populate the default elements defined in your _config.yml as empty elements in your page. If you trigger the action again it will check for existance of the element Class and won't add Classes that are already created.
+A button below the Element GridField called "Create default elements" will populate the default elements defined in your _config.yml as empty elements in your page. If you trigger the action again it will counter-check against the already created elements and don't add any duplicates.
 
-To use the populate defaults behaviour add the following extension in your _config.yml
-
-```yml
-LeftAndMain:
-  extensions:
-    - arillo\elements\DefaultElementsExtension
-```
-
-Then you can define the element_defaults for each of your relations like this:
+You can define the element_defaults for each of your relations like this:
 
 ```yml
 Page:

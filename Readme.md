@@ -151,7 +151,12 @@ ElementBase:
 
 ## Changelog:
 
-0.1.0 - remove extensions from your mysite/_config/elements.yml
+### 0.2.0 
+- remove DefaultElementsExtension
+- add Publish page button in Element DetailForm
+
+### 0.1.0 
+- remove extensions from your mysite/_config/elements.yml
 
 ```yml
 ElementBase:

@@ -202,17 +202,33 @@ class ElementsExtension extends DataExtension
     }
 
     public function onAfterDuplicate($sourceObject, $doWrite = true) {
-        // @CHECK: Why do we still need to call write() ?
-        if(is_a($sourceObject, 'SiteTree')) $this->owner->write();
+
+        \SS_Log::log("onAfterDuplicate::SOURCE<>OWNER ".$sourceObject->ID." <> ".$this->owner->ID, \SS_Log::WARN);
+        // if($doWrite){
+        //     \SS_Log::log("onAfterDuplicate:: TRUE", \SS_Log::WARN);
+        // } else {
+        //     \SS_Log::log("onAfterDuplicate:: FALSE", \SS_Log::WARN);
+        // }
+        // // @CHECK: Why do we still need to call write() ?
+        // if(is_a($sourceObject, 'SiteTree')){
+        //     // $this->owner->write();
+        //     \SS_Log::log("onAfterDuplicate:: SiteTree => ".$sourceObject->ID, \SS_Log::WARN);
+        // } else {
+        //     \SS_Log::log("onAfterDuplicate:: Element => ".$sourceObject->ID, \SS_Log::WARN);
+        // }
+
+        if($this->owner->ID != 0 && $this->owner->ID < $sourceObject->ID){
+            $relationID = is_a($sourceObject, 'SiteTree') ? "PageID" : "ElementID";
+            \SS_Log::log("onAfterDuplicate:: DUPLICATE <>".$relationID, \SS_Log::WARN);
+            foreach ($sourceObject->Elements() as $element) {
+                $newField = $element->duplicate();
+                $newField->{$relationID} = $sourceObject->ID;
+                $newField->write();
+            }
+        }
 
         // if($doWrite){
             //duplicate has many elements
-            $relationID = is_a($sourceObject, 'SiteTree') ? "PageID" : "ElementID";
-            foreach ($sourceObject->Elements() as $element) {
-                $newField = $element->duplicate();
-                $newField->{$relationID} = $this->owner->ID;
-                $newField->write();
-            }
         // }
     }
 

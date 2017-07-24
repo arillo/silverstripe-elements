@@ -169,7 +169,7 @@ You might need a to add a helper method to quickly add the gridfield component l
     // e.g. in Element.php, feel free to change to your needs....
 
     /**
-     * !!! CAUTION - only use on gf's with one relation !!!
+     * !!! CAUTION - only use in gridfields with one element relation !!!
      * Adds a bulkuploader to element GridField
      *
      * @param FieldList  $fields              the fields to look for the gf

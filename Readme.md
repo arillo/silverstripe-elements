@@ -153,6 +153,7 @@ ElementBase:
 ### Example: Bulkuploading with `colymba/gridfield-bulk-editing-tools`:
 
 In some cases (e.g. slideshow elements, etc.) you may want to give content authors a way to upload many assets into a relation at once. Here we provide an example how this can be achieved.
+
 **Note:** this will only work well with element relations with one single allowed child element class.
 
 Install https://github.com/colymba/GridFieldBulkEditingTools

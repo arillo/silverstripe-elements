@@ -166,46 +166,45 @@ composer require colymba/gridfield-bulk-editing-tools
 
 You might need a to add a helper method to quickly add the gridfield component like this:
 
-```
-    // e.g. in Element.php, feel free to change to your needs....
+```php
+// e.g. in Element.php, feel free to change to your needs....
 
-    /**
-     * !!! CAUTION - only use in gridfields with one element relation !!!
-     * Adds a bulkuploader to element GridField
-     *
-     * @param FieldList  $fields              the fields to look for the gf
-     * @param string     $elementClass        the element class to create
-     * @param string     $elementRelationName the relation name to add to the element
-     * @param string     $assetRelationName   the asset relation inside the element
-     * @return FieldList $fields
-     */
-    public static function add_bulk_uploader(
-        FieldList $fields,
-        $elementClass,
-        $elementRelationName,
-        $assetRelationName,
-        $uploadFolder = null
-    ) {
-        if ($gf = $fields->dataFieldByName($elementRelationName))
-        {
-            $gf->getConfig()
-                ->addComponent((new GridFieldBulkUpload($assetRelationName, $elementClass))
-                    // this is needed in onBulkUpload hook
-                    ->setUfConfig('elementRelationName', $elementRelationName) 
-                    ->setUfSetup('setFolderName', $uploadFolder)
-                )
-            ;
+/**
+ * !!! CAUTION - only use in gridfields with one element relation !!!
+ * Adds a bulkuploader to element GridField
+ *
+ * @param FieldList  $fields              the fields to look for the gf
+ * @param string     $elementClass        the element class to create
+ * @param string     $elementRelationName the relation name to add to the element
+ * @param string     $assetRelationName   the asset relation inside the element
+ * @return FieldList $fields
+ */
+public static function add_bulk_uploader(
+    FieldList $fields,
+    $elementClass,
+    $elementRelationName,
+    $assetRelationName,
+    $uploadFolder = null
+) {
+    if ($gf = $fields->dataFieldByName($elementRelationName))
+    {
+        $gf->getConfig()
+            ->addComponent((new GridFieldBulkUpload($assetRelationName, $elementClass))
+                // this is needed in onBulkUpload hook
+                ->setUfConfig('elementRelationName', $elementRelationName) 
+                ->setUfSetup('setFolderName', $uploadFolder)
+            )
+        ;
 
-            $gf->setModelClass($elementClass);
-        }
-        return $fields;
+        $gf->setModelClass($elementClass);
     }
-
+    return $fields;
+}
 ```
 
 You also need to add an extension to your Element class to hook into the write process during bulk uploading:
 
-```
+```php
 // feel free to change or use it in you own extension.
 class BulkUploadExtension extends Extension
 {
@@ -226,19 +225,19 @@ class BulkUploadExtension extends Extension
 
 Then you can add the bulkuploader like this:
 
-```
+```php
 // e.g. parent page or parent element
 public function getCMSFields()
 {
-        $fields = parent::getCMSFields();
-        Element::add_bulk_uploader(
-            $fields,
-            'ImageElement', // element class to create
-            'Images', // element relation to attach to
-            'Image', // asset relation 
-            'home' // folder name
-        );
-        return $fields;
+    $fields = parent::getCMSFields();
+    Element::add_bulk_uploader(
+        $fields,
+        'ImageElement', // element class to create
+        'Images', // element relation to attach to
+        'Image', // asset relation 
+        'home' // folder name
+    );
+    return $fields;
 }
 ```
 

@@ -4,7 +4,9 @@
       "layout": "index",
       "theme": "blue",
       "title": "SilverStripe Elements",
-      "intro": "Customizable layout elements for the SilverStripe CMS"
+      "intro": "Customizable layout elements for the SilverStripe CMS",
+      "metaDescription": "Customizable layout elements for the SilverStripe CMS",
+      "metaImage": "/share-img.png"
     }
   },
   "menu": false,

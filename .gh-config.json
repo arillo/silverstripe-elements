@@ -4,11 +4,15 @@
       "layout": "index",
       "theme": "blue",
       "title": "SilverStripe Elements",
-      "intro": "Customizable layout elements for the SilverStripe CMS",
-      "metaDescription": "Customizable layout elements for the SilverStripe CMS",
-      "metaImage": "/share-img.png"
+      "intro": "Customizable layout elements for the SilverStripe CMS"
     }
   },
+
+  "page": {
+    "metaDescription": "Customizable layout elements for the SilverStripe CMS",
+    "metaImage": "https://arillo.github.io/silverstripe-elements//share-img.png"
+  },
+
   "menu": false,
   "projectBase": "/silverstripe-elements",
   "githubLink": "https://github.com/arillo/silverstripe-elements",

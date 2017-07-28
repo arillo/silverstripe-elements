@@ -15,6 +15,7 @@
 
   "menu": false,
   "projectBase": "/silverstripe-elements",
+  "projectUrl": "https://arillo.github.io/silverstripe-elements/",
   "githubLink": "https://github.com/arillo/silverstripe-elements",
   "licenseLink": "https://github.com/arillo/silverstripe-elements/blob/master/License.md",
   "licenseType": "MIT"

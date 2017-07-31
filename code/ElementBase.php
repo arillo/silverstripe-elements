@@ -208,7 +208,7 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     public function getBetterButtonsUtils(){
         $fields = parent::getBetterButtonsUtils();
-        if($this->ID && ($this->stagesDiffer('Stage','Live') || $this->hasModifiedElement($this->Elements()))){
+        if($this->ID && is_a(Controller::curr(),'CMSPageEditController') && ($this->stagesDiffer('Stage','Live') || $this->hasModifiedElement($this->Elements()))){
             $fields->unshift($publish_action = BetterButtonCustomAction::create('publishPage', 'Publish page'));
             $publish_action
             ->addExtraClass("ss-ui-action-constructive")

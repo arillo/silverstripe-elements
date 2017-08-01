@@ -11,7 +11,7 @@
   "page": {
     "silverstripe": true,
     "metaDescription": "Customizable layout elements for the SilverStripe CMS",
-    "metaImage": "https://arillo.github.io/silverstripe-elements/share-img.png"
+    "metaImage": "http://assets.arillo.net/gh-pages-share-img.png"
   },
 
   "menu": false,

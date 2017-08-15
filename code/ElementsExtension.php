@@ -349,10 +349,13 @@ class ElementsExtension extends DataExtension
 
         if (count($relation) == 1) $gridField->setModelClass($relation[0]);
 
-        $fields
-            ->findOrMakeTab($tabName)
-            ->setTitle($label)
-        ;
+        if (count($this->_elementRelations) > 1)
+        {
+            $fields
+                ->findOrMakeTab($tabName)
+                ->setTitle($label)
+            ;
+        }
 
         return $this->owner;
     }

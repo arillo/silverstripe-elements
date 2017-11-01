@@ -6,6 +6,8 @@ class ElementBase extends DataObject implements CMSPreviewable
 {
     protected static $_cached_get_by_url = array();
 
+    private static $show_urlsegment_field = false;
+
     private static $db = array(
         'Title' => 'Text',
         'URLSegment' => 'Varchar(255)',
@@ -149,11 +151,13 @@ class ElementBase extends DataObject implements CMSPreviewable
 
         $fields->addFieldsToTab('Root.Main', [
             LiteralField::create('ClassNameDescription', $description),
-            // DropdownField::create('ClassName', _t('ElementBase.Type', 'Type'), $recordClassesMap),
             TextField::create('Title', _t('ElementBase.Title', 'Title'), null, 255),
-            TextField::create('URLSegment', _t('Element.URLSegment', 'URLSegment'), null, 255),
             HiddenField::create('RelationName', $relationName, $relationName)
         ]);
+
+        if($this->config()->show_urlsegment_field){
+            $fields->addFieldsToTab('Root.Main', TextField::create('URLSegment', _t('Element.URLSegment', 'URLSegment'), null, 255));
+        }
 
         if (!ClassInfo::exists('Fluent'))
         {

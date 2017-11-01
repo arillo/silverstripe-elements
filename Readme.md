@@ -114,6 +114,15 @@ HomePage:
 
 In this example ImageElement is added to the list of available Elements defined in MainElements.
 
+### URLSegmentField
+
+If you want to show the URLSegment field in the cms, you can opt-in via the config show_urlsegment_field
+
+```yml
+ElementBase:
+  show_urlsegment_field: true
+```
+
 ### Translation
 Naming of `Tab` and `GridField` labels can be done through silverstripes i18n.
 There is a special key called `Element_Relations` reserved to accomplish this task, e.g. in de.yml:

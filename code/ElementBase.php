@@ -67,6 +67,25 @@ class ElementBase extends DataObject implements CMSPreviewable
     {
         parent::onBeforeWrite();
 
+        $this
+            ->generateUniqueURLSegment()
+            ->generateElementSortForHolder();
+
+    }
+
+    public function generateElementSortForHolder(){
+        if (!$this->Sort)
+        {
+            $holder_filter = array('PageID' => $this->PageID);
+            if($this->ElementID) $holder_filter = array('ElementID' => $this->ElementID);
+            $this->Sort = ElementBase::get()
+            ->filter($holder_filter)
+            ->max('Sort') + 1;
+        }
+        return $this;
+    }
+
+    public function generateUniqueURLSegment(){
         $filter = URLSegmentFilter::create();
 
         if (!$this->URLSegment) {
@@ -80,20 +99,12 @@ class ElementBase extends DataObject implements CMSPreviewable
 
         $class = $this->ClassName;
         $count = 2;
-        while ($this->getByUrlSegment($class, $this->URLSegment, $this->ID)) {
+        while ($this->getByUrlSegment('ElementBase', $this->URLSegment, $this->ID)) {
             // add a -n to the URLSegment if it already existed
             $this->URLSegment = preg_replace('/-[0-9]+$/', null, $this->URLSegment) . '-' . $count;
             $count++;
         }
-
-        if (!$this->Sort)
-        {
-            $holder_filter = array('PageID' => $this->PageID);
-            if($this->ElementID) $holder_filter = array('ElementID' => $this->ElementID);
-            $this->Sort = ElementBase::get()
-            ->filter($holder_filter)
-            ->max('Sort') + 1;
-        }
+        return $this;
     }
 
     public function onAfterDelete() {

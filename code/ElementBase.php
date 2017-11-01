@@ -97,7 +97,6 @@ class ElementBase extends DataObject implements CMSPreviewable
             $this->URLSegment = uniqid();
         }
 
-        $class = $this->ClassName;
         $count = 2;
         while ($this->getByUrlSegment('ElementBase', $this->URLSegment, $this->ID)) {
             // add a -n to the URLSegment if it already existed
@@ -152,6 +151,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             LiteralField::create('ClassNameDescription', $description),
             // DropdownField::create('ClassName', _t('ElementBase.Type', 'Type'), $recordClassesMap),
             TextField::create('Title', _t('ElementBase.Title', 'Title'), null, 255),
+            TextField::create('URLSegment', _t('Element.URLSegment', 'URLSegment'), null, 255),
             HiddenField::create('RelationName', $relationName, $relationName)
         ]);
 

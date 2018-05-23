@@ -1,12 +1,15 @@
 <?php
 namespace Arillo\Elements;
 
-use \GridField_HTMLProvider;
-use \GridField_ActionProvider;
-use \GridField_URLHandler;
-use \GridField_FormAction;
-use \GridField;
-use \Controller;
+use SilverStripe\Forms\GridField\{
+    GridField,
+    GridField_HTMLProvider,
+    GridField_ActionProvider,
+    GridField_URLHandler,
+    GridField_FormAction
+};
+
+// use \Controller;
 
 /**
  * Adds an "Export list" button to the bottom of a {@link GridField}.

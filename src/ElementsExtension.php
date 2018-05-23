@@ -1,19 +1,26 @@
 <?php
 namespace Arillo\Elements;
 
-use \DataExtension;
-use \FieldList;
+use SilverStripe\ORM\DataExtension;
+use SilverStripe\Forms\{
+    FieldList,
+    FormAction
+};
+
 use \Config;
 use \Controller;
 use \ClassInfo;
-use \GridField;
-use \GridFieldConfig_RelationEditor;
-use \FormAction;
-use \GridFieldOrderableRows;
-use \GridFieldDeleteAction;
-use \GridFieldAddNewMultiClass;
-use \ElementBase;
-use \Versioned;
+
+use SilverStripe\Forms\GridField\{
+    GridField,
+    GridFieldConfig_RelationEditor
+};
+// use \GridFieldConfig_RelationEditor;
+// use \GridFieldOrderableRows;
+// use \GridFieldDeleteAction;
+// use \GridFieldAddNewMultiClass;
+// use \ElementBase;
+// use \Versioned;
 
 /**
  * Establishes multiple has_many elements relations, which can be set up via the config system
@@ -36,16 +43,15 @@ use \Versioned;
  */
 class ElementsExtension extends DataExtension
 {
-
     private static $has_many = [
-        'Elements' => 'ElementBase'
+        'Elements' => ElementBase::class
     ];
 
     /**
      * Holds parsed relations taking into consideration the inheritance.
      * @var string
      */
-    protected $_elementRelations;
+    protected $elementRelations;
 
 
     /**
@@ -178,7 +184,7 @@ class ElementsExtension extends DataExtension
 
         if ($relations)
         {
-            $this->_elementRelations = array_keys($relations);
+            $this->elementRelations = array_keys($relations);
             foreach ($relations as $key => $relation)
             {
                 $this->gridFieldForElementRelation($fields, $key, self::validate_class_inheritance($relation));
@@ -333,7 +339,7 @@ class ElementsExtension extends DataExtension
         $tabName = "Root.{$relationName}";
 
         // if only one relation is set, add gridfield to main tab
-        if (count($this->_elementRelations) == 1) $tabName = "Root.Main";
+        if (count($this->elementRelations) == 1) $tabName = "Root.Main";
 
         $label = _t("Element_Relations.{$relationName}", $relationName);
         $fields->addFieldToTab($tabName,
@@ -349,7 +355,7 @@ class ElementsExtension extends DataExtension
 
         if (count($relation) == 1) $gridField->setModelClass($relation[0]);
 
-        if (count($this->_elementRelations) > 1)
+        if (count($this->elementRelations) > 1)
         {
             $fields
                 ->findOrMakeTab($tabName)

@@ -1,56 +1,72 @@
 <?php
+namespace Arillo\Elements;
 
-use Arillo\Elements\ElementsExtension;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\Versioned\Versioned;
+use SilverStripe\Forms\{
+    LiteralField,
+    HiddenField,
+    TextField
+};
 
-class ElementBase extends DataObject implements CMSPreviewable
+ // implements CMSPreviewable
+class ElementBase extends DataObject
 {
-    protected static $_cached_get_by_url = array();
+    protected static $_cached_get_by_url = [];
 
-    private static $show_urlsegment_field = false;
+    private static
+        $show_urlsegment_field = false,
 
-    private static $db = array(
-        'Title' => 'Text',
-        'URLSegment' => 'Varchar(255)',
-        'RelationName' => 'Varchar(255)',
-        'Visible' => 'Boolean(1)',
-        'Sort' => 'Int'
-        );
+        $table_name = 'Arillo_ElementBase',
+        $extensions = [ Versioned::class ],
 
-    private static $has_one = array(
-        'Page' => 'Page',
-        'Element' => 'ElementBase'
-        );
+        $db = [
+            'Title' => 'Text',
+            'URLSegment' => 'Varchar(255)',
+            'RelationName' => 'Varchar(255)',
+            'Visible' => 'Boolean(1)',
+            'Sort' => 'Int'
+        ],
 
-    private static $default_sort = 'Sort ASC';
+        $indexes = [
+            'ElementBase_ID_RelationName' => [
+                'type' => 'index',
+                'columns' => [ 'ID', 'RelationName' ],
+            ]
+        ],
 
-    private static $extensions = array(
-        'Versioned("Stage","Live")'
-        );
+        $has_one = [
+            'Page' => Page::class,
+            'Element' => ElementBase::class
+        ],
 
-    private static $translate = array(
-        'Title'
-        );
+        $default_sort = 'Sort ASC',
 
-    private static $searchable_fields = array(
-        'ClassName',
-        'URLSegment'
-        );
+        $translate = [
+            'Title'
+        ],
 
-    private static $summary_fields = array(
-        'ClassName',
-        'Title',
-        'StatusFlags'
-        );
+        $searchable_fields = [
+            'ClassName',
+            'URLSegment'
+        ],
 
-    private static $defaults = [
-        'Visible' => true
-    ];
+        $summary_fields = [
+            'ClassName',
+            'Title',
+            'StatusFlags'
+        ],
 
-    private static $better_buttons_actions = array (
-        'publishPage'
-    );
+        $defaults = [
+            'Visible' => true
+        ]
+    ;
 
-    public static function hasModifiedElement($elements)
+    // private static $better_buttons_actions = array (
+    //     'publishPage'
+    // );
+
+    public static function has_modified_element($elements)
     {
         if ($elements->Count() > 0)
         {
@@ -59,7 +75,7 @@ class ElementBase extends DataObject implements CMSPreviewable
                 if ($element->stagesDiffer('Stage','Live')) return true;
                 if ($element->hasManyComponent('Elements'))
                 {
-                    ElementBase::hasModifiedElement($element->Elements());
+                    ElementBase::has_modified_element($element->Elements());
                 }
             }
         }
@@ -68,51 +84,54 @@ class ElementBase extends DataObject implements CMSPreviewable
     public function onBeforeWrite()
     {
         parent::onBeforeWrite();
-
         $this
             ->generateUniqueURLSegment()
-            ->generateElementSortForHolder();
-
+            ->generateElementSortForHolder()
+        ;
     }
 
-    public function generateElementSortForHolder(){
+    public function generateElementSortForHolder()
+    {
         if (!$this->Sort)
         {
             $holder_filter = array('PageID' => $this->PageID);
-            if($this->ElementID) $holder_filter = array('ElementID' => $this->ElementID);
-            $this->Sort = ElementBase::get()
-            ->filter($holder_filter)
-            ->max('Sort') + 1;
+            if ($this->ElementID) $holder_filter = array('ElementID' => $this->ElementID);
+
+            $this->Sort = self::get()
+                ->filter($holder_filter)
+                ->max('Sort') + 1
+            ;
         }
         return $this;
     }
 
-    public function generateUniqueURLSegment(){
+    public function generateUniqueURLSegment()
+    {
         $filter = URLSegmentFilter::create();
 
-        if (!$this->URLSegment) {
-            $this->URLSegment = $this->Title;
-        }
+        if (!$this->URLSegment) $this->URLSegment = $this->Title;
+
         $this->URLSegment = $filter->filter($this->URLSegment);
 
-        if (!$this->URLSegment) {
-            $this->URLSegment = uniqid();
-        }
+        if (!$this->URLSegment) $this->URLSegment = uniqid();
 
         $count = 2;
-        while ($this->getByUrlSegment('ElementBase', $this->URLSegment, $this->ID)) {
-            // add a -n to the URLSegment if it already existed
+
+        // add a -n to the URLSegment if it already existed
+        while ($this->getByUrlSegment(__CLASS__, $this->URLSegment, $this->ID))
+        {
             $this->URLSegment = preg_replace('/-[0-9]+$/', null, $this->URLSegment) . '-' . $count;
             $count++;
         }
         return $this;
     }
 
-    public function onAfterDelete() {
-
+    public function onAfterDelete()
+    {
         // This is done in order to unpublish sub-elements when unpublishing an element,
         // since unpublishing an element also calls the onAfterDelete callback
-        if(Versioned::current_stage() !== 'Stage') {
+        if (Versioned::current_stage() !== 'Stage')
+        {
             foreach($this->owner->Elements() as $element)
             {
                 $element->deleteFromStage('Live');
@@ -134,7 +153,6 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     public function addCMSFieldsHeader($fields)
     {
-
         $relationName = Controller::curr()->request->param('FieldName');
 
         $description = '<div class="cms-page-info"><b>'. $this->i18n_singular_name() . '</b> – ID: ' . $this->ID;
@@ -155,8 +173,12 @@ class ElementBase extends DataObject implements CMSPreviewable
             HiddenField::create('RelationName', $relationName, $relationName)
         ]);
 
-        if($this->config()->show_urlsegment_field){
-            $fields->addFieldsToTab('Root.Main', TextField::create('URLSegment', _t('Element.URLSegment', 'URLSegment'), null, 255));
+        if ($this->config()->show_urlsegment_field)
+        {
+            $fields->addFieldsToTab(
+                'Root.Main',
+                TextField::create('URLSegment', _t('Element.URLSegment', 'URLSegment'), null, 255)
+            );
         }
 
         if (!ClassInfo::exists('Fluent'))
@@ -166,10 +188,10 @@ class ElementBase extends DataObject implements CMSPreviewable
                 CheckboxField::create('Visible', _t('ElementBase.Visible', 'Is element visible'))
             );
         }
-
     }
 
-    public function populate($type, $id, $relation){
+    public function populate($type, $id, $relation)
+    {
         $this->Title = $this->i18n_singular_name() . ' title';
         $this->PageID = $id;
         $this->RelationName = $relation;
@@ -177,7 +199,6 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     public function getCMSFields()
     {
-
         $fields = FieldList::create(TabSet::create('Root'));
         $this->addCMSFieldsHeader($fields);
 
@@ -215,56 +236,65 @@ class ElementBase extends DataObject implements CMSPreviewable
     public function getBetterButtonsActions()
     {
         $fields = parent::getBetterButtonsActions();
-        if(is_a(Controller::curr(),'CMSPageEditController')){
+        if (is_a(Controller::curr(),'CMSPageEditController'))
+        {
             $fields->removeByName('action_publish');
         }
         return $fields;
     }
 
-    public function getBetterButtonsUtils(){
-        $fields = parent::getBetterButtonsUtils();
-        if($this->ID && is_a(Controller::curr(),'CMSPageEditController') && ($this->stagesDiffer('Stage','Live') || $this->hasModifiedElement($this->Elements()))){
-            $fields->unshift($publish_action = BetterButtonCustomAction::create('publishPage', 'Publish page'));
-            $publish_action
-            ->addExtraClass("ss-ui-action-constructive")
-            ->setAttribute('data-icon', 'disk')
-            // ->setAttribute('data-icon', 'accept')
-            // ->setAttribute('data-icon-alternate', 'disk')
-            ->setAttribute('data-text-alternate', _t('SiteTree.BUTTONSAVEPUBLISH', 'Save & publish'));
-        }
-        return $fields;
-    }
+    // public function getBetterButtonsUtils()
+    // {
+    //     $fields = parent::getBetterButtonsUtils();
+    //     if($this->ID && is_a(Controller::curr(),'CMSPageEditController') && ($this->stagesDiffer('Stage','Live') || $this->has_modified_element($this->Elements()))){
+    //         $fields->unshift($publish_action = BetterButtonCustomAction::create('publishPage', 'Publish page'));
+    //         $publish_action
+    //         ->addExtraClass("ss-ui-action-constructive")
+    //         ->setAttribute('data-icon', 'disk')
+    //         // ->setAttribute('data-icon', 'accept')
+    //         // ->setAttribute('data-icon-alternate', 'disk')
+    //         ->setAttribute('data-text-alternate', _t('SiteTree.BUTTONSAVEPUBLISH', 'Save & publish'));
+    //     }
+    //     return $fields;
+    // }
 
-    public function publishPage() {
+    public function publishPage()
+    {
         $look = true;
         $parent = $this;
-        while($look){
-            if($parent = $parent->getHolder()){
-                if(is_a($parent, 'SiteTree')){
+        while($look)
+        {
+            if ($parent = $parent->getHolder())
+            {
+                if (is_a($parent, 'SiteTree'))
+                {
                     $look = false;
                 }
             } else {
                 $look = false;
             }
         }
-        if($parent->doPublish()){
-            return _t('ElementBase.PageAndElementsPublished', "Page & elements published");
+
+        if ($parent->doPublish())
+        {
+            return _t(__CLASS__ . '.PageAndElementsPublished', "Page & elements published");
         }
-        return _t('ElementBase.PageAndElementsPublishError', "There was an error publishing the page");
+        return _t(__CLASS__ . '.PageAndElementsPublishError', "There was an error publishing the page");
     }
 
-    public function getType(){
-        return _t($this->class.'.SINGULARNAME', $this->singular_name());
+    public function getType()
+    {
+        return _t(__CLASS__ . '.SINGULARNAME', $this->singular_name());
     }
 
     public function getStatusFlags($separator = '<br>')
     {
         $modified = false;
         $state = [];
-        $published = _t('ElementBase.State_published', 'published');
-        $draft = _t('ElementBase.State_draft', 'draft');
-        $modifiedContent = _t('ElementBase.State_modified', 'modified');
-        $notVisible = _t('ElementBase.State_hidden', 'hidden');
+        $published = _t(__CLASS__ . '.State_published', 'published');
+        $draft = _t(__CLASS__ . '.State_draft', 'draft');
+        $modifiedContent = _t(__CLASS__ . '.State_modified', 'modified');
+        $notVisible = _t(__CLASS__ . '.State_hidden', 'hidden');
 
         $state[] = $this->isPublished()
             ? "<span class='element-state active'>{$published}</span>"
@@ -273,7 +303,7 @@ class ElementBase extends DataObject implements CMSPreviewable
 
         if ($this->stagesDiffer('Stage', 'Live')) $modified = true;
 
-        if (ElementBase::hasModifiedElement($this->owner->Elements())) $modified = true;
+        if (ElementBase::has_modified_element($this->owner->Elements())) $modified = true;
 
         if ($modified) $state[] = "<span class='element-state modified'>$modifiedContent</span>";
 
@@ -362,19 +392,23 @@ class ElementBase extends DataObject implements CMSPreviewable
     }
 
     // Permissions
-    public function canView($member = null) {
+    public function canView($member = null, $context = [])
+    {
         return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
 
-    public function canEdit($member = null) {
+    public function canEdit($member = null, $context = [])
+    {
         return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
 
-    public function canDelete($member = null) {
+    public function canDelete($member = null, $context = [])
+    {
         return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
 
-    public function canCreate($member = null) {
+    public function canCreate($member = null, $context = [])
+    {
         return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
 

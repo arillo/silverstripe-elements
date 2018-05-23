@@ -1,5 +1,5 @@
 <?php
-namespace arillo\elements;
+namespace Arillo\Elements;
 
 use \DataExtension;
 use \FieldList;
@@ -20,7 +20,7 @@ use \Versioned;
  * e.g:
  *   Page:
  *     extensions:
- *        - arillo\elements\ElementsExtension("Element")
+ *        - Arillo\Elements\ElementsExtension("Element")
  *     element_relations:
  *        Elements:
  *          - Element
@@ -32,7 +32,7 @@ use \Versioned;
  *
  *   $pageInst->ElementsByRelation('Downloads');
  *
- * @package arillo\elements
+ * @package Arillo\Elements
  */
 class ElementsExtension extends DataExtension
 {

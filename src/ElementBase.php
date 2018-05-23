@@ -1,6 +1,6 @@
 <?php
 
-use arillo\elements\ElementsExtension;
+use Arillo\Elements\ElementsExtension;
 
 class ElementBase extends DataObject implements CMSPreviewable
 {

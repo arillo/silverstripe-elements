@@ -1,5 +1,5 @@
 <?php
-namespace arillo\elements;
+namespace Arillo\Elements;
 
 use \GridField_HTMLProvider;
 use \GridField_ActionProvider;

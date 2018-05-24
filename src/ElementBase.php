@@ -1,7 +1,10 @@
 <?php
 namespace Arillo\Elements;
 
-use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\{
+    DataObject,
+    DataList
+};
 use SilverStripe\Versioned\Versioned;
 use SilverStripe\Forms\{
     CheckboxField,
@@ -15,13 +18,14 @@ use SilverStripe\Forms\{
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Security\Permission;
 use SilverStripe\Control\Controller;
-use SilverStripe\Core\ClassInfo;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\View\Parsers\URLSegmentFilter;
 
  // implements CMSPreviewable
 class ElementBase extends DataObject
 {
+    const FLUENT_CLASS = 'TractorCow\Fluent\Extension\FluentExtension';
+
     protected static $_cached_get_by_url = [];
 
     private static
@@ -72,6 +76,8 @@ class ElementBase extends DataObject
         ]
     ;
 
+    protected $wasNew = false;
+
     // private static $better_buttons_actions = array (
     //     'publishPage'
     // );
@@ -91,24 +97,15 @@ class ElementBase extends DataObject
         }
     }
 
-    public function onBeforeWrite()
-    {
-        parent::onBeforeWrite();
-        $this
-            ->generateUniqueURLSegment()
-            ->generateElementSortForHolder()
-        ;
-    }
-
     public function generateElementSortForHolder()
     {
         if (!$this->Sort)
         {
-            $holder_filter = array('PageID' => $this->PageID);
-            if ($this->ElementID) $holder_filter = array('ElementID' => $this->ElementID);
+            $holderFilter = ['PageID' => $this->PageID];
+            if ($this->ElementID) $holderFilter = ['ElementID' => $this->ElementID];
 
             $this->Sort = self::get()
-                ->filter($holder_filter)
+                ->filter($holderFilter)
                 ->max('Sort') + 1
             ;
         }
@@ -136,45 +133,82 @@ class ElementBase extends DataObject
         return $this;
     }
 
+    public function onBeforeWrite()
+    {
+        parent::onBeforeWrite();
+        $this->wasNew = !$this->isInDB();
+        $this
+            ->generateUniqueURLSegment()
+            ->generateElementSortForHolder()
+        ;
+    }
+
+    public function onAfterWrite()
+    {
+        parent::onAfterWrite();
+        $this->populateLocales();
+
+    }
+
+    public function populateLocales()
+    {
+        if (
+            $this->wasNew
+            && $this->hasExtension(self::FLUENT_CLASS)
+        ) {
+            $locales = \TractorCow\Fluent\Model\Locale::get();
+            foreach ($locales as $locale)
+            {
+                $this->FilteredLocales()->add($locale);
+            }
+        }
+        return $this;
+    }
+
+
     public function onAfterDelete()
     {
+        parent::onAfterDelete();
         // This is done in order to unpublish sub-elements when unpublishing an element,
         // since unpublishing an element also calls the onAfterDelete callback
-        if (Versioned::current_stage() !== 'Stage')
+        if (Versioned::get_reading_mode() !== Versioned::DRAFT)
         {
             foreach($this->owner->Elements() as $element)
             {
-                $element->deleteFromStage('Live');
+                $element->deleteFromStage(Versioned::LIVE);
             }
             return;
         }
 
         // Delete own element from live if called from GridFieldDeleteAction
-        $this->deleteFromStage('Live');
+        $this->deleteFromStage(Versioned::LIVE);
         foreach($this->owner->Elements() as $element)
         {
-            $element->deleteFromStage('Live');
-            $element->deleteFromStage('Stage');
+            $element->deleteFromStage(Versioned::LIVE);
+            $element->deleteFromStage(Versioned::DRAFT);
             $element->delete();
         }
 
-        parent::onAfterDelete();
     }
 
     public function addCMSFieldsHeader($fields)
     {
         $relationName = Controller::curr()->request->param('FieldName');
 
-        $description = '<div class="cms-page-info"><b>'. $this->i18n_singular_name() . '</b> – ID: ' . $this->ID;
-        $description .= ' PageID: ' . $this->PageID . ' ElementID: ' . $this->ElementID;
+        $description = "<div class='cms-page-info'><b>{$this->i18n_singular_name()}</b> – ID: {$this->ID}";
+        $description .= " PageID: {$this->PageID} ElementID: {$this->ElementID}";
 
-        if (ClassInfo::exists('Fluent'))
+
+        if ($this->hasExtension(self::FLUENT_CLASS))
         {
-            $locale = Fluent::alias(Fluent::current_locale());
-            $description .= ' – Locale: <span class="element-state element-state-'.$locale.'">'.$locale.'</span>';
+            $locale = $this->LocaleInformation(
+                \TractorCow\Fluent\State\FluentState::singleton()->getLocale()
+            );
+
+            $description .= " – Locale: <span class='element-state element-state-{$locale->URLSegment}'>{$locale->URLSegment}</span>";
         }
 
-        $description .= " " . $this->getStatusFlags('') . '</div>';
+        $description .= " {$this->getStatusFlags('')} </div>";
 
 
         $fields->addFieldsToTab('Root.Main', [
@@ -187,15 +221,15 @@ class ElementBase extends DataObject
         {
             $fields->addFieldsToTab(
                 'Root.Main',
-                TextField::create('URLSegment', _t('Element.URLSegment', 'URLSegment'), null, 255)
+                TextField::create('URLSegment', _t(__CLASS__ . '.URLSegment', 'URLSegment'), null, 255)
             );
         }
 
-        if (!ClassInfo::exists('Fluent'))
+        if (!$this->hasExtension(self::FLUENT_CLASS))
         {
             $fields->addFieldToTab(
                 'Root.Main',
-                CheckboxField::create('Visible', _t('ElementBase.Visible', 'Is element visible'))
+                CheckboxField::create('Visible', _t(__CLASS__ . '.Visible', 'Is element visible'))
             );
         }
     }
@@ -212,8 +246,9 @@ class ElementBase extends DataObject
         $fields = FieldList::create(TabSet::create('Root'));
         $this->addCMSFieldsHeader($fields);
 
-        if (!$this->isInDB()
-            && $this->class === "ElementBase"
+        if (
+            !$this->isInDB()
+            && $this->class === ElementBase::class
             && $elementRelation = Controller::curr()->request->param('FieldName')
         ) {
             $relationNames = ElementsExtension::page_element_relation_names($this->Page());
@@ -229,6 +264,8 @@ class ElementBase extends DataObject
                 );
             }
         }
+
+        $this->extend('updateCMSFields', $fields);
         return $fields;
     }
 
@@ -243,15 +280,15 @@ class ElementBase extends DataObject
      * Remove Save & Publish to make the handling easier for the editor.
      * Elements get published when the page gets published.
      */
-    public function getBetterButtonsActions()
-    {
-        $fields = parent::getBetterButtonsActions();
-        if (is_a(Controller::curr(),'CMSPageEditController'))
-        {
-            $fields->removeByName('action_publish');
-        }
-        return $fields;
-    }
+    // public function getBetterButtonsActions()
+    // {
+    //     $fields = parent::getBetterButtonsActions();
+    //     if (is_a(Controller::curr(),'CMSPageEditController'))
+    //     {
+    //         $fields->removeByName('action_publish');
+    //     }
+    //     return $fields;
+    // }
 
     // public function getBetterButtonsUtils()
     // {
@@ -276,7 +313,7 @@ class ElementBase extends DataObject
         {
             if ($parent = $parent->getHolder())
             {
-                if (is_a($parent, 'SiteTree'))
+                if (is_a($parent, SiteTree::class))
                 {
                     $look = false;
                 }
@@ -315,9 +352,9 @@ class ElementBase extends DataObject
 
         if (ElementBase::has_modified_element($this->owner->Elements())) $modified = true;
 
-        if ($modified) $state[] = "<span class='element-state modified'>$modifiedContent</span>";
+        if ($modified) $state[] = "<span class='element-state modified'>{$modifiedContent}</span>";
 
-        if (!ClassInfo::exists('Fluent'))
+        if (!$this->hasExtension(self::FLUENT_CLASS))
         {
             if (!$this->Visible) $state[] = "<span class='element-state inactive'>{$notVisible}</span>";
         }
@@ -328,16 +365,14 @@ class ElementBase extends DataObject
     public function getLanguages()
     {
         $pills = '';
-        if (ClassInfo::exists('Fluent'))
+        if ($this->hasExtension(self::FLUENT_CLASS))
         {
-            $activeLocales = $this->owner->getFilteredLocales();
-            if ($locales = Fluent::locales())
+            if ($locales = \TractorCow\Fluent\Model\Locale::get())
             {
-                foreach ($locales as $key)
+                foreach ($locales as $locale)
                 {
-                    $class = in_array($key, $activeLocales) ? 'active' : 'inactive';
-                    $lang = Fluent::alias($key);
-                    $pills .= "<span class='element-state $class'>{$lang}</span><br>";
+                    $class = $this->isAvailableInLocale($locale) ? 'active' : 'inactive';
+                    $pills .= "<span class='element-state $class'>{$locale->URLSegment}</span><br>";
                 }
             }
         }

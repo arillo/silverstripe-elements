@@ -23,6 +23,7 @@ use SilverStripe\Forms\GridField\{
 
 use Symbiote\GridFieldExtensions\GridFieldOrderableRows;
 use SilverStripe\Versioned\Versioned;
+use SilverStripe\Admin\LeftAndMain;
 
 // use \GridFieldAddNewMultiClass;
 // use \ElementBase;
@@ -267,11 +268,7 @@ class ElementsExtension extends DataExtension
         {
             foreach($elements as $subElement)
             {
-                // \SilverStripe\Dev\Debug::dump($elements->Count());
-                // die;
-                // $subElement->write();
-                // $subElement->publish('Stage', 'Live');
-                $subElement->copyVersionToStage('Stage', 'Live');
+                $subElement->copyVersionToStage(Versioned::DRAFT, Versioned::LIVE);
                 if ($subElement->getSchema()->hasManyComponent(ElementBase::class, 'Elements'))
                 {
                     $this->publishElements($subElement->Elements());
@@ -289,8 +286,9 @@ class ElementsExtension extends DataExtension
     public function ElementsByRelation(string $relationName)
     {
         $filter = [ 'RelationName' => $relationName ];
-        if (!ClassInfo::exists('Fluent')
-            && !is_a(Controller::curr(), 'LeftAndMain')
+        if (
+            $this->owner->hasExtension(ElementBase::FLUENT_CLASS)
+            && !is_a(Controller::curr(), LeftAndMain::class)
         ) {
             $filter['Visible'] = true;
         }
@@ -351,7 +349,7 @@ class ElementsExtension extends DataExtension
             'Title' => 'Title'
         ];
 
-        if (ClassInfo::exists('Fluent'))
+        if ($this->owner->hasExtension(ElementBase::FLUENT_CLASS))
         {
             $columns['Languages'] = 'Lang';
         }
@@ -373,7 +371,8 @@ class ElementsExtension extends DataExtension
         if (count($this->elementRelations) == 1) $tabName = "Root.Main";
 
         $label = _t("Element_Relations.{$relationName}", $relationName);
-        $fields->addFieldToTab($tabName,
+        $fields->addFieldToTab(
+            $tabName,
             $gridField = GridField::create(
                 $relationName,
                 $label,

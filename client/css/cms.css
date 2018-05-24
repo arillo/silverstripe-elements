@@ -6,13 +6,12 @@
   overflow: visible;
 }
 
-
 /* =================================== */
 /* State pills */
 /* =================================== */
 
 .element-state {
-  color: #FFFFFF;
+  color: #ffffff;
   background: #1f9433;
   display: inline-block;
   padding: 3px 3px 1px 3px;
@@ -31,6 +30,9 @@
 }
 
 .element-state.modified {
-  background: #F46B00;
+  background: #f46b00;
 }
 
+.cms-page-info {
+  margin-bottom: 10px;
+}

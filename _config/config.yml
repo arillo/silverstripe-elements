@@ -10,14 +10,14 @@ BetterButtonsActions:
     Group_Versioning: false
     BetterButtonFrontendLinksAction: false
 
-LeftAndMain:
+SilverStripe\Admin\LeftAndMain:
   extra_requirements_css:
-    - elements/css/cms.css
+    - arillo/silverstripe-elements:client/css/cms.css
 
-ElementBase:
+Arillo\Elements\ElementBase:
   extensions:
-    - arillo\elements\ElementsExtension
+    - Arillo\Elements\ElementsExtension
 
 Page:
   extensions:
-    - arillo\elements\ElementsExtension
+    - Arillo\Elements\ElementsExtension

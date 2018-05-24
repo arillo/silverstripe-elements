@@ -4,10 +4,20 @@ namespace Arillo\Elements;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Versioned\Versioned;
 use SilverStripe\Forms\{
+    CheckboxField,
+    FieldList,
     LiteralField,
     HiddenField,
+    TabSet,
     TextField
 };
+
+use SilverStripe\CMS\Model\SiteTree;
+use SilverStripe\Security\Permission;
+use SilverStripe\Control\Controller;
+use SilverStripe\Core\ClassInfo;
+use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\View\Parsers\URLSegmentFilter;
 
  // implements CMSPreviewable
 class ElementBase extends DataObject
@@ -36,7 +46,7 @@ class ElementBase extends DataObject
         ],
 
         $has_one = [
-            'Page' => Page::class,
+            'Page' => SiteTree::class,
             'Element' => ElementBase::class
         ],
 
@@ -73,7 +83,7 @@ class ElementBase extends DataObject
             foreach($elements as $element)
             {
                 if ($element->stagesDiffer('Stage','Live')) return true;
-                if ($element->hasManyComponent('Elements'))
+                if ($element->getSchema()->hasManyComponent(__CLASS__, 'Elements'))
                 {
                     ElementBase::has_modified_element($element->Elements());
                 }
@@ -313,19 +323,6 @@ class ElementBase extends DataObject
         }
 
         return DBField::create_field('HTMLVarchar', implode($state, $separator));
-    }
-
-    public function isPublished()
-    {
-        if (!$this->hasExtension('Versioned')) return false;
-        if (!$this->isInDB()) return false;
-
-        $table = $this->class;
-        while (($p = get_parent_class($table)) !== 'DataObject')
-        {
-            $table = $p;
-        }
-        return (bool) DB::query("SELECT \"ID\" FROM \"{$table}_Live\" WHERE \"ID\" = {$this->ID}")->value();
     }
 
     public function getLanguages()

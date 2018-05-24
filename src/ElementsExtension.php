@@ -7,20 +7,25 @@ use SilverStripe\Forms\{
     FormAction
 };
 
-use \Config;
-use \Controller;
-use \ClassInfo;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Control\Controller;
+use SilverStripe\Core\ClassInfo;
 
 use SilverStripe\Forms\GridField\{
     GridField,
-    GridFieldConfig_RelationEditor
+    GridFieldDeleteAction,
+    GridFieldConfig_RelationEditor,
+    GridFieldPaginator,
+    GridFieldAddNewButton,
+    GridFieldDataColumns,
+    GridFieldAddExistingAutocompleter
 };
-// use \GridFieldConfig_RelationEditor;
-// use \GridFieldOrderableRows;
-// use \GridFieldDeleteAction;
+
+use Symbiote\GridFieldExtensions\GridFieldOrderableRows;
+use SilverStripe\Versioned\Versioned;
+
 // use \GridFieldAddNewMultiClass;
 // use \ElementBase;
-// use \Versioned;
 
 /**
  * Establishes multiple has_many elements relations, which can be set up via the config system
@@ -63,26 +68,33 @@ class ElementsExtension extends DataExtension
      * @param  string    $insertBefore      optional: insert before an other field
      * @return FieldList                    the altered fields
      */
-    public static function move_elements_manager(FieldList $fields, $relationName, $newTabName = 'Root.Main', $insertBefore = null)
+    public static function move_elements_manager(
+        FieldList $fields,
+        string $relationName,
+        string $newTabName = 'Root.Main',
+        string $insertBefore = null
+    ): FieldList
     {
         $itemsGf = $fields->dataFieldByName($relationName);
-        $fields->removeByName($relationName);
-        $fields->addFieldToTab($newTabName, $itemsGf, $insertBefore);
+        $fields
+            ->removeByName($relationName)
+            ->addFieldToTab($newTabName, $itemsGf, $insertBefore)
+        ;
+
         return $fields;
     }
 
-    public static function create_default_elements($record){
-
+    public static function create_default_elements(ElementBase $record): int
+    {
         $count = 0;
-
-        if (!$record || !$record->ID) {
+        if (!$record || !$record->ID)
+        {
             throw new SS_HTTPResponse_Exception("Bad record ID #" . (int)$data['ID'], 404);
         }
 
         if ($relationNames = ElementsExtension::page_element_relation_names($record))
         {
             $defaultElements = $record->getDefaultElements();
-
             if (count($relationNames) > 0)
             {
                 foreach ($relationNames as $relationName => $elementsClasses)
@@ -109,16 +121,23 @@ class ElementsExtension extends DataExtension
         return $count;
     }
 
-    public static function validate_class_inheritance($relation)
+    /**
+     * Check if all provied classes derive from ElementBase.
+     * @param  array  $relation
+     * @return array
+     */
+    public static function validate_class_inheritance(array $relation): array
     {
         return array_filter($relation, function($className)
         {
-            if (ClassInfo::exists($className) && (is_a(singleton($className), "ElementBase")))
-            {
+            if (
+                ClassInfo::exists($className)
+                && (is_a(singleton($className), ElementBase::class))
+            ) {
                 return $className;
-            } else {
-                user_error("Your element needs to extend from the ElementBase Class", E_USER_WARNING);
             }
+
+            // user_error("Your element needs to extend from the ElementBase Class", E_USER_WARNING);
         });
     }
 
@@ -152,7 +171,8 @@ class ElementsExtension extends DataExtension
         return $relations;
     }
 
-    public function defaultsCreated(){
+    public function defaultsCreated()
+    {
         $defaultElements = $this->getDefaultElements();
         $relationNames = ElementsExtension::page_element_relation_names($this->owner);
         if (count($relationNames) > 0)
@@ -214,12 +234,15 @@ class ElementsExtension extends DataExtension
     public function onAfterDelete()
     {
         $staged = Versioned::get_by_stage($this->owner->ClassName, 'Stage')
-            ->byID($this->owner->ID);
+            ->byID($this->owner->ID)
+        ;
 
         $live = Versioned::get_by_stage($this->owner->ClassName, 'Live')
-            ->byID($this->owner->ID);
+            ->byID($this->owner->ID)
+        ;
 
-        if(!$staged && !$live) {
+        if (!$staged && !$live)
+        {
             foreach($this->owner->Elements() as $element)
             {
                 $element->deleteFromStage('Live');
@@ -227,7 +250,6 @@ class ElementsExtension extends DataExtension
                 $element->delete();
             }
         }
-
         parent::onAfterDelete();
     }
 
@@ -239,14 +261,20 @@ class ElementsExtension extends DataExtension
         $this->publishElements($this->owner->Elements());
     }
 
-    private function publishElements($elements){
-        if($elements->Count()>0){
-            foreach($elements as $subelement)
+    private function publishElements($elements)
+    {
+        if ($elements->Count() > 0)
+        {
+            foreach($elements as $subElement)
             {
-                $subelement->write();
-                $subelement->publish('Stage', 'Live');
-                if($subelement->hasManyComponent('Elements')){
-                    $this->publishElements($subelement->Elements());
+                // \SilverStripe\Dev\Debug::dump($elements->Count());
+                // die;
+                // $subElement->write();
+                // $subElement->publish('Stage', 'Live');
+                $subElement->copyVersionToStage('Stage', 'Live');
+                if ($subElement->getSchema()->hasManyComponent(ElementBase::class, 'Elements'))
+                {
+                    $this->publishElements($subElement->Elements());
                 }
             }
         }
@@ -258,7 +286,7 @@ class ElementsExtension extends DataExtension
      * @param  string $relationName
      * @return DataList
      */
-    public function ElementsByRelation($relationName)
+    public function ElementsByRelation(string $relationName)
     {
         $filter = [ 'RelationName' => $relationName ];
         if (!ClassInfo::exists('Fluent')
@@ -280,14 +308,17 @@ class ElementsExtension extends DataExtension
      * @param  string    $relationName
      * @return DataObject
      */
-    public function gridFieldForElementRelation(FieldList $fields, $relationName, $relation)
-    {
+    public function gridFieldForElementRelation(
+        FieldList $fields,
+        $relationName,
+        $relation
+    ) {
         // sort relations
         asort($relation);
 
         $config = GridFieldConfig_RelationEditor::create()
-            ->removeComponentsByType('GridFieldDeleteAction')
-            ->removeComponentsByType('GridFieldAddExistingAutocompleter')
+            ->removeComponentsByType(GridFieldDeleteAction::class)
+            ->removeComponentsByType(GridFieldAddExistingAutocompleter::class)
             ->addComponent(new GridFieldOrderableRows('Sort'))
             ->addComponent(new GridFieldDeleteAction())
         ;
@@ -302,7 +333,7 @@ class ElementsExtension extends DataExtension
         if (count($relation) > 1)
         {
             $config
-                ->removeComponentsByType('GridFieldAddNewButton')
+                ->removeComponentsByType(GridFieldAddNewButton::class)
                 ->addComponent($multiClass = new GridFieldAddNewMultiClass())
             ;
 
@@ -310,7 +341,7 @@ class ElementsExtension extends DataExtension
         }
 
         $config
-            ->getComponentByType('GridFieldPaginator')
+            ->getComponentByType(GridFieldPaginator::class)
             ->setItemsPerPage(150)
         ;
 
@@ -332,7 +363,7 @@ class ElementsExtension extends DataExtension
         }
 
         $config
-            ->getComponentByType('GridFieldDataColumns')
+            ->getComponentByType(GridFieldDataColumns::class)
             ->setDisplayFields($columns)
         ;
 
@@ -366,12 +397,14 @@ class ElementsExtension extends DataExtension
         return $this->owner;
     }
 
-    public function updateStatusFlags(&$flags){
-        if(ElementBase::hasModifiedElement($this->owner->Elements())){
-            $flags['modified'] = array(
+    public function updateStatusFlags(&$flags)
+    {
+        if (ElementBase::has_modified_element($this->owner->Elements()))
+        {
+            $flags['modified'] = [
                 'text' => _t('SiteTree.MODIFIEDONDRAFTSHORT', 'Modified'),
                 'title' => _t('SiteTree.MODIFIEDONDRAFTHELP', 'Page has unpublished changes'),
-            );
+            ];
         }
     }
 }

@@ -15,8 +15,13 @@
       "email": "sf@arillo.net"
     }
   ],
+  "require": {
+    "silverstripe/framework": "^4",
+    "symbiote/silverstripe-gridfieldextensions": "^3"
+  },
   "extra": {
-    "installer-name": "elements"
+    "installer-name": "elements",
+    "expose": ["client"]
   },
   "autoload": {
     "psr-4": {

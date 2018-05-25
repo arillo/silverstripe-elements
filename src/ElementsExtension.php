@@ -380,6 +380,12 @@ class ElementsExtension extends DataExtension
         if (count($this->elementRelations) == 1) $tabName = "Root.Main";
 
         $label = _t("Element_Relations.{$relationName}", $relationName);
+
+        $config
+            ->getComponentByType(GridFieldDetailForm::class)
+            ->setItemRequestClass(Element_ItemRequest::class)
+        ;
+
         $fields->addFieldToTab(
             $tabName,
             $gridField = GridField::create(
@@ -392,10 +398,6 @@ class ElementsExtension extends DataExtension
 
         $gridField->addExtraClass('elements-gridfield');
 
-        $config
-            ->getComponentByType(GridFieldDetailForm::class)
-            ->setItemRequestClass(Element_ItemRequest::class)
-        ;
 
         if (count($relation) == 1) $gridField->setModelClass($relation[0]);
 

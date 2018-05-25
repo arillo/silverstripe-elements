@@ -198,9 +198,7 @@ class ElementBase extends DataObject implements CMSPreviewable
     {
         $relationName = Controller::curr()->request->param('FieldName');
 
-        $description = "<div class='cms-page-info'><b>{$this->i18n_singular_name()}</b> – ID: {$this->ID}";
-        $description .= " PageID: {$this->PageID} ElementID: {$this->ElementID}";
-
+        $description = "<div class='cms-page-info'><b>{$this->i18n_singular_name()} [{$this->ID}]</b>";
 
         if ($this->hasExtension(self::FLUENT_CLASS))
         {
@@ -208,11 +206,10 @@ class ElementBase extends DataObject implements CMSPreviewable
                 \TractorCow\Fluent\State\FluentState::singleton()->getLocale()
             );
 
-            $description .= " – Locale: <span class='element-state element-state-{$locale->URLSegment}'>{$locale->URLSegment}</span>";
+            $description .= " <span class='element-state element-state-{$locale->URLSegment}'>{$locale->URLSegment}</span>";
         }
 
-        $description .= " {$this->getStatusFlags('')} </div>";
-
+        $description .= "{$this->getStatusFlags('')} </div>";
 
         $fields->addFieldsToTab('Root.Main', [
             LiteralField::create('ClassNameDescription', $description),

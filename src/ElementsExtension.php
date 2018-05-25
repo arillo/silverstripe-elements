@@ -1,14 +1,14 @@
 <?php
 namespace Arillo\Elements;
 
-use SilverStripe\ORM\DataExtension;
+use SilverStripe\ORM\{
+    DataObject,
+    DataExtension
+};
 use SilverStripe\Forms\{
     FieldList,
     FormAction
 };
-
-use SilverStripe\Core\Config\Config;
-use SilverStripe\Core\ClassInfo;
 
 use SilverStripe\Forms\GridField\{
     GridField,
@@ -17,14 +17,21 @@ use SilverStripe\Forms\GridField\{
     GridFieldPaginator,
     GridFieldAddNewButton,
     GridFieldDataColumns,
-    GridFieldAddExistingAutocompleter
+    GridFieldAddExistingAutocompleter,
+    GridFieldDetailForm
 };
 
 use Symbiote\GridFieldExtensions\{
     GridFieldOrderableRows,
     GridFieldAddNewMultiClass
 };
-use SilverStripe\Versioned\Versioned;
+
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\ClassInfo;
+use SilverStripe\Versioned\{
+    Versioned,
+    VersionedGridFieldDetailForm
+};
 use SilverStripe\Admin\LeftAndMain;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
@@ -34,7 +41,7 @@ use SilverStripe\Control\Controller;
  * e.g:
  *   Page:
  *     extensions:
- *        - Arillo\Elements\ElementsExtension("Element")
+ *        - Arillo\Elements\ElementsExtension
  *     element_relations:
  *        Elements:
  *          - Element
@@ -59,7 +66,6 @@ class ElementsExtension extends DataExtension
      * @var string
      */
     protected $elementRelations;
-
 
     /**
      * Move an elements gridfield to an other tab.
@@ -119,7 +125,6 @@ class ElementsExtension extends DataExtension
                 }
             }
         }
-
         return $count;
     }
 
@@ -138,12 +143,11 @@ class ElementsExtension extends DataExtension
             ) {
                 return $className;
             }
-
-            // user_error("Your element needs to extend from the ElementBase Class", E_USER_WARNING);
+            user_error('Your element needs to extend from ' . ElementBase::class, E_USER_WARNING);
         });
     }
 
-    public static function map_classnames($elementClasses)
+    public static function map_classnames(array $elementClasses): array
     {
         $result = [];
         foreach ($elementClasses as $elementClass)
@@ -157,13 +161,13 @@ class ElementsExtension extends DataExtension
         return $result;
     }
 
-    public static function page_element_relation_names($page)
+    public static function page_element_relation_names(DataObject $record): array
     {
-        $relations = $page->uninherited('element_relations');
+        $relations = $record->uninherited('element_relations');
         if (!$relations) $relations = [];
 
-        // inherit relations from another PageType
-        if ($inherit_relations_from = $page->uninherited('element_relations_inherit_from'))
+        // inherit relations from another record type
+        if ($inherit_relations_from = $record->uninherited('element_relations_inherit_from'))
         {
             if ($inherit_relations = Config::inst()->get($inherit_relations_from, 'element_relations', Config::UNINHERITED))
             {
@@ -209,7 +213,11 @@ class ElementsExtension extends DataExtension
             $this->elementRelations = array_keys($relations);
             foreach ($relations as $key => $relation)
             {
-                $this->gridFieldForElementRelation($fields, $key, self::validate_class_inheritance($relation));
+                $this->gridFieldForElementRelation(
+                    $fields,
+                    $key,
+                    self::validate_class_inheritance($relation)
+                );
             }
         }
     }
@@ -235,11 +243,11 @@ class ElementsExtension extends DataExtension
      */
     public function onAfterDelete()
     {
-        $staged = Versioned::get_by_stage($this->owner->ClassName, 'Stage')
+        $staged = Versioned::get_by_stage($this->owner->ClassName, Versioned::DRAFT)
             ->byID($this->owner->ID)
         ;
 
-        $live = Versioned::get_by_stage($this->owner->ClassName, 'Live')
+        $live = Versioned::get_by_stage($this->owner->ClassName, Versioned::LIVE)
             ->byID($this->owner->ID)
         ;
 
@@ -247,8 +255,8 @@ class ElementsExtension extends DataExtension
         {
             foreach($this->owner->Elements() as $element)
             {
-                $element->deleteFromStage('Live');
-                $element->deleteFromStage('Stage');
+                $element->deleteFromStage(Versioned::LIVE);
+                $element->deleteFromStage(Versioned::DRAFT);
                 $element->delete();
             }
         }
@@ -384,6 +392,11 @@ class ElementsExtension extends DataExtension
 
         $gridField->addExtraClass('elements-gridfield');
 
+        $config
+            ->getComponentByType(GridFieldDetailForm::class)
+            ->setItemRequestClass(Element_ItemRequest::class)
+        ;
+
         if (count($relation) == 1) $gridField->setModelClass($relation[0]);
 
         if (count($this->elementRelations) > 1)
@@ -393,7 +406,6 @@ class ElementsExtension extends DataExtension
                 ->setTitle($label)
             ;
         }
-
         return $this->owner;
     }
 

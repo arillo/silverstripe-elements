@@ -3,26 +3,29 @@ namespace Arillo\Elements;
 
 use SilverStripe\ORM\{
     DataObject,
-    DataList
+    DataList,
+    CMSPreviewable
 };
-use SilverStripe\Versioned\Versioned;
+
 use SilverStripe\Forms\{
     CheckboxField,
     FieldList,
+    FormAction,
     LiteralField,
     HiddenField,
     TabSet,
     TextField
 };
 
+use SilverStripe\Versioned\Versioned;
 use SilverStripe\CMS\Model\SiteTree;
+use SilverStripe\CMS\Controllers\CMSPageEditController;
 use SilverStripe\Security\Permission;
 use SilverStripe\Control\Controller;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\View\Parsers\URLSegmentFilter;
 
- // implements CMSPreviewable
-class ElementBase extends DataObject
+class ElementBase extends DataObject implements CMSPreviewable
 {
     const FLUENT_CLASS = 'TractorCow\Fluent\Extension\FluentExtension';
 
@@ -66,9 +69,8 @@ class ElementBase extends DataObject
         ],
 
         $summary_fields = [
-            'ClassName',
-            'Title',
-            'StatusFlags'
+            'Title' => 'Title',
+            'StatusFlags' => 'Status',
         ],
 
         $defaults = [
@@ -165,7 +167,6 @@ class ElementBase extends DataObject
         return $this;
     }
 
-
     public function onAfterDelete()
     {
         parent::onAfterDelete();
@@ -188,7 +189,6 @@ class ElementBase extends DataObject
             $element->deleteFromStage(Versioned::DRAFT);
             $element->delete();
         }
-
     }
 
     public function addCMSFieldsHeader($fields)
@@ -276,34 +276,27 @@ class ElementBase extends DataObject
         return false;
     }
 
-    /**
-     * Remove Save & Publish to make the handling easier for the editor.
-     * Elements get published when the page gets published.
-     */
-    // public function getBetterButtonsActions()
-    // {
-    //     $fields = parent::getBetterButtonsActions();
-    //     if (is_a(Controller::curr(),'CMSPageEditController'))
-    //     {
-    //         $fields->removeByName('action_publish');
-    //     }
-    //     return $fields;
-    // }
+    public function getCMSActions()
+    {
+        $fields = parent::getCMSActions();
 
-    // public function getBetterButtonsUtils()
-    // {
-    //     $fields = parent::getBetterButtonsUtils();
-    //     if($this->ID && is_a(Controller::curr(),'CMSPageEditController') && ($this->stagesDiffer('Stage','Live') || $this->has_modified_element($this->Elements()))){
-    //         $fields->unshift($publish_action = BetterButtonCustomAction::create('publishPage', 'Publish page'));
-    //         $publish_action
-    //         ->addExtraClass("ss-ui-action-constructive")
-    //         ->setAttribute('data-icon', 'disk')
-    //         // ->setAttribute('data-icon', 'accept')
-    //         // ->setAttribute('data-icon-alternate', 'disk')
-    //         ->setAttribute('data-text-alternate', _t('SiteTree.BUTTONSAVEPUBLISH', 'Save & publish'));
-    //     }
-    //     return $fields;
-    // }
+        if (
+            $this->ID
+            && is_a(Controller::curr(), CMSPageEditController::class)
+            && ($this->stagesDiffer(Versioned::DRAFT,Versioned::LIVE)
+            || self::has_modified_element($this->Elements()))
+        ) {
+            $fields->push(
+                FormAction::create(
+                    'publishPage',
+                    _t(__CLASS__ . 'PublishPage', 'Publish page')
+                )
+                ->setUseButtonTag(true)
+                ->addExtraClass('btn action btn btn-primary font-icon-rocket')
+            );
+        }
+        return $fields;
+    }
 
     public function publishPage()
     {
@@ -394,8 +387,22 @@ class ElementBase extends DataObject
         return $this->Link();
     }
 
-    public function Render($IsPos = null, $IsFirst = null, $IsLast = null, $IsEvenOdd = null)
+    /**
+     * To determine preview mechanism (e.g. embedded / iframe)
+     *
+     * @return string
+     */
+    public function getMimeType()
     {
+        return 'embedded';
+    }
+
+    public function Render(
+        $IsPos = null,
+        $IsFirst = null,
+        $IsLast = null,
+        $IsEvenOdd = null
+    ) {
         $this->IsPos = $IsPos;
         $this->IsFirst = $IsFirst;
         $this->IsLast = $IsLast;
@@ -408,15 +415,22 @@ class ElementBase extends DataObject
     }
 
     /**
-     * @param $str
-     * @return Product|Boolean
+     * @param  string $class
+     * @param  string $str
+     * @param  int $excludeID
+     * @return bool
      */
-    protected function getByUrlSegment($class, $str, $excludeID = null) {
-        if (!isset(static::$_cached_get_by_url[$str])) {
+    protected function getByUrlSegment(
+        string $class,
+        string $str,
+        $excludeID = null
+    ): bool
+    {
+        if (!isset(static::$_cached_get_by_url[$str]))
+        {
             $list = $class::get()->filter('URLSegment', $str);
-            if ($excludeID) {
-                $list = $list->exclude('ID', $excludeID);
-            }
+            if ($excludeID) $list = $list->exclude('ID', $excludeID);
+
             $obj = $list->First();
             static::$_cached_get_by_url[$str] = ($obj && $obj->exists()) ? $obj : false;
         }
@@ -443,5 +457,4 @@ class ElementBase extends DataObject
     {
         return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
-
 }

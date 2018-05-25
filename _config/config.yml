@@ -1,5 +1,7 @@
 ---
-Name: elements
+Name: arillo-elements
+After:
+  - 'silverstripe/versioned'
 ---
 BetterButtonsActions:
   edit:

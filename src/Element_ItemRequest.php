@@ -22,10 +22,10 @@ class Element_ItemRequest extends VersionedGridFieldItemRequest
             $fields->merge($actions);
         }
 
-        if (is_a(Controller::curr(), CMSPageEditController::class))
-        {
-            $fields->removeByName('action_doPublish');
-        }
+        // if (is_a(Controller::curr(), CMSPageEditController::class))
+        // {
+        //     $fields->removeByName('action_doPublish');
+        // }
         return $fields;
     }
 

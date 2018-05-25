@@ -8,7 +8,6 @@ use SilverStripe\Forms\{
 };
 
 use SilverStripe\Core\Config\Config;
-use SilverStripe\Control\Controller;
 use SilverStripe\Core\ClassInfo;
 
 use SilverStripe\Forms\GridField\{
@@ -21,12 +20,14 @@ use SilverStripe\Forms\GridField\{
     GridFieldAddExistingAutocompleter
 };
 
-use Symbiote\GridFieldExtensions\GridFieldOrderableRows;
+use Symbiote\GridFieldExtensions\{
+    GridFieldOrderableRows,
+    GridFieldAddNewMultiClass
+};
 use SilverStripe\Versioned\Versioned;
 use SilverStripe\Admin\LeftAndMain;
-
-// use \GridFieldAddNewMultiClass;
-// use \ElementBase;
+use SilverStripe\CMS\Model\SiteTree;
+use SilverStripe\Control\Controller;
 
 /**
  * Establishes multiple has_many elements relations, which can be set up via the config system
@@ -85,7 +86,7 @@ class ElementsExtension extends DataExtension
         return $fields;
     }
 
-    public static function create_default_elements(ElementBase $record): int
+    public static function create_default_elements(SiteTree $record): int
     {
         $count = 0;
         if (!$record || !$record->ID)

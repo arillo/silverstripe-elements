@@ -21,7 +21,10 @@ use SilverStripe\Versioned\Versioned;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\CMS\Controllers\CMSPageEditController;
 use SilverStripe\Security\Permission;
-use SilverStripe\Control\Controller;
+use SilverStripe\Control\{
+    Controller,
+    Director
+};
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\View\Parsers\URLSegmentFilter;
 
@@ -374,7 +377,13 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     public function PreviewLink($action = null)
     {
-        return Controller::join_links(Director::baseURL(), 'cms-preview', 'show', $this->ClassName, $this->ID);
+        return Controller::join_links(
+            Director::baseURL(),
+            'cms-preview',
+            'show',
+            str_replace('\\', '-', $this->ClassName),
+            $this->ID
+        );
     }
 
     public function Link()

@@ -5,12 +5,20 @@
 
 Decorates a SiteTree class with multiple named element relations through a has_many "Elements" relation.
 
+### Requirements
+
+SilverStripe CMS ^4.0
+
+For a SilverStripe 3.x compatible version of this module, please see the [1 branch, or 0.x release line](https://github.com/arillo/silverstripe-elements/tree/1.x).
+
 ### Todo
-+ write tests
-+ write better docs
+
+* write tests
+* write better docs
 
 ### Usage
-Set up you relation types in your _config/elements.yml, e.g:
+
+Set up you relation types in your \_config/elements.yml, e.g:
 
 ```yml
 Page:
@@ -42,7 +50,6 @@ class Element extends ElementBase
 }
 ```
 
-
 In the SiteTree instance the element relations are now accessable through:
 
 ```php
@@ -51,13 +58,14 @@ $elementInst->ElementsByRelation('Elements');
 ```
 
 To use them in a template:
+
 ```html
 <% loop $ElementsByRelation(Elements) %>
   $Render($Pos, $First, $Last, $EvenOdd)
 <% end_loop %>
 ```
 
-__Notice:__ we pass in the $Pos, $First, $Last and $EvenOdd values to have them available inside the template as $IsPos, $IsFirst, $IsLast and $IsEvenOdd.
+**Notice:** we pass in the $Pos, $First, $Last and $EvenOdd values to have them available inside the template as $IsPos, $IsFirst, $IsLast and $IsEvenOdd.
 
 There is also a helper function to move a gridfield into another tab if you prefer:
 
@@ -72,6 +80,7 @@ public function getCMSFields()
 ```
 
 ### Nested Element relations
+
 Apply the same extension to the Element instead of the Page.
 
 ```yml
@@ -82,6 +91,7 @@ TeasersElement:
 ```
 
 ### Element inheritance
+
 If you would like to have the same elements applied to different Pagetypes you can use the `element_relations_inherit_from` definition referencing a arbitrary setup in the yml file. For example if we want the HomePage and the EventsPage to inherit the same elements we can define the .yml like this:
 
 ```yml
@@ -124,6 +134,7 @@ ElementBase:
 ```
 
 ### Translation
+
 Naming of `Tab` and `GridField` labels can be done through silverstripes i18n.
 There is a special key called `Element_Relations` reserved to accomplish this task, e.g. in de.yml:
 
@@ -134,7 +145,8 @@ de:
 ```
 
 ### Populate default elements
-A button below the Element GridField called "Create default elements" will populate the default elements defined in your _config.yml as empty elements in your page. If you trigger the action again it will counter-check against the already created elements and don't add any duplicates.
+
+A button below the Element GridField called "Create default elements" will populate the default elements defined in your \_config.yml as empty elements in your page. If you trigger the action again it will counter-check against the already created elements and don't add any duplicates.
 
 You can define the element_defaults for each of your relations like this:
 
@@ -149,6 +161,7 @@ Page:
 ```
 
 ### Fluent integration
+
 To use fluent with elements just add the Fluent extensions to the ElementBase:
 
 ```yml
@@ -157,7 +170,6 @@ ElementBase:
     - FluentExtension
     - FluentFilteredExtension
 ```
-
 
 ### Example: Bulkuploading with `colymba/gridfield-bulk-editing-tools`:
 
@@ -171,7 +183,7 @@ Install https://github.com/colymba/GridFieldBulkEditingTools
 composer require colymba/gridfield-bulk-editing-tools
 ```
 
-*(Watch out: grab a version fitting to you silverstripe version)*
+_(Watch out: grab a version fitting to you silverstripe version)_
 
 You might need a to add a helper method to quickly add the gridfield component like this:
 
@@ -200,7 +212,7 @@ public static function add_bulk_uploader(
         $gf->getConfig()
             ->addComponent((new GridFieldBulkUpload($assetRelationName, $elementClass))
                 // this is needed in onBulkUpload hook
-                ->setUfConfig('elementRelationName', $elementRelationName) 
+                ->setUfConfig('elementRelationName', $elementRelationName)
                 ->setUfSetup('setFolderName', $uploadFolder)
             )
         ;
@@ -227,10 +239,9 @@ class BulkUploadExtension extends Extension
         ;
     }
 }
-
 ```
 
-*(This is due to the way bulk editing tools work. Right now it only works with extension hooks. That might change in the future.)*
+_(This is due to the way bulk editing tools work. Right now it only works with extension hooks. That might change in the future.)_
 
 Then you can add the bulkuploader like this:
 
@@ -243,22 +254,27 @@ public function getCMSFields()
         $fields,
         'ImageElement', // element class to create
         'Images', // element relation to attach to
-        'Image', // asset relation 
+        'Image', // asset relation
         'home' // folder name
     );
     return $fields;
 }
 ```
 
-
 ## Changelog:
 
-### 0.2.0 
-- remove DefaultElementsExtension
-- add Publish page button in Element DetailForm
+### 2.0.0
 
-### 0.1.0 
-- remove extensions from your mysite/_config/elements.yml
+* SilverStripe 4 compat
+
+### 0.2.0
+
+* remove DefaultElementsExtension
+* add Publish page button in Element DetailForm
+
+### 0.1.0
+
+* remove extensions from your mysite/\_config/elements.yml
 
 ```yml
 ElementBase:

@@ -5,7 +5,7 @@ use SilverStripe\Versioned\VersionedGridFieldItemRequest;
 use SilverStripe\Control\Controller;
 use SilverStripe\CMS\Controllers\CMSPageEditController;
 
-class Element_ItemRequest extends VersionedGridFieldItemRequest
+class VersionedElement_ItemRequest extends VersionedGridFieldItemRequest
 {
     private static
         $allowed_actions = [
@@ -31,6 +31,7 @@ class Element_ItemRequest extends VersionedGridFieldItemRequest
 
     public function publishPage($data, $form)
     {
+        $this->record->write();
         $this->record->publishPage();
         return $this->respond();
     }

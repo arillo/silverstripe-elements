@@ -57,9 +57,15 @@ use SilverStripe\Control\Controller;
  */
 class ElementsExtension extends DataExtension
 {
-    private static $has_many = [
-        'Elements' => ElementBase::class
-    ];
+    private static
+        $has_many = [
+            'Elements' => ElementBase::class
+        ],
+
+        $owns = [
+            'Elements'
+        ]
+    ;
 
     /**
      * Holds parsed relations taking into consideration the inheritance.
@@ -266,7 +272,8 @@ class ElementsExtension extends DataExtension
     /**
      * Publish all related elements.
      */
-    public function onAfterPublish()
+    // public function onAfterPublish()
+    public function onAfterVersionedPublish()
     {
         $this->publishElements($this->owner->Elements());
     }
@@ -383,7 +390,7 @@ class ElementsExtension extends DataExtension
 
         $config
             ->getComponentByType(GridFieldDetailForm::class)
-            ->setItemRequestClass(Element_ItemRequest::class)
+            ->setItemRequestClass(VersionedElement_ItemRequest::class)
         ;
 
         $fields->addFieldToTab(

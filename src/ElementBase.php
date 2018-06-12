@@ -38,6 +38,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         $show_urlsegment_field = false,
 
         $table_name = 'Arillo_ElementBase',
+
         $extensions = [ Versioned::class ],
 
         $db = [
@@ -83,17 +84,13 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     protected $wasNew = false;
 
-    // private static $better_buttons_actions = array (
-    //     'publishPage'
-    // );
-
     public static function has_modified_element($elements)
     {
         if ($elements->Count() > 0)
         {
             foreach($elements as $element)
             {
-                if ($element->stagesDiffer('Stage','Live')) return true;
+                if ($element->stagesDiffer(Versioned::DRAFT, Versioned::LIVE)) return true;
                 if ($element->getSchema()->hasManyComponent(__CLASS__, 'Elements'))
                 {
                     ElementBase::has_modified_element($element->Elements());
@@ -198,7 +195,7 @@ class ElementBase extends DataObject implements CMSPreviewable
     {
         $relationName = Controller::curr()->request->param('FieldName');
 
-        $description = "<div class='cms-page-info'><b>{$this->i18n_singular_name()} [{$this->ID}]</b>";
+        $description = "<div class='cms-page-info'><b>{$this->i18n_singular_name()}&nbsp;[{$this->ID}]</b>&nbsp;";
 
         if ($this->hasExtension(self::FLUENT_CLASS))
         {
@@ -206,7 +203,7 @@ class ElementBase extends DataObject implements CMSPreviewable
                 \TractorCow\Fluent\State\FluentState::singleton()->getLocale()
             );
 
-            $description .= " <span class='element-state element-state-{$locale->URLSegment}'>{$locale->URLSegment}</span>";
+            $description .= " <span class='element-state element-state-{$locale->URLSegment}'>{$locale->URLSegment}</span> &nbsp;";
         }
 
         $description .= "{$this->getStatusFlags('')} </div>";

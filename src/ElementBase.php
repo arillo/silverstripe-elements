@@ -427,8 +427,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         string $class,
         string $str,
         $excludeID = null
-    ): bool
-    {
+    ) {
         if (!isset(static::$_cached_get_by_url[$str]))
         {
             $list = $class::get()->filter('URLSegment', $str);

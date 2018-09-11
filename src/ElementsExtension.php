@@ -339,7 +339,10 @@ class ElementsExtension extends DataExtension
 
         if ($this->owner->canEdit() && $this->owner->getDefaultElements())
         {
-            if (!$this->defaultsCreated()) {
+            if (
+                !$this->defaultsCreated()
+                && isset($this->owner->getDefaultElements()[$relationName])
+            ) {
                 $config->addComponent(new GridFieldDefaultElementsButton());
             }
         }

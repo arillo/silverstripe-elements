@@ -5,6 +5,7 @@ use SilverStripe\ORM\{
     DataObject,
     DataExtension
 };
+
 use SilverStripe\Forms\{
     FieldList,
     FormAction
@@ -52,8 +53,8 @@ use SilverStripe\Control\Controller;
  * Adds a getter function to access the elements by relation name
  *
  *   $pageInst->ElementsByRelation('Downloads');
- *
  * @package Arillo\Elements
+ *
  */
 class ElementsExtension extends DataExtension
 {
@@ -337,14 +338,14 @@ class ElementsExtension extends DataExtension
             ->addComponent(new GridFieldDeleteAction())
         ;
 
-        if ($this->owner->canEdit() && $this->owner->getDefaultElements())
-        {
-            if (
-                !$this->defaultsCreated()
-                && isset($this->owner->getDefaultElements()[$relationName])
-            ) {
-                $config->addComponent(new GridFieldDefaultElementsButton());
-            }
+        // attach default elements action
+        if (
+            $this->owner->canEdit()
+            && !$this->defaultsCreated()
+            && $this->owner->getDefaultElements()
+            && isset($this->owner->getDefaultElements()[$relationName])
+        ) {
+            $config->addComponent(new GridFieldDefaultElementsButton());
         }
 
         if (count($relation) > 1)

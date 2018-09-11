@@ -273,6 +273,25 @@ class ElementBase extends DataObject implements CMSPreviewable
         return false;
     }
 
+    /**
+     * Recursive look up for holder page.
+     */
+    public function getHolderPage()
+    {
+        if (!$this->PageID && !$this->ElementID) return null;
+
+        $holder = $this->getHolder();
+        while (
+            $holder
+            && $holder->exists()
+            && !is_a($holder, SiteTree::class)
+        ) {
+            $holder = $holder->getHolder();
+        }
+
+        return $holder;
+    }
+
     public function getCMSActions()
     {
         $fields = parent::getCMSActions();

@@ -40,6 +40,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         $table_name = 'Arillo_ElementBase',
 
         $extensions = [ Versioned::class ],
+        $versioned_gridfield_extensions = false,
 
         $db = [
             'Title' => 'Text',

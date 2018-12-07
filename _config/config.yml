@@ -2,6 +2,7 @@
 Name: arillo-elements
 After:
   - 'silverstripe/versioned'
+  - '#versionedgridfield'
 ---
 SilverStripe\Admin\LeftAndMain:
   extra_requirements_css:
@@ -14,3 +15,7 @@ Arillo\Elements\ElementBase:
 Page:
   extensions:
     - Arillo\Elements\ElementsExtension
+
+SilverStripe\Versioned\VersionedGridFieldItemRequest:
+  extensions:
+    - Arillo\Elements\VersionedGridFieldItemRequestExtension

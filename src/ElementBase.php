@@ -178,7 +178,7 @@ class ElementBase extends DataObject implements CMSPreviewable
 
         // Delete own element from live if called from GridFieldDeleteAction
         $this->deleteFromStage(Versioned::LIVE);
-        foreach($this->owner->Elements() as $element)
+        foreach ($this->owner->Elements() as $element)
         {
             $element->deleteFromStage(Versioned::LIVE);
             $element->deleteFromStage(Versioned::DRAFT);
@@ -186,6 +186,11 @@ class ElementBase extends DataObject implements CMSPreviewable
         }
     }
 
+    /**
+     * Type info for GridField usage.
+     *
+     * @return string
+     */
     public function getCMSTypeInfo()
     {
         $data = ArrayData::create([
@@ -213,11 +218,6 @@ class ElementBase extends DataObject implements CMSPreviewable
 
 
         return $data->renderWith('Arillo\\Elements\\TypeInfo');
-    }
-
-    public function getCMSSummary()
-    {
-        return $this->Title;
     }
 
     public function addCMSFieldsHeader($fields)
@@ -343,33 +343,9 @@ class ElementBase extends DataObject implements CMSPreviewable
         return $fields;
     }
 
-    public function publishPage()
-    {
-        $look = true;
-        $parent = $this;
-        while($look)
-        {
-            if ($parent = $parent->getHolder())
-            {
-                if (is_a($parent, SiteTree::class))
-                {
-                    $look = false;
-                }
-            } else {
-                $look = false;
-            }
-        }
-
-        if ($parent->doPublish())
-        {
-            return _t(__CLASS__ . '.PageAndElementsPublished', "Page & elements published");
-        }
-        return _t(__CLASS__ . '.PageAndElementsPublishError', "There was an error publishing the page");
-    }
-
     public function getType()
     {
-        return _t(__CLASS__ . '.SINGULARNAME', $this->singular_name());
+        return $this->i18n_singular_name();
     }
 
     public function getStatusFlags($separator = '<br>')
@@ -398,6 +374,15 @@ class ElementBase extends DataObject implements CMSPreviewable
         }
 
         return DBField::create_field('HTMLVarchar', implode($state, $separator));
+    }
+
+    /**
+     * Summary for GridField usage.
+     * @return string
+     */
+    public function getCMSSummary()
+    {
+        return $this->Title;
     }
 
     public function getLanguages()
@@ -448,6 +433,14 @@ class ElementBase extends DataObject implements CMSPreviewable
         return 'embedded';
     }
 
+    /**
+     * Render for template useage.
+     *
+     * @param int $IsPos
+     * @param bool $IsFirst
+     * @param bool $IsLast
+     * @param bool $IsEvenOdd
+     */
     public function Render(
         $IsPos = null,
         $IsFirst = null,
@@ -463,6 +456,33 @@ class ElementBase extends DataObject implements CMSPreviewable
             ->customise($this)
             ->renderWith($this->ClassName)
         ;
+    }
+
+    /**
+     * Publish holder page, trigger publish all sub elements.
+     */
+    public function publishPage()
+    {
+        $look = true;
+        $parent = $this;
+        while($look)
+        {
+            if ($parent = $parent->getHolder())
+            {
+                if (is_a($parent, SiteTree::class))
+                {
+                    $look = false;
+                }
+            } else {
+                $look = false;
+            }
+        }
+
+        if ($parent->doPublish())
+        {
+            return _t(__CLASS__ . '.PageAndElementsPublished', 'Page & elements published');
+        }
+        return _t(__CLASS__ . '.PageAndElementsPublishError', 'There was an error publishing the page');
     }
 
     /**
@@ -487,7 +507,6 @@ class ElementBase extends DataObject implements CMSPreviewable
         return static::$_cached_get_by_url[$str];
     }
 
-    // Permissions
     public function canView($member = null, $context = [])
     {
         return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);

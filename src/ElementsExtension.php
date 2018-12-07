@@ -99,6 +99,11 @@ class ElementsExtension extends DataExtension
         return $fields;
     }
 
+    /**
+     * Create_default elements , if setup via config @see self::getDefaultElements().
+     * @param  SiteTree $record
+     * @return int
+     */
     public static function create_default_elements(SiteTree $record): int
     {
         $count = 0;
@@ -184,6 +189,9 @@ class ElementsExtension extends DataExtension
         return $relations;
     }
 
+    /**
+     * @return bool
+     */
     public function defaultsCreated()
     {
         $defaultElements = $this->getDefaultElements();
@@ -195,7 +203,12 @@ class ElementsExtension extends DataExtension
                 if (isset($defaultElements[$relationName]))
                 {
                     $elementClasses = $defaultElements[$relationName];
-                    $definedElements = $this->owner->ElementsByRelation($relationName)->map('ClassName', 'ClassName');
+                    $definedElements = $this
+                        ->owner
+                        ->ElementsByRelation($relationName)
+                        ->map('ClassName', 'ClassName')
+                    ;
+
                     foreach ($elementClasses as $className)
                     {
                         if (!isset($definedElements[$className]))
@@ -229,6 +242,19 @@ class ElementsExtension extends DataExtension
         }
     }
 
+    /**
+     * Elements to generate withi create default elements action.
+     * Can be configured like this:
+     *   YourElement:
+     *     element_relations:
+     *       Elements:
+     *         - YourChildElement
+     *
+     *      element_defaults:
+     *        - YourChildElement
+     *
+     * @return array
+     */
     public function getDefaultElements()
     {
         $relations = $this->owner->uninherited('element_defaults');
@@ -273,7 +299,6 @@ class ElementsExtension extends DataExtension
     /**
      * Publish all related elements.
      */
-    // public function onAfterPublish()
     public function onAfterVersionedPublish()
     {
         $this->publishElements($this->owner->Elements());
@@ -364,15 +389,21 @@ class ElementsExtension extends DataExtension
         ;
 
         $columns = [
-            'StatusFlags' => 'Status',
-            'Type'=> 'Type',
-            'Title' => 'Title'
+            // 'StatusFlags' => 'Status',
+            'CMSTypeInfo' => 'Type',
+            'CMSSummary' => 'Summary'
         ];
 
         if ($this->owner->hasExtension(ElementBase::FLUENT_CLASS))
         {
             $columns['Languages'] = 'Lang';
         }
+
+
+        // \SilverStripe\Dev\Debug::show(singleton($relation[0])->summaryFields());
+        // \SilverStripe\Dev\Debug::show(singleton($relation[0]));
+
+        // die;
 
         if (count($relation) == 1
             && $summaryFields = singleton($relation[0])->summaryFields()

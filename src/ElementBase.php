@@ -17,6 +17,7 @@ use SilverStripe\Forms\{
     TextField
 };
 
+use SilverStripe\View\ArrayData;
 use SilverStripe\Versioned\Versioned;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\CMS\Controllers\CMSPageEditController;
@@ -28,6 +29,11 @@ use SilverStripe\Control\{
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\View\Parsers\URLSegmentFilter;
 
+/**
+ * Element base model.
+ *
+ * @package Arillo\Elements
+ */
 class ElementBase extends DataObject implements CMSPreviewable
 {
     const FLUENT_CLASS = 'TractorCow\Fluent\Extension\FluentExtension';
@@ -35,12 +41,13 @@ class ElementBase extends DataObject implements CMSPreviewable
     protected static $_cached_get_by_url = [];
 
     private static
-        $show_urlsegment_field = false,
-
         $table_name = 'Arillo_ElementBase',
-
         $extensions = [ Versioned::class ],
+
+        $show_urlsegment_field = false,
         $versioned_gridfield_extensions = false,
+
+        $icon = 'font-icon-box',
 
         $db = [
             'Title' => 'Text',
@@ -74,8 +81,8 @@ class ElementBase extends DataObject implements CMSPreviewable
         ],
 
         $summary_fields = [
-            'Title' => 'Title',
-            'StatusFlags' => 'Status',
+            'CMSTypeInfo' => 'Type',
+            'CMSSummary' => 'Summary'
         ],
 
         $defaults = [
@@ -83,8 +90,10 @@ class ElementBase extends DataObject implements CMSPreviewable
         ]
     ;
 
-    protected $wasNew = false;
-
+    /**
+     * @param  $elements
+     * @return boolean
+     */
     public static function has_modified_element($elements)
     {
         if ($elements->Count() > 0)
@@ -100,6 +109,11 @@ class ElementBase extends DataObject implements CMSPreviewable
         }
     }
 
+    /**
+     * Generate next Sort value on element creation.
+     *
+     * @return ElementBase
+     */
     public function generateElementSortForHolder()
     {
         if (!$this->Sort)
@@ -115,6 +129,9 @@ class ElementBase extends DataObject implements CMSPreviewable
         return $this;
     }
 
+    /**
+     * @return ElementBase
+     */
     public function generateUniqueURLSegment()
     {
         $filter = URLSegmentFilter::create();
@@ -139,33 +156,10 @@ class ElementBase extends DataObject implements CMSPreviewable
     public function onBeforeWrite()
     {
         parent::onBeforeWrite();
-        $this->wasNew = !$this->isInDB();
         $this
             ->generateUniqueURLSegment()
             ->generateElementSortForHolder()
         ;
-    }
-
-    public function onAfterWrite()
-    {
-        parent::onAfterWrite();
-        $this->populateLocales();
-
-    }
-
-    public function populateLocales()
-    {
-        if (
-            $this->wasNew
-            && $this->hasExtension(self::FLUENT_CLASS)
-        ) {
-            $locales = \TractorCow\Fluent\Model\Locale::get();
-            foreach ($locales as $locale)
-            {
-                $this->FilteredLocales()->add($locale);
-            }
-        }
-        return $this;
     }
 
     public function onAfterDelete()
@@ -190,6 +184,40 @@ class ElementBase extends DataObject implements CMSPreviewable
             $element->deleteFromStage(Versioned::DRAFT);
             $element->delete();
         }
+    }
+
+    public function getCMSTypeInfo()
+    {
+        $data = ArrayData::create([
+            'Icon' => $this->config()->icon,
+            'Type' => $this->getType(),
+        ]);
+
+        // Add versioned states (rendered as a circle over the icon)
+        if ($this->hasExtension(Versioned::class)) {
+            $data->IsVersioned = true;
+            if ($this->isOnDraftOnly()) {
+                $data->VersionState = 'draft';
+                $data->VersionStateTitle = _t(
+                    'SilverStripe\\Versioned\\VersionedGridFieldState\\VersionedGridFieldState.ADDEDTODRAFTHELP',
+                    'Item has not been published yet'
+                );
+            } elseif ($this->isModifiedOnDraft()) {
+                $data->VersionState = 'modified';
+                $data->VersionStateTitle = $data->VersionStateTitle = _t(
+                    'SilverStripe\\Versioned\\VersionedGridFieldState\\VersionedGridFieldState.MODIFIEDONDRAFTHELP',
+                    'Item has unpublished changes'
+                );
+            }
+        }
+
+
+        return $data->renderWith('Arillo\\Elements\\TypeInfo');
+    }
+
+    public function getCMSSummary()
+    {
+        return $this->Title;
     }
 
     public function addCMSFieldsHeader($fields)

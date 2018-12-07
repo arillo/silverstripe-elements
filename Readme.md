@@ -13,8 +13,8 @@ For a SilverStripe 3.x compatible version of this module, please see the [1 bran
 
 ### Todo
 
-* write tests
-* write better docs
+- write tests
+- write better docs
 
 ### Usage
 
@@ -117,7 +117,7 @@ If you inherit elements you can still create your custom relations and also appe
 ```yml
 HomePage:
   element_relations_inherit_from: MainElements
-  element_relations:
+  ? element_relations
   Elements:
     - ImageElement
 ```
@@ -141,7 +141,7 @@ There is a special key called `Element_Relations` reserved to accomplish this ta
 ```yml
 de:
   Element_Relations:
-    Downloads: 'Dateien'
+    Downloads: "Dateien"
 ```
 
 ### Populate default elements
@@ -173,18 +173,22 @@ ElementBase:
 
 ## Changelog:
 
+### 2.1.0
+
+- removed Fluent Locales auto-creation, use [`Arillo\Utils\FluentFilteredHelper`](https://github.com/arillo/silverstripe-utils/blob/master/src/FluentFilteredHelper.php) instead.
+
 ### 2.0.0
 
-* SilverStripe 4 compat
+- SilverStripe 4 compat
 
 ### 0.2.0
 
-* remove DefaultElementsExtension
-* add Publish page button in Element DetailForm
+- remove DefaultElementsExtension
+- add Publish page button in Element DetailForm
 
 ### 0.1.0
 
-* remove extensions from your mysite/\_config/elements.yml
+- remove extensions from your mysite/\_config/elements.yml
 
 ```yml
 ElementBase:

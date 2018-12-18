@@ -29,6 +29,9 @@ use SilverStripe\Control\{
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\View\Parsers\URLSegmentFilter;
 
+use SilverStripe\ORM\Queries\SQLDelete;
+use SilverStripe\Core\ClassInfo;
+
 /**
  * Element base model.
  *
@@ -169,7 +172,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         // since unpublishing an element also calls the onAfterDelete callback
         if (Versioned::get_reading_mode() !== Versioned::DRAFT)
         {
-            foreach($this->owner->Elements() as $element)
+            foreach($this->Elements() as $element)
             {
                 $element->deleteFromStage(Versioned::LIVE);
             }
@@ -178,7 +181,8 @@ class ElementBase extends DataObject implements CMSPreviewable
 
         // Delete own element from live if called from GridFieldDeleteAction
         $this->deleteFromStage(Versioned::LIVE);
-        foreach ($this->owner->Elements() as $element)
+
+        foreach($this->Elements() as $element)
         {
             $element->deleteFromStage(Versioned::LIVE);
             $element->deleteFromStage(Versioned::DRAFT);
@@ -216,8 +220,13 @@ class ElementBase extends DataObject implements CMSPreviewable
             }
         }
 
-
         return $data->renderWith('Arillo\\Elements\\TypeInfo');
+    }
+
+    public function onBeforeDelete()
+    {
+        parent::onBeforeDelete();
+        $this->deleteLocalisedRecords();
     }
 
     public function addCMSFieldsHeader($fields)
@@ -507,6 +516,65 @@ class ElementBase extends DataObject implements CMSPreviewable
         return static::$_cached_get_by_url[$str];
     }
 
+    /**
+     * Execute record deletion, even when localised records in non-current locale exist.
+     * @return ElementBase
+     */
+    public function deleteLocalisedRecords()
+    {
+        if ($this->hasExtension(self::FLUENT_CLASS))
+        {
+            $localisedTables = $this->getLocalisedTables();
+            $tableClasses = ClassInfo::ancestry($this->owner, true);
+
+            foreach ($tableClasses as $class)
+            {
+                $table = DataObject::getSchema()->tableName($class);
+
+                $rootTable = $this->getLocalisedTable($table);
+                $rootDelete = SQLDelete::create("\"{$rootTable}\"")
+                    ->addWhere(["\"{$rootTable}\".\"ID\"" => $this->ID]);
+
+                // If table isn't localised, simple delete
+                if (!isset($localisedTables[$table]))
+                {
+                    $baseTable = $this->getLocalisedTable($this->baseTable());
+
+                    // The base table isn't localised? Delete the record then.
+                    if ($baseTable === $rootTable)
+                    {
+                        $rootDelete->execute();
+                        continue;
+                    }
+
+                    $rootDelete
+                        ->setDelete("\"{$rootTable}\"")
+                        ->addLeftJoin(
+                            $baseTable,
+                            "\"{$rootTable}\".\"ID\" = \"{$baseTable}\".\"ID\""
+                        )
+                        // Only when join matches no localisations is it safe to delete
+                        ->addWhere("\"{$baseTable}\".\"ID\" IS NULL")
+                        ->execute();
+
+                    continue;
+                }
+
+                $localisedTable = $this->getLocalisedTable($table);
+                $localisedDelete = SQLDelete::create(
+                    "\"{$localisedTable}\"",
+                    [
+                        '"RecordID"' => $this->ID,
+                    ]
+                );
+                $localisedDelete->execute();
+            }
+        }
+
+        return $this;
+    }
+
+    // Permissions
     public function canView($member = null, $context = [])
     {
         return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);

@@ -7,6 +7,13 @@
 }
 
 /* =================================== */
+/* Type info */
+/* =================================== */
+
+.element-typeInfo {
+}
+
+/* =================================== */
 /* State pills */
 /* =================================== */
 
@@ -14,8 +21,8 @@
   color: #ffffff;
   background: #1f9433;
   display: inline-block;
-  padding: 3px 3px 1px 3px;
-  margin-right: 6px;
+  padding: 2px 3px;
+  margin: 0 3px;
   border-radius: 2px;
   font-size: 9px;
   text-transform: uppercase;
@@ -23,6 +30,7 @@
   text-shadow: none;
   line-height: 1;
   cursor: default;
+  font-weight: normal;
 }
 
 .element-state.inactive {
@@ -33,10 +41,11 @@
   background: #f46b00;
 }
 
-.cms-page-info {
-  margin-bottom: 10px;
-}
-
 .action_createdefaults {
   margin-top: 16px;
+}
+
+.element-icon {
+  vertical-align: middle;
+  display: inline-block;
 }

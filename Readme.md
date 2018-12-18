@@ -177,6 +177,8 @@ ElementBase:
 
 - removed Fluent Locales auto-creation, use [`Arillo\Utils\FluentFilteredHelper`](https://github.com/arillo/silverstripe-utils/blob/master/src/FluentFilteredHelper.php) instead.
 
+- refactor GridField overview display: added `getCMSTypeInfo` and `getCMSSummary` functions.
+
 ### 2.0.0
 
 - SilverStripe 4 compat

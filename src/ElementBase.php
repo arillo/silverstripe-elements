@@ -391,7 +391,7 @@ class ElementBase extends DataObject implements CMSPreviewable
      */
     public function getCMSSummary()
     {
-        return $this->Title;
+        return $this->renderWith('Arillo\Elements\ElementBaseSummary');
     }
 
     public function getLanguages()

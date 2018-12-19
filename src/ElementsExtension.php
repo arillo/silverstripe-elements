@@ -389,21 +389,14 @@ class ElementsExtension extends DataExtension
         ;
 
         $columns = [
-            // 'StatusFlags' => 'Status',
             'CMSTypeInfo' => 'Type',
-            'CMSSummary' => 'Summary'
+            'CMSSummary' => 'Summary',
         ];
 
         if ($this->owner->hasExtension(ElementBase::FLUENT_CLASS))
         {
             $columns['Languages'] = 'Lang';
         }
-
-
-        // \SilverStripe\Dev\Debug::show(singleton($relation[0])->summaryFields());
-        // \SilverStripe\Dev\Debug::show(singleton($relation[0]));
-
-        // die;
 
         if (count($relation) == 1
             && $summaryFields = singleton($relation[0])->summaryFields()

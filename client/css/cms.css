@@ -10,7 +10,15 @@
 /* Type info */
 /* =================================== */
 
-.element-typeInfo {
+.element-icon {
+  font-size: 20px;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.element-type {
+  display: inline-block;
+  margin-right: 5px;
 }
 
 /* =================================== */

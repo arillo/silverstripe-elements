@@ -40,6 +40,7 @@ use SilverStripe\Core\ClassInfo;
 class ElementBase extends DataObject implements CMSPreviewable
 {
     const FLUENT_CLASS = 'TractorCow\Fluent\Extension\FluentExtension';
+    const CMS_SUMMARY_TEMPLATE = 'Arillo\Elements\ElementBaseSummary';
 
     protected static $_cached_get_by_url = [];
 
@@ -391,7 +392,7 @@ class ElementBase extends DataObject implements CMSPreviewable
      */
     public function getCMSSummary()
     {
-        return $this->renderWith('Arillo\Elements\ElementBaseSummary');
+        return $this->renderWith(self::CMS_SUMMARY_TEMPLATE);
     }
 
     public function getLanguages()

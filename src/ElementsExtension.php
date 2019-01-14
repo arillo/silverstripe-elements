@@ -164,11 +164,7 @@ class ElementsExtension extends DataExtension
         $result = [];
         foreach ($elementClasses as $elementClass)
         {
-            $result[$elementClass] = $elementClass;
-            if ($label = singleton($elementClass)->stat('singular_name'))
-            {
-                $result[$elementClass] = $label;
-            }
+            $result[$elementClass] = singleton($elementClass)->getType();
         }
         return $result;
     }

@@ -136,11 +136,11 @@ class ElementBase extends DataObject implements CMSPreviewable
     /**
      * @return ElementBase
      */
-    public function generateUniqueURLSegment()
+    public function generateUniqueURLSegment($title = null)
     {
         $filter = URLSegmentFilter::create();
 
-        if (!$this->URLSegment) $this->URLSegment = $this->Title;
+        if (!$this->URLSegment) $this->URLSegment = $title ?? $this->Title;
 
         $this->URLSegment = $filter->filter($this->URLSegment);
 

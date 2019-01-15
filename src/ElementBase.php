@@ -249,7 +249,7 @@ class ElementBase extends DataObject implements CMSPreviewable
 
         $fields->addFieldsToTab('Root.Main', [
             LiteralField::create('ClassNameDescription', $description),
-            TextField::create('Title', _t('ElementBase.Title', 'Title'), null, 255),
+            TextField::create('Title', _t(__CLASS__ . '.Title', 'Title'), null, 255),
             HiddenField::create('RelationName', $relationName, $relationName)
         ]);
 
@@ -257,7 +257,8 @@ class ElementBase extends DataObject implements CMSPreviewable
         {
             $fields->addFieldsToTab(
                 'Root.Main',
-                TextField::create('URLSegment', _t(__CLASS__ . '.URLSegment', 'URLSegment'), null, 255)
+                ElementURLSegmentField::create('URLSegment', _t(__CLASS__ . '.URLSegment', 'Url-Segment'))
+                // TextField::create('URLSegment', _t(__CLASS__ . '.URLSegment', 'URLSegment'), null, 255)
             );
         }
 
@@ -294,7 +295,7 @@ class ElementBase extends DataObject implements CMSPreviewable
                     'Root.Main',
                     DropdownField::create(
                         'ClassName',
-                        _t('ElementBase.Typ', 'Type'),
+                        _t(__CLASS__ . '.ClassName', 'Type'),
                         ElementsExtension::map_classnames($relationNames[$elementRelation])
                     )
                 );

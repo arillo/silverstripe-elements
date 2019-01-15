@@ -385,13 +385,13 @@ class ElementsExtension extends DataExtension
         ;
 
         $columns = [
-            'CMSTypeInfo' => 'Type',
-            'CMSSummary' => 'Summary',
+            'CMSTypeInfo' => _t(__CLASS__ . '.CMSTypeInfo', 'Type'),
+            'CMSSummary' => _t(__CLASS__ . '.CMSSummary', 'Summary'),
         ];
 
         if ($this->owner->hasExtension(ElementBase::FLUENT_CLASS))
         {
-            $columns['Languages'] = 'Lang';
+            $columns['Languages'] = _t(__CLASS__ . '.Languages', 'Lang');
         }
 
         if (count($relation) == 1

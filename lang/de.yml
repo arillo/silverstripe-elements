@@ -1,0 +1,12 @@
+de:
+  Arillo\Elements\ElementsExtension:
+    CMSTypeInfo: 'Typ'
+    CMSSummary: 'Inhalt'
+    Languages: 'Sprachen'
+
+  Arillo\Elements\ElementBase:
+    ClassName: 'Typ'
+    Title: 'Titel'
+    MenuTitle: 'Menu-Titel'
+    URLSegment: 'URL-Segment'
+    ShowInMenu: 'In Menü anzeigen'

@@ -426,7 +426,7 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     public function Link()
     {
-        return $this->Page()->Link($this->URLSegment);
+        return $this->Page()->Link('#' . $this->URLSegment);
     }
 
     public function CMSEditLink()

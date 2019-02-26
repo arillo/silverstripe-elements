@@ -65,7 +65,15 @@ class ElementBase extends DataObject implements CMSPreviewable
             'ElementBase_ID_RelationName' => [
                 'type' => 'index',
                 'columns' => [ 'ID', 'RelationName' ],
-            ]
+            ],
+            'ElementBase_PageID_RelationName' => [
+                'type' => 'index',
+                'columns' => [ 'PageID', 'RelationName' ],
+            ],
+            'ElementBase_ElementID_RelationName' => [
+                'type' => 'index',
+                'columns' => [ 'ElementID', 'RelationName' ],
+            ],
         ],
 
         $has_one = [

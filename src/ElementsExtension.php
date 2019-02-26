@@ -267,30 +267,71 @@ class ElementsExtension extends DataExtension
         return $relations;
     }
 
+    public function onAfterRestoreToStage()
+    {
+        \SilverStripe\Dev\Debug::dump('onAfterRestoreToStage');
+        // parent::onAfterRevertToLive();
+        //
+        Versioned::get_by_stage(ElementBase::class, Versioned::DRAFT);
+    }
+
     /**
      * Remove all related elements
      */
     public function onAfterDelete()
     {
-        $staged = Versioned::get_by_stage($this->owner->ClassName, Versioned::DRAFT)
-            ->byID($this->owner->ID)
-        ;
+        // $staged = Versioned::get_by_stage(
+        //     $this->owner->ClassName,
+        //     Versioned::DRAFT
+        // )
+        //     ->byID($this->owner->ID)
+        // ;
 
-        $live = Versioned::get_by_stage($this->owner->ClassName, Versioned::LIVE)
-            ->byID($this->owner->ID)
-        ;
+        // $live = Versioned::get_by_stage(
+        //     $this->owner->ClassName,
+        //     Versioned::LIVE
+        // )
+        //     ->byID($this->owner->ID)
+        // ;
 
-        if (!$staged && !$live)
+        // if (!$staged && !$live)
+        // {
+        // }
+        foreach($this->owner->Elements() as $element)
         {
-            foreach($this->owner->Elements() as $element)
-            {
-                $element->deleteFromStage(Versioned::LIVE);
-                $element->deleteFromStage(Versioned::DRAFT);
-                $element->delete();
-            }
+            $element->deleteFromStage(Versioned::LIVE);
+            // $element->deleteFromStage(Versioned::DRAFT);
+            // $element->delete();
         }
         parent::onAfterDelete();
     }
+    // public function onAfterDelete()
+    // {
+    //     $staged = Versioned::get_by_stage(
+    //         $this->owner->ClassName,
+    //         Versioned::DRAFT
+    //     )
+    //         ->byID($this->owner->ID)
+    //     ;
+
+    //     $live = Versioned::get_by_stage(
+    //         $this->owner->ClassName,
+    //         Versioned::LIVE
+    //     )
+    //         ->byID($this->owner->ID)
+    //     ;
+
+    //     if (!$staged && !$live)
+    //     {
+    //         foreach($this->owner->Elements() as $element)
+    //         {
+    //             $element->deleteFromStage(Versioned::LIVE);
+    //             $element->deleteFromStage(Versioned::DRAFT);
+    //             // $element->delete();
+    //         }
+    //     }
+    //     parent::onAfterDelete();
+    // }
 
     /**
      * Publish all related elements.

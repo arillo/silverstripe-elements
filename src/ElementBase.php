@@ -186,10 +186,17 @@ class ElementBase extends DataObject implements CMSPreviewable
         foreach($this->Elements() as $element)
         {
             $element->deleteFromStage(Versioned::LIVE);
-            $element->deleteFromStage(Versioned::DRAFT);
-            $element->delete();
+            // $element->deleteFromStage(Versioned::DRAFT);
+            // $element->delete();
         }
     }
+
+    public function onBeforeDelete()
+    {
+        parent::onBeforeDelete();
+        $this->deleteLocalisedRecords();
+    }
+
 
     /**
      * Type info for GridField usage.
@@ -222,12 +229,6 @@ class ElementBase extends DataObject implements CMSPreviewable
         }
 
         return $data->renderWith('Arillo\\Elements\\TypeInfo');
-    }
-
-    public function onBeforeDelete()
-    {
-        parent::onBeforeDelete();
-        $this->deleteLocalisedRecords();
     }
 
     public function addCMSFieldsHeader($fields)

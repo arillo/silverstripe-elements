@@ -26,7 +26,7 @@
 /* =================================== */
 
 .element-summary:after {
-  content: "";
+  content: '';
   display: table;
   clear: both;
 }
@@ -48,6 +48,17 @@
 }
 
 .element-summary-txt {
+  padding-top: 5px;
+}
+
+.element-summary-txt .captionImage,
+.element-summary-txt img {
+  width: auto !important;
+  height: auto;
+  max-width: 100%;
+}
+
+.element-summary-txt .caption {
   padding-top: 5px;
 }
 

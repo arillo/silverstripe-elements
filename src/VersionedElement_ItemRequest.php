@@ -24,7 +24,11 @@ class VersionedElement_ItemRequest extends VersionedGridFieldItemRequest
 
     public function publishPage($data, $form)
     {
-        $this->record->write();
+        $this->record
+            ->update($data)
+            ->write()
+        ;
+
         $this->record->publishPage();
         return $this->respond();
     }

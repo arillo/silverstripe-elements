@@ -11,6 +11,7 @@ SilverStripe\Admin\LeftAndMain:
 Arillo\Elements\ElementBase:
   extensions:
     - Arillo\Elements\ElementsExtension
+    - Arillo\Elements\BulkUploadExtension
 
 Page:
   extensions:

@@ -60,8 +60,7 @@ $elementInst->ElementsByRelation('Elements');
 To use them in a template:
 
 ```html
-<% loop $ElementsByRelation(Elements) %>
-  $Render($Pos, $First, $Last, $EvenOdd)
+<% loop $ElementsByRelation(Elements) %> $Render($Pos, $First, $Last, $EvenOdd)
 <% end_loop %>
 ```
 
@@ -117,7 +116,7 @@ If you inherit elements you can still create your custom relations and also appe
 ```yml
 HomePage:
   element_relations_inherit_from: MainElements
-  ? element_relations
+  element_relations:
   Elements:
     - ImageElement
 ```
@@ -131,6 +130,37 @@ If you want to show the URLSegment field in the cms, you can opt-in via the conf
 ```yml
 ElementBase:
   show_urlsegment_field: true
+```
+
+### Bulkuploader
+
+There is support for using `Colymba\BulkUpload\BulkUploader` for an relation to a single element. E.g. given the following relation:
+
+```yml
+ImagesElement:
+  element_relations:
+    - ImageElement # an element with a has_one Image (Image) relation
+```
+
+you can apply a bulkuploader in `ImagesElement`:
+
+```php
+public function getCMSFields()
+    {
+        $fields = parent::getCMSFields();
+        if ($images = $fields->dataFieldByName('Images')) {
+            BulkUploader::apply(
+                $images,
+                [
+                    BulkUploader::ELEMENT_CLASSNAME => ImageElement::class,
+                    BulkUploader::ELEMENT_RELATIONNAME => 'Images',
+                    BulkUploader::FOLDER_NAME => 'FancyFolderName', // optional
+                    BulkUploader::FILE_RELATIONNAME => 'File',  // optional, may be mandatory if you element has multiple has_one file relations
+                ]
+            );
+        }
+        return $fields;
+    }
 ```
 
 ### Translation
@@ -172,6 +202,10 @@ ElementBase:
 ```
 
 ## Changelog:
+
+### 2.1.7
+
+- addded support for bulkuploading
 
 ### 2.1.0
 

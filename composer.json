@@ -18,7 +18,8 @@
   "require": {
     "silverstripe/framework": "^4",
     "arillo/silverstripe-dataobject-preview": "^2",
-    "symbiote/silverstripe-gridfieldextensions": "^3"
+    "symbiote/silverstripe-gridfieldextensions": "^3",
+    "colymba/gridfield-bulk-editing-tools": "dev-master"
   },
   "extra": {
     "installer-name": "elements",

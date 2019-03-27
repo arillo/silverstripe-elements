@@ -353,7 +353,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             $fields->push(
                 FormAction::create(
                     'publishPage',
-                    _t(__CLASS__ . 'PublishPage', 'Publish page')
+                    _t(__CLASS__ . '.PublishPage', 'Publish page')
                 )
                 ->setUseButtonTag(true)
                 ->addExtraClass('btn action btn btn-primary font-icon-rocket')

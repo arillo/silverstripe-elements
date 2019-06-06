@@ -392,6 +392,8 @@ class ElementsExtension extends DataExtension
         if ($this->owner->hasExtension(ElementBase::FLUENT_CLASS))
         {
             $columns['Languages'] = _t(__CLASS__ . '.Languages', 'Lang');
+        } else {
+            $columns['Visible'] = _t(__CLASS__ . '.Visible', 'Available');
         }
 
         if (count($relation) == 1

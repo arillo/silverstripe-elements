@@ -203,6 +203,10 @@ ElementBase:
 
 ## Changelog:
 
+### 2.1.9
+
+– added support for SS 4.4 GridFieldDetailForm::setShowAdd
+
 ### 2.1.8
 
 - addded support for bulkuploading

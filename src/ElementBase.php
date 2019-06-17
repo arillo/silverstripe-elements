@@ -242,7 +242,7 @@ class ElementBase extends DataObject implements CMSPreviewable
     {
         $relationName = Controller::curr()->request->param('FieldName');
 
-        $description = "<div class='alert alert-dark'>{$this->i18n_singular_name()} ({$this->ID}) &nbsp; –";
+        $description = "<div class='alert alert-dark'><i class='element-icon {$this->config()->icon}'></i> {$this->i18n_singular_name()} ({$this->ID}) &nbsp; –";
 
         if ($this->hasExtension(self::FLUENT_CLASS))
         {

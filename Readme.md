@@ -197,8 +197,8 @@ To use fluent with elements just add the Fluent extensions to the ElementBase:
 ```yml
 ElementBase:
   extensions:
-    - FluentExtension
-    - FluentFilteredExtension
+    - 'TractorCow\Fluent\Extension\FluentExtension'
+    - 'TractorCow\Fluent\Extension\FluentFilteredExtension'
 ```
 
 ## Changelog:

@@ -139,7 +139,7 @@ There is support for using `Colymba\BulkUpload\BulkUploader` for an relation to 
 ```yml
 ImagesElement:
   element_relations:
-    Elements:
+    Images:
       - ImageElement # an element with a has_one Image (Image) relation
 ```
 

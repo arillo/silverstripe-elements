@@ -146,6 +146,8 @@ ImagesElement:
 you can apply a bulkuploader in `ImagesElement`:
 
 ```php
+use Arillo\Elements\BulkUploader;
+
 public function getCMSFields()
     {
         $fields = parent::getCMSFields();

@@ -117,8 +117,8 @@ If you inherit elements you can still create your custom relations and also appe
 HomePage:
   element_relations_inherit_from: MainElements
   element_relations:
-  Elements:
-    - ImageElement
+    Elements:
+      - ImageElement
 ```
 
 In this example ImageElement is added to the list of available Elements defined in MainElements.
@@ -139,7 +139,8 @@ There is support for using `Colymba\BulkUpload\BulkUploader` for an relation to 
 ```yml
 ImagesElement:
   element_relations:
-    - ImageElement # an element with a has_one Image (Image) relation
+    Elements:
+      - ImageElement # an element with a has_one Image (Image) relation
 ```
 
 you can apply a bulkuploader in `ImagesElement`:

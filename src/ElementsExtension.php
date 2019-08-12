@@ -65,10 +65,6 @@ class ElementsExtension extends DataExtension
 
         $owns = [
             'Elements'
-        ],
-
-        $cascade_deletes = [
-            'Elements'
         ]
     ;
 

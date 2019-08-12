@@ -206,6 +206,14 @@ ElementBase:
 ### 2.1.9
 
 – added support for SS 4.4 GridFieldDetailForm::setShowAdd
+– removed 'onAfterDelete' hook, if you need auto deletion, add:
+
+```
+Arillo\Elements\ElementsExtension:
+  cascade_deletes:
+    - Elements
+
+```
 
 ### 2.1.8
 

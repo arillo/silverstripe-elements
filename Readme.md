@@ -117,8 +117,8 @@ If you inherit elements you can still create your custom relations and also appe
 HomePage:
   element_relations_inherit_from: MainElements
   element_relations:
-  Elements:
-    - ImageElement
+    Elements:
+      - ImageElement
 ```
 
 In this example ImageElement is added to the list of available Elements defined in MainElements.
@@ -139,12 +139,15 @@ There is support for using `Colymba\BulkUpload\BulkUploader` for an relation to 
 ```yml
 ImagesElement:
   element_relations:
-    - ImageElement # an element with a has_one Image (Image) relation
+    Images:
+      - ImageElement # an element with a has_one Image (Image) relation
 ```
 
 you can apply a bulkuploader in `ImagesElement`:
 
 ```php
+use Arillo\Elements\BulkUploader;
+
 public function getCMSFields()
     {
         $fields = parent::getCMSFields();
@@ -197,8 +200,8 @@ To use fluent with elements just add the Fluent extensions to the ElementBase:
 ```yml
 ElementBase:
   extensions:
-    - FluentExtension
-    - FluentFilteredExtension
+    - 'TractorCow\Fluent\Extension\FluentExtension'
+    - 'TractorCow\Fluent\Extension\FluentFilteredExtension'
 ```
 
 ## Changelog:

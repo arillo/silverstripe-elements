@@ -198,10 +198,19 @@ Page:
 To use fluent with elements just add the Fluent extensions to the ElementBase:
 
 ```yml
-ElementBase:
+Arillo\Elements\ElementBase:
   extensions:
     - 'TractorCow\Fluent\Extension\FluentVersionedExtension'
     - 'TractorCow\Fluent\Extension\FluentFilteredExtension'
+```
+
+### Options
+
+Use a tab instead of inline field when only one relation available
+
+```yml
+Arillo\Elements\ElementsExtension:
+  use_custom_tab: true
 ```
 
 ## Changelog:

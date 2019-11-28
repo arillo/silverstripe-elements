@@ -68,6 +68,8 @@ class ElementsExtension extends DataExtension
         ]
     ;
 
+    private static $use_custom_tab = false;
+
     /**
      * Holds parsed relations taking into consideration the inheritance.
      * @var string
@@ -385,7 +387,7 @@ class ElementsExtension extends DataExtension
         $tabName = "Root.{$relationName}";
 
         // if only one relation is set, add gridfield to main tab
-        if (count($this->elementRelations) == 1) $tabName = "Root.Main";
+        if (!$this->owner->config()->use_custom_tab && count($this->elementRelations) == 1) $tabName = "Root.Main";
 
         $label = _t("Element_Relations.{$relationName}", $relationName);
 

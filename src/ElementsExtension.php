@@ -1,41 +1,23 @@
 <?php
 namespace Arillo\Elements;
 
-use SilverStripe\ORM\{
-    DataObject,
-    DataExtension
-};
-
-use SilverStripe\Forms\{
-    FieldList,
-    FormAction
-};
-
-use SilverStripe\Forms\GridField\{
-    GridField,
-    GridFieldDeleteAction,
-    GridFieldConfig_RelationEditor,
-    GridFieldPaginator,
-    GridFieldAddNewButton,
-    GridFieldDataColumns,
-    GridFieldAddExistingAutocompleter,
-    GridFieldDetailForm
-};
-
-use Symbiote\GridFieldExtensions\{
-    GridFieldOrderableRows,
-    GridFieldAddNewMultiClass
-};
-
+use SilverStripe\Admin\LeftAndMain;use SilverStripe\CMS\Model\SiteTree;
+use SilverStripe\Control\Controller;use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
-use SilverStripe\Core\ClassInfo;
-use SilverStripe\Versioned\{
-    Versioned,
-    VersionedGridFieldDetailForm
-};
-use SilverStripe\Admin\LeftAndMain;
-use SilverStripe\CMS\Model\SiteTree;
-use SilverStripe\Control\Controller;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\GridField\GridField;
+use SilverStripe\Forms\GridField\GridFieldAddExistingAutocompleter;
+use SilverStripe\Forms\GridField\GridFieldAddNewButton;
+use SilverStripe\Forms\GridField\GridFieldConfig_RelationEditor;
+use SilverStripe\Forms\GridField\GridFieldDataColumns;
+use SilverStripe\Forms\GridField\GridFieldDeleteAction;
+use SilverStripe\Forms\GridField\GridFieldDetailForm;
+use SilverStripe\Forms\GridField\GridFieldPaginator;
+use SilverStripe\ORM\DataExtension;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\Versioned\Versioned;
+use Symbiote\GridFieldExtensions\GridFieldAddNewMultiClass;
+use Symbiote\GridFieldExtensions\GridFieldOrderableRows;
 
 /**
  * Establishes multiple has_many elements relations, which can be set up via the config system
@@ -58,15 +40,13 @@ use SilverStripe\Control\Controller;
  */
 class ElementsExtension extends DataExtension
 {
-    private static
-        $has_many = [
-            'Elements' => ElementBase::class
-        ],
+    private static $has_many = [
+        'Elements' => ElementBase::class,
+    ];
 
-        $owns = [
-            'Elements'
-        ]
-    ;
+    private static $owns = [
+        'Elements',
+    ];
 
     private static $use_custom_tab = false;
 
@@ -90,8 +70,7 @@ class ElementsExtension extends DataExtension
         string $relationName,
         string $newTabName = 'Root.Main',
         string $insertBefore = null
-    ): FieldList
-    {
+    ): FieldList {
         $itemsGf = $fields->dataFieldByName($relationName);
         $fields
             ->removeByName($relationName)
@@ -109,26 +88,19 @@ class ElementsExtension extends DataExtension
     public static function create_default_elements(SiteTree $record): int
     {
         $count = 0;
-        if (!$record || !$record->ID)
-        {
-            throw new SS_HTTPResponse_Exception("Bad record ID #" . (int)$data['ID'], 404);
+        if (!$record || !$record->ID) {
+            throw new SS_HTTPResponse_Exception("Bad record ID #" . (int) $data['ID'], 404);
         }
 
-        if ($relationNames = ElementsExtension::page_element_relation_names($record))
-        {
+        if ($relationNames = ElementsExtension::page_element_relation_names($record)) {
             $defaultElements = $record->getDefaultElements();
-            if (count($relationNames) > 0)
-            {
-                foreach ($relationNames as $relationName => $elementsClasses)
-                {
-                    if (isset($defaultElements[$relationName]))
-                    {
+            if (count($relationNames) > 0) {
+                foreach ($relationNames as $relationName => $elementsClasses) {
+                    if (isset($defaultElements[$relationName])) {
                         $elementClasses = $defaultElements[$relationName];
-                        foreach ($elementClasses as $className)
-                        {
+                        foreach ($elementClasses as $className) {
                             $definedElements = $record->ElementsByRelation($relationName)->map('ClassName', 'ClassName');
-                            if (!isset($definedElements[$className]))
-                            {
+                            if (!isset($definedElements[$className])) {
                                 $element = new $className;
                                 $element->populate('PageID', $record->ID, $relationName);
                                 $element->write();
@@ -149,8 +121,7 @@ class ElementsExtension extends DataExtension
      */
     public static function validate_class_inheritance(array $relation): array
     {
-        return array_filter($relation, function($className)
-        {
+        return array_filter($relation, function ($className) {
             if (
                 ClassInfo::exists($className)
                 && (is_a(singleton($className), ElementBase::class))
@@ -164,8 +135,7 @@ class ElementsExtension extends DataExtension
     public static function map_classnames(array $elementClasses): array
     {
         $result = [];
-        foreach ($elementClasses as $elementClass)
-        {
+        foreach ($elementClasses as $elementClass) {
             $result[$elementClass] = singleton($elementClass)->getType();
         }
         return $result;
@@ -174,13 +144,13 @@ class ElementsExtension extends DataExtension
     public static function page_element_relation_names(DataObject $record): array
     {
         $relations = $record->uninherited('element_relations');
-        if (!$relations) $relations = [];
+        if (!$relations) {
+            $relations = [];
+        }
 
         // inherit relations from another record type
-        if ($inherit_relations_from = $record->uninherited('element_relations_inherit_from'))
-        {
-            if ($inherit_relations = Config::inst()->get($inherit_relations_from, 'element_relations', Config::UNINHERITED))
-            {
+        if ($inherit_relations_from = $record->uninherited('element_relations_inherit_from')) {
+            if ($inherit_relations = Config::inst()->get($inherit_relations_from, 'element_relations', Config::UNINHERITED)) {
                 $relations = array_merge_recursive($relations, $inherit_relations);
             }
         }
@@ -194,12 +164,9 @@ class ElementsExtension extends DataExtension
     {
         $defaultElements = $this->getDefaultElements();
         $relationNames = ElementsExtension::page_element_relation_names($this->owner);
-        if (count($relationNames) > 0)
-        {
-            foreach ($relationNames as $relationName => $elementsClasses)
-            {
-                if (isset($defaultElements[$relationName]))
-                {
+        if (count($relationNames) > 0) {
+            foreach ($relationNames as $relationName => $elementsClasses) {
+                if (isset($defaultElements[$relationName])) {
                     $elementClasses = $defaultElements[$relationName];
                     $definedElements = $this
                         ->owner
@@ -207,10 +174,8 @@ class ElementsExtension extends DataExtension
                         ->map('ClassName', 'ClassName')
                     ;
 
-                    foreach ($elementClasses as $className)
-                    {
-                        if (!isset($definedElements[$className]))
-                        {
+                    foreach ($elementClasses as $className) {
+                        if (!isset($definedElements[$className])) {
                             return false;
                         }
                     }
@@ -222,15 +187,15 @@ class ElementsExtension extends DataExtension
 
     public function updateCMSFields(FieldList $fields)
     {
-        if (!$this->owner->exists()) return;
+        if (!$this->owner->exists()) {
+            return;
+        }
 
         $relations = ElementsExtension::page_element_relation_names($this->owner);
 
-        if ($relations)
-        {
+        if ($relations) {
             $this->elementRelations = array_keys($relations);
-            foreach ($relations as $key => $relation)
-            {
+            foreach ($relations as $key => $relation) {
                 $this->gridFieldForElementRelation(
                     $fields,
                     $key,
@@ -256,13 +221,13 @@ class ElementsExtension extends DataExtension
     public function getDefaultElements()
     {
         $relations = $this->owner->uninherited('element_defaults');
-        if (!$relations) $relations = [];
+        if (!$relations) {
+            $relations = [];
+        }
 
         // inherit relations from another PageType
-        if ($inherit_relations_from = $this->owner->uninherited('element_relations_inherit_from'))
-        {
-            if ($inherit_relations = Config::inst()->get($inherit_relations_from, 'element_defaults', Config::UNINHERITED))
-            {
+        if ($inherit_relations_from = $this->owner->uninherited('element_relations_inherit_from')) {
+            if ($inherit_relations = Config::inst()->get($inherit_relations_from, 'element_defaults', Config::UNINHERITED)) {
                 $relations = array_merge_recursive($relations, $inherit_relations);
             }
         }
@@ -279,13 +244,10 @@ class ElementsExtension extends DataExtension
 
     private function publishElements($elements)
     {
-        if ($elements->Count() > 0)
-        {
-            foreach($elements as $subElement)
-            {
+        if ($elements->Count() > 0) {
+            foreach ($elements as $subElement) {
                 $subElement->copyVersionToStage(Versioned::DRAFT, Versioned::LIVE);
-                if ($subElement->getSchema()->hasManyComponent(ElementBase::class, 'Elements'))
-                {
+                if ($subElement->getSchema()->hasManyComponent(ElementBase::class, 'Elements')) {
                     $this->publishElements($subElement->Elements());
                 }
             }
@@ -300,9 +262,9 @@ class ElementsExtension extends DataExtension
      */
     public function ElementsByRelation(string $relationName)
     {
-        $filter = [ 'RelationName' => $relationName ];
+        $filter = ['RelationName' => $relationName];
         if (
-            $this->owner->hasExtension(ElementBase::FLUENT_CLASS)
+            !$this->owner->hasExtension(ElementBase::FLUENT_CLASS)
             && !is_a(Controller::curr(), LeftAndMain::class)
         ) {
             $filter['Visible'] = true;
@@ -346,8 +308,7 @@ class ElementsExtension extends DataExtension
             $config->addComponent(new GridFieldDefaultElementsButton());
         }
 
-        if (count($relation) > 1)
-        {
+        if (count($relation) > 1) {
             $config
                 ->removeComponentsByType(GridFieldAddNewButton::class)
                 ->addComponent($multiClass = new GridFieldAddNewMultiClass())
@@ -366,8 +327,7 @@ class ElementsExtension extends DataExtension
             'CMSSummary' => _t(__CLASS__ . '.CMSSummary', 'Summary'),
         ];
 
-        if ($this->owner->hasExtension(ElementBase::FLUENT_CLASS))
-        {
+        if ($this->owner->hasExtension(ElementBase::FLUENT_CLASS)) {
             $columns['Languages'] = _t(__CLASS__ . '.Languages', 'Lang');
         } else {
             $columns['Visible'] = _t(__CLASS__ . '.Visible', 'Available');
@@ -387,7 +347,9 @@ class ElementsExtension extends DataExtension
         $tabName = "Root.{$relationName}";
 
         // if only one relation is set, add gridfield to main tab
-        if (!$this->owner->config()->use_custom_tab && count($this->elementRelations) == 1) $tabName = "Root.Main";
+        if (!$this->owner->config()->use_custom_tab && count($this->elementRelations) == 1) {
+            $tabName = "Root.Main";
+        }
 
         $label = _t("Element_Relations.{$relationName}", $relationName);
 
@@ -406,14 +368,15 @@ class ElementsExtension extends DataExtension
 
         $gridField->addExtraClass('elements-gridfield');
 
-        if (count($relation) == 1) $gridField->setModelClass($relation[0]);
-        if (count($relation) > 1 && $detailForm->hasMethod('setShowAdd'))
-        {
+        if (count($relation) == 1) {
+            $gridField->setModelClass($relation[0]);
+        }
+
+        if (count($relation) > 1 && $detailForm->hasMethod('setShowAdd')) {
             $detailForm->setShowAdd(false);
         }
 
-        if (count($this->elementRelations) > 1)
-        {
+        if (count($this->elementRelations) > 1) {
             $fields
                 ->findOrMakeTab($tabName)
                 ->setTitle($label)
@@ -424,8 +387,7 @@ class ElementsExtension extends DataExtension
 
     public function updateStatusFlags(&$flags)
     {
-        if (ElementBase::has_modified_element($this->owner->Elements()))
-        {
+        if (ElementBase::has_modified_element($this->owner->Elements())) {
             $flags['modified'] = [
                 'text' => _t('SiteTree.MODIFIEDONDRAFTSHORT', 'Modified'),
                 'title' => _t('SiteTree.MODIFIEDONDRAFTHELP', 'Page has unpublished changes'),

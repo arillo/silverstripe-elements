@@ -1,36 +1,23 @@
 <?php
 namespace Arillo\Elements;
 
-use SilverStripe\ORM\{
-    DataObject,
-    DataList,
-    CMSPreviewable
-};
-
-use SilverStripe\Forms\{
-    CheckboxField,
-    FieldList,
-    FormAction,
-    LiteralField,
-    HiddenField,
-    TabSet,
-    TextField
-};
-
-use SilverStripe\View\ArrayData;
-use SilverStripe\Versioned\Versioned;
-use SilverStripe\CMS\Model\SiteTree;
-use SilverStripe\CMS\Controllers\CMSPageEditController;
+use SilverStripe\CMS\Controllers\CMSPageEditController;use SilverStripe\CMS\Model\SiteTree;
+use SilverStripe\Control\Controller;
+use SilverStripe\Control\Director;use SilverStripe\Core\ClassInfo;
+use SilverStripe\Forms\CheckboxField;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\FormAction;
+use SilverStripe\Forms\HiddenField;
+use SilverStripe\Forms\LiteralField;
+use SilverStripe\Forms\TabSet;
+use SilverStripe\Forms\TextField;
+use SilverStripe\ORM\CMSPreviewable;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\FieldType\DBField;use SilverStripe\ORM\Queries\SQLDelete;
 use SilverStripe\Security\Permission;
-use SilverStripe\Control\{
-    Controller,
-    Director
-};
-use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\Versioned\Versioned;
+use SilverStripe\View\ArrayData;
 use SilverStripe\View\Parsers\URLSegmentFilter;
-
-use SilverStripe\ORM\Queries\SQLDelete;
-use SilverStripe\Core\ClassInfo;
 
 /**
  * Element base model.
@@ -39,68 +26,66 @@ use SilverStripe\Core\ClassInfo;
  */
 class ElementBase extends DataObject implements CMSPreviewable
 {
-    const FLUENT_CLASS = 'TractorCow\Fluent\Extension\FluentExtension';
+    const FLUENT_CLASS = 'TractorCow\Fluent\Extension\FluentVersionedExtension';
     const CMS_SUMMARY_TEMPLATE = 'Arillo\Elements\ElementBaseSummary';
 
     protected static $_cached_get_by_url = [];
 
-    private static
-        $table_name = 'Arillo_ElementBase',
-        $extensions = [ Versioned::class ],
+    private static $table_name = 'Arillo_ElementBase';
+    private static $extensions = [Versioned::class];
 
-        $show_urlsegment_field = false,
-        $versioned_gridfield_extensions = false,
+    private static $show_urlsegment_field = false;
+    private static $versioned_gridfield_extensions = false;
 
-        $icon = 'font-icon-box',
+    private static $icon = 'font-icon-box';
 
-        $db = [
-            'Title' => 'Text',
-            'URLSegment' => 'Varchar(255)',
-            'RelationName' => 'Varchar(255)',
-            'Visible' => 'Boolean(1)',
-            'Sort' => 'Int'
+    private static $db = [
+        'Title' => 'Text',
+        'URLSegment' => 'Varchar(255)',
+        'RelationName' => 'Varchar(255)',
+        'Visible' => 'Boolean(1)',
+        'Sort' => 'Int',
+    ];
+
+    private static $indexes = [
+        'ElementBase_ID_RelationName' => [
+            'type' => 'index',
+            'columns' => ['ID', 'RelationName'],
         ],
-
-        $indexes = [
-            'ElementBase_ID_RelationName' => [
-                'type' => 'index',
-                'columns' => [ 'ID', 'RelationName' ],
-            ],
-            'ElementBase_PageID_RelationName' => [
-                'type' => 'index',
-                'columns' => [ 'PageID', 'RelationName' ],
-            ],
-            'ElementBase_ElementID_RelationName' => [
-                'type' => 'index',
-                'columns' => [ 'ElementID', 'RelationName' ],
-            ],
+        'ElementBase_PageID_RelationName' => [
+            'type' => 'index',
+            'columns' => ['PageID', 'RelationName'],
         ],
-
-        $has_one = [
-            'Page' => SiteTree::class,
-            'Element' => ElementBase::class
+        'ElementBase_ElementID_RelationName' => [
+            'type' => 'index',
+            'columns' => ['ElementID', 'RelationName'],
         ],
+    ];
 
-        $default_sort = 'Sort ASC',
+    private static $has_one = [
+        'Page' => SiteTree::class,
+        'Element' => ElementBase::class,
+    ];
 
-        $translate = [
-            'Title'
-        ],
+    private static $default_sort = 'Sort ASC';
 
-        $searchable_fields = [
-            'ClassName',
-            'URLSegment'
-        ],
+    private static $translate = [
+        'Title',
+    ];
 
-        $summary_fields = [
-            'CMSTypeInfo' => 'Type',
-            'CMSSummary' => 'Summary'
-        ],
+    private static $searchable_fields = [
+        'ClassName',
+        'URLSegment',
+    ];
 
-        $defaults = [
-            'Visible' => true
-        ]
-    ;
+    private static $summary_fields = [
+        'CMSTypeInfo' => 'Type',
+        'CMSSummary' => 'Summary',
+    ];
+
+    private static $defaults = [
+        'Visible' => true,
+    ];
 
     /**
      * @param  $elements
@@ -108,13 +93,13 @@ class ElementBase extends DataObject implements CMSPreviewable
      */
     public static function has_modified_element($elements)
     {
-        if ($elements->Count() > 0)
-        {
-            foreach($elements as $element)
-            {
-                if ($element->stagesDiffer(Versioned::DRAFT, Versioned::LIVE)) return true;
-                if ($element->getSchema()->hasManyComponent(__CLASS__, 'Elements'))
-                {
+        if ($elements->Count() > 0) {
+            foreach ($elements as $element) {
+                if ($element->stagesDiffer(Versioned::DRAFT, Versioned::LIVE)) {
+                    return true;
+                }
+
+                if ($element->getSchema()->hasManyComponent(__CLASS__, 'Elements')) {
                     ElementBase::has_modified_element($element->Elements());
                 }
             }
@@ -128,10 +113,11 @@ class ElementBase extends DataObject implements CMSPreviewable
      */
     public function generateElementSortForHolder()
     {
-        if (!$this->Sort)
-        {
+        if (!$this->Sort) {
             $holderFilter = ['PageID' => $this->PageID];
-            if ($this->ElementID) $holderFilter = ['ElementID' => $this->ElementID];
+            if ($this->ElementID) {
+                $holderFilter = ['ElementID' => $this->ElementID];
+            }
 
             $this->Sort = self::get()
                 ->filter($holderFilter)
@@ -148,17 +134,20 @@ class ElementBase extends DataObject implements CMSPreviewable
     {
         $filter = URLSegmentFilter::create();
 
-        if (!$this->URLSegment) $this->URLSegment = $title ?? $this->Title;
+        if (!$this->URLSegment) {
+            $this->URLSegment = $title ?? $this->Title;
+        }
 
         $this->URLSegment = $filter->filter($this->URLSegment);
 
-        if (!$this->URLSegment) $this->URLSegment = uniqid();
+        if (!$this->URLSegment) {
+            $this->URLSegment = uniqid();
+        }
 
         $count = 2;
 
         // add a -n to the URLSegment if it already existed
-        while ($this->getByUrlSegment(__CLASS__, $this->URLSegment, $this->ID))
-        {
+        while ($this->getByUrlSegment(__CLASS__, $this->URLSegment, $this->ID)) {
             $this->URLSegment = preg_replace('/-[0-9]+$/', null, $this->URLSegment) . '-' . $count;
             $count++;
         }
@@ -219,13 +208,12 @@ class ElementBase extends DataObject implements CMSPreviewable
 
         $description = "<div class='alert alert-dark'><i class='element-icon {$this->config()->icon}'></i> {$this->i18n_singular_name()} ({$this->ID}) &nbsp; –";
 
-        if ($this->hasExtension(self::FLUENT_CLASS))
-        {
+        if ($this->hasExtension(self::FLUENT_CLASS)) {
             $locale = $this->LocaleInformation(
                 \TractorCow\Fluent\State\FluentState::singleton()->getLocale()
             );
 
-                $description .= "&nbsp; <span class='element-state element-state-{$locale->URLSegment}'>{$locale->URLSegment}</span> &nbsp;";
+            $description .= "&nbsp; <span class='element-state element-state-{$locale->URLSegment}'>{$locale->URLSegment}</span> &nbsp;";
         }
 
         $description .= "{$this->getStatusFlags('')} </div>";
@@ -233,11 +221,10 @@ class ElementBase extends DataObject implements CMSPreviewable
         $fields->addFieldsToTab('Root.Main', [
             LiteralField::create('ClassNameDescription', $description),
             TextField::create('Title', _t(__CLASS__ . '.Title', 'Title'), null, 255),
-            HiddenField::create('RelationName', $relationName, $relationName)
+            HiddenField::create('RelationName', $relationName, $relationName),
         ]);
 
-        if ($this->config()->show_urlsegment_field)
-        {
+        if ($this->config()->show_urlsegment_field) {
             $fields->addFieldsToTab(
                 'Root.Main',
                 ElementURLSegmentField::create('URLSegment', _t(__CLASS__ . '.URLSegment', 'Url-Segment'))
@@ -245,8 +232,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             );
         }
 
-        if (!$this->hasExtension(self::FLUENT_CLASS))
-        {
+        if (!$this->hasExtension(self::FLUENT_CLASS)) {
             $fields->addFieldToTab(
                 'Root.Main',
                 CheckboxField::create('Visible', _t(__CLASS__ . '.Visible', 'Is element visible'))
@@ -272,8 +258,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             && $elementRelation = Controller::curr()->request->param('FieldName')
         ) {
             $relationNames = ElementsExtension::page_element_relation_names($this->Page());
-            if (isset($relationNames[$elementRelation]))
-            {
+            if (isset($relationNames[$elementRelation])) {
                 $fields->addFieldToTab(
                     'Root.Main',
                     DropdownField::create(
@@ -291,8 +276,14 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     public function getHolder()
     {
-        if ($this->Element()->exists()) return $this->Element();
-        if ($this->Page()->exists()) return $this->Page();
+        if ($this->Element()->exists()) {
+            return $this->Element();
+        }
+
+        if ($this->Page()->exists()) {
+            return $this->Page();
+        }
+
         return false;
     }
 
@@ -301,7 +292,9 @@ class ElementBase extends DataObject implements CMSPreviewable
      */
     public function getHolderPage()
     {
-        if (!$this->PageID && !$this->ElementID) return null;
+        if (!$this->PageID && !$this->ElementID) {
+            return null;
+        }
 
         $holder = $this->getHolder();
         while (
@@ -322,16 +315,16 @@ class ElementBase extends DataObject implements CMSPreviewable
         if (
             $this->ID
             && is_a(Controller::curr(), CMSPageEditController::class)
-            && ($this->stagesDiffer(Versioned::DRAFT,Versioned::LIVE)
-            || self::has_modified_element($this->Elements()))
+            && ($this->stagesDiffer(Versioned::DRAFT, Versioned::LIVE)
+                || self::has_modified_element($this->Elements()))
         ) {
             $fields->push(
                 FormAction::create(
                     'publishPage',
                     _t(__CLASS__ . '.PublishPage', 'Publish page')
                 )
-                ->setUseButtonTag(true)
-                ->addExtraClass('btn action btn btn-primary font-icon-rocket')
+                    ->setUseButtonTag(true)
+                    ->addExtraClass('btn action btn btn-primary font-icon-rocket')
             );
         }
         return $fields;
@@ -352,19 +345,27 @@ class ElementBase extends DataObject implements CMSPreviewable
         $notVisible = _t(__CLASS__ . '.State_hidden', 'hidden');
 
         $state[] = $this->isPublished()
-            ? "<span class='element-state active'>{$published}</span>"
-            : "<span class='element-state modified'>{$draft}</span>"
+        ? "<span class='element-state active'>{$published}</span>"
+        : "<span class='element-state modified'>{$draft}</span>"
         ;
 
-        if ($this->stagesDiffer('Stage', 'Live')) $modified = true;
+        if ($this->stagesDiffer('Stage', 'Live')) {
+            $modified = true;
+        }
 
-        if (ElementBase::has_modified_element($this->owner->Elements())) $modified = true;
+        if (ElementBase::has_modified_element($this->owner->Elements())) {
+            $modified = true;
+        }
 
-        if ($modified) $state[] = "<span class='element-state modified'>{$modifiedContent}</span>";
+        if ($modified) {
+            $state[] = "<span class='element-state modified'>{$modifiedContent}</span>";
+        }
 
-        if (!$this->hasExtension(self::FLUENT_CLASS))
-        {
-            if (!$this->Visible) $state[] = "<span class='element-state inactive'>{$notVisible}</span>";
+        if (!$this->hasExtension(self::FLUENT_CLASS)) {
+            if (!$this->Visible) {
+                $state[] = "<span class='element-state inactive'>{$notVisible}</span>";
+            }
+
         }
 
         return DBField::create_field('HTMLVarchar', implode($state, $separator));
@@ -382,12 +383,9 @@ class ElementBase extends DataObject implements CMSPreviewable
     public function getLanguages()
     {
         $pills = '';
-        if ($this->hasExtension(self::FLUENT_CLASS))
-        {
-            if ($locales = \TractorCow\Fluent\Model\Locale::get())
-            {
-                foreach ($locales as $locale)
-                {
+        if ($this->hasExtension(self::FLUENT_CLASS)) {
+            if ($locales = \TractorCow\Fluent\Model\Locale::get()) {
+                foreach ($locales as $locale) {
                     $class = $this->isAvailableInLocale($locale) ? 'active' : 'inactive';
                     $pills .= "<span class='element-state $class'>{$locale->URLSegment}</span><br>";
                 }
@@ -459,12 +457,9 @@ class ElementBase extends DataObject implements CMSPreviewable
     {
         $look = true;
         $parent = $this;
-        while($look)
-        {
-            if ($parent = $parent->getHolder())
-            {
-                if (is_a($parent, SiteTree::class))
-                {
+        while ($look) {
+            if ($parent = $parent->getHolder()) {
+                if (is_a($parent, SiteTree::class)) {
                     $look = false;
                 }
             } else {
@@ -472,8 +467,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             }
         }
 
-        if ($parent->doPublish())
-        {
+        if ($parent->doPublish()) {
             return _t(__CLASS__ . '.PageAndElementsPublished', 'Page & elements published');
         }
         return _t(__CLASS__ . '.PageAndElementsPublishError', 'There was an error publishing the page');
@@ -490,10 +484,11 @@ class ElementBase extends DataObject implements CMSPreviewable
         string $str,
         $excludeID = null
     ) {
-        if (!isset(static::$_cached_get_by_url[$str]))
-        {
+        if (!isset(static::$_cached_get_by_url[$str])) {
             $list = $class::get()->filter('URLSegment', $str);
-            if ($excludeID) $list = $list->exclude('ID', $excludeID);
+            if ($excludeID) {
+                $list = $list->exclude('ID', $excludeID);
+            }
 
             $obj = $list->First();
             static::$_cached_get_by_url[$str] = ($obj && $obj->exists()) ? $obj : false;
@@ -507,13 +502,11 @@ class ElementBase extends DataObject implements CMSPreviewable
      */
     public function deleteLocalisedRecords()
     {
-        if ($this->hasExtension(self::FLUENT_CLASS))
-        {
+        if ($this->hasExtension(self::FLUENT_CLASS)) {
             $localisedTables = $this->getLocalisedTables();
             $tableClasses = ClassInfo::ancestry($this->owner, true);
 
-            foreach ($tableClasses as $class)
-            {
+            foreach ($tableClasses as $class) {
                 $table = DataObject::getSchema()->tableName($class);
 
                 $rootTable = $this->getLocalisedTable($table);
@@ -521,13 +514,11 @@ class ElementBase extends DataObject implements CMSPreviewable
                     ->addWhere(["\"{$rootTable}\".\"ID\"" => $this->ID]);
 
                 // If table isn't localised, simple delete
-                if (!isset($localisedTables[$table]))
-                {
+                if (!isset($localisedTables[$table])) {
                     $baseTable = $this->getLocalisedTable($this->baseTable());
 
                     // The base table isn't localised? Delete the record then.
-                    if ($baseTable === $rootTable)
-                    {
+                    if ($baseTable === $rootTable) {
                         $rootDelete->execute();
                         continue;
                     }

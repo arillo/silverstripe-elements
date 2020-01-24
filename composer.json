@@ -17,7 +17,7 @@
   ],
   "require": {
     "silverstripe/framework": "^4",
-    "arillo/silverstripe-dataobject-preview": "^2",
+    "arillo/silverstripe-dataobject-preview": "dev-master",
     "symbiote/silverstripe-gridfieldextensions": "^3",
     "colymba/gridfield-bulk-editing-tools": "dev-master"
   },

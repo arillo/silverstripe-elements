@@ -1,8 +1,10 @@
 <?php
 namespace Arillo\Elements;
 
-use SilverStripe\Admin\LeftAndMain;use SilverStripe\CMS\Model\SiteTree;
-use SilverStripe\Control\Controller;use SilverStripe\Core\ClassInfo;
+use SilverStripe\Admin\LeftAndMain;
+use SilverStripe\CMS\Model\SiteTree;
+use SilverStripe\Control\Controller;
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\GridField\GridField;
@@ -12,6 +14,7 @@ use SilverStripe\Forms\GridField\GridFieldConfig_RelationEditor;
 use SilverStripe\Forms\GridField\GridFieldDataColumns;
 use SilverStripe\Forms\GridField\GridFieldDeleteAction;
 use SilverStripe\Forms\GridField\GridFieldDetailForm;
+use SilverStripe\Forms\GridField\GridFieldFilterHeader;
 use SilverStripe\Forms\GridField\GridFieldPaginator;
 use SilverStripe\ORM\DataExtension;
 use SilverStripe\ORM\DataObject;
@@ -294,6 +297,7 @@ class ElementsExtension extends DataExtension
         $config = GridFieldConfig_RelationEditor::create()
             ->removeComponentsByType(GridFieldDeleteAction::class)
             ->removeComponentsByType(GridFieldAddExistingAutocompleter::class)
+            ->removeComponentsByType(GridFieldFilterHeader::class)
             ->addComponent(new GridFieldOrderableRows('Sort'))
             ->addComponent(new GridFieldDeleteAction())
         ;

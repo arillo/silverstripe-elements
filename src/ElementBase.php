@@ -74,8 +74,7 @@ class ElementBase extends DataObject implements CMSPreviewable
     ];
 
     private static $searchable_fields = [
-        'ClassName',
-        'URLSegment',
+        'ID',
     ];
 
     private static $summary_fields = [

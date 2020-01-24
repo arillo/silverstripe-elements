@@ -354,7 +354,7 @@ class ElementsExtension extends DataExtension
         $label = _t("Element_Relations.{$relationName}", $relationName);
 
         $detailForm = $config->getComponentByType(GridFieldDetailForm::class);
-        $detailForm->setItemRequestClass(VersionedElement_ItemRequest::class);
+        //$detailForm->setItemRequestClass(VersionedElement_ItemRequest::class);
 
         $fields->addFieldToTab(
             $tabName,

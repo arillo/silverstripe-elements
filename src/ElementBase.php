@@ -1,9 +1,11 @@
 <?php
 namespace Arillo\Elements;
 
-use SilverStripe\CMS\Controllers\CMSPageEditController;use SilverStripe\CMS\Model\SiteTree;
+use SilverStripe\CMS\Controllers\CMSPageEditController;
+use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
-use SilverStripe\Control\Director;use SilverStripe\Core\ClassInfo;
+use SilverStripe\Control\Director;
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\FormAction;
@@ -13,7 +15,8 @@ use SilverStripe\Forms\TabSet;
 use SilverStripe\Forms\TextField;
 use SilverStripe\ORM\CMSPreviewable;
 use SilverStripe\ORM\DataObject;
-use SilverStripe\ORM\FieldType\DBField;use SilverStripe\ORM\Queries\SQLDelete;
+use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\ORM\Queries\SQLDelete;
 use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
 use SilverStripe\View\ArrayData;
@@ -390,6 +393,15 @@ class ElementBase extends DataObject implements CMSPreviewable
                 }
             }
         }
+        return DBField::create_field('HTMLVarchar', $pills);
+    }
+
+    public function getVisibleForCMS()
+    {
+        $pills = '';
+        $class = $this->Visible ? 'active' : 'inactive';
+        $icon = $this->Visible ? "&#9733;" : "&#9734;";
+        $pills .= "<span class='element-state $class'>{$icon}</span><br>";
         return DBField::create_field('HTMLVarchar', $pills);
     }
 

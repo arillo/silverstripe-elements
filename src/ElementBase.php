@@ -396,7 +396,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         return DBField::create_field('HTMLVarchar', $pills);
     }
 
-    public function getVisibleForCMS()
+    public function getCMSVisible()
     {
         $pills = '';
         $class = $this->Visible ? 'active' : 'inactive';

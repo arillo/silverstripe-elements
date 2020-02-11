@@ -335,7 +335,7 @@ class ElementsExtension extends DataExtension
             $columns['Languages'] = _t(__CLASS__ . '.Languages', 'Lang');
         } else {
             // $columns['Visible'] = _t(__CLASS__ . '.Visible', 'Available');
-            $columns['VisibleForCMS'] = _t(__CLASS__ . '.Visible', 'Available');
+            $columns['CMSVisible'] = _t(__CLASS__ . '.Visible', 'Available');
         }
 
         if (count($relation) == 1

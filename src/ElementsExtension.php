@@ -238,26 +238,6 @@ class ElementsExtension extends DataExtension
     }
 
     /**
-     * Publish all related elements.
-     */
-    public function onAfterVersionedPublish()
-    {
-        $this->publishElements($this->owner->Elements());
-    }
-
-    private function publishElements($elements)
-    {
-        if ($elements->Count() > 0) {
-            foreach ($elements as $subElement) {
-                $subElement->copyVersionToStage(Versioned::DRAFT, Versioned::LIVE);
-                if ($subElement->getSchema()->hasManyComponent(ElementBase::class, 'Elements')) {
-                    $this->publishElements($subElement->Elements());
-                }
-            }
-        }
-    }
-
-    /**
      * Getter for items by relation name
      *
      * @param  string $relationName

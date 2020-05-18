@@ -215,6 +215,10 @@ Arillo\Elements\ElementsExtension:
 
 ## Changelog:
 
+### 2.2.5
+
+- removed fluent records auto-deletion
+
 ### 2.1.9
 
 – added support for SS 4.4 GridFieldDetailForm::setShowAdd
@@ -226,10 +230,6 @@ Arillo\Elements\ElementsExtension:
     - Elements
 
 ```
-
-### 2.2.5
-
-- removed fluent records auto-deletion
 
 ### 2.1.8
 

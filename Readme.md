@@ -227,6 +227,10 @@ Arillo\Elements\ElementsExtension:
 
 ```
 
+### 2.2.5
+
+- removed fluent records auto-deletion
+
 ### 2.1.8
 
 - addded support for bulkuploading

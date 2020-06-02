@@ -6,7 +6,7 @@
   <% end_if %>
 
   <div class="element-summary-content">
-    <div class="element-summary-title">$Title</div>
+    <div class="element-summary-title">[$ID] – $Title</div>
 
     <% if $Content %>
       <div class="element-summary-txt">$Content</div>

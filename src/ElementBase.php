@@ -1,9 +1,11 @@
 <?php
 namespace Arillo\Elements;
 
-use SilverStripe\CMS\Controllers\CMSPageEditController;use SilverStripe\CMS\Model\SiteTree;
+use SilverStripe\CMS\Controllers\CMSPageEditController;
+use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
-use SilverStripe\Control\Director;use SilverStripe\Core\ClassInfo;
+use SilverStripe\Control\Director;
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\FormAction;
@@ -13,7 +15,8 @@ use SilverStripe\Forms\TabSet;
 use SilverStripe\Forms\TextField;
 use SilverStripe\ORM\CMSPreviewable;
 use SilverStripe\ORM\DataObject;
-use SilverStripe\ORM\FieldType\DBField;use SilverStripe\ORM\Queries\SQLDelete;
+use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\ORM\Queries\SQLDelete;
 use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
 use SilverStripe\View\ArrayData;
@@ -195,12 +198,6 @@ class ElementBase extends DataObject implements CMSPreviewable
         return $data->renderWith('Arillo\\Elements\\TypeInfo');
     }
 
-    public function onBeforeDelete()
-    {
-        parent::onBeforeDelete();
-        $this->deleteLocalisedRecords();
-    }
-
     public function addCMSFieldsHeader($fields)
     {
         $relationName = Controller::curr()->request->param('FieldName');
@@ -367,7 +364,7 @@ class ElementBase extends DataObject implements CMSPreviewable
 
         }
 
-        return DBField::create_field('HTMLVarchar', implode($state, $separator));
+        return DBField::create_field('HTMLVarchar', implode($separator, $state));
     }
 
     /**
@@ -390,6 +387,15 @@ class ElementBase extends DataObject implements CMSPreviewable
                 }
             }
         }
+        return DBField::create_field('HTMLVarchar', $pills);
+    }
+
+    public function getCMSVisible()
+    {
+        $pills = '';
+        $class = $this->Visible ? 'active' : 'inactive';
+        $icon = $this->Visible ? "&#9733;" : "&#9734;";
+        $pills .= "<span class='element-state $class'>{$icon}</span><br>";
         return DBField::create_field('HTMLVarchar', $pills);
     }
 
@@ -493,60 +499,6 @@ class ElementBase extends DataObject implements CMSPreviewable
             static::$_cached_get_by_url[$str] = ($obj && $obj->exists()) ? $obj : false;
         }
         return static::$_cached_get_by_url[$str];
-    }
-
-    /**
-     * Execute record deletion, even when localised records in non-current locale exist.
-     * @return ElementBase
-     */
-    public function deleteLocalisedRecords()
-    {
-        if ($this->hasExtension(self::FLUENT_CLASS)) {
-            $localisedTables = $this->getLocalisedTables();
-            $tableClasses = ClassInfo::ancestry($this->owner, true);
-
-            foreach ($tableClasses as $class) {
-                $table = DataObject::getSchema()->tableName($class);
-
-                $rootTable = $this->getLocalisedTable($table);
-                $rootDelete = SQLDelete::create("\"{$rootTable}\"")
-                    ->addWhere(["\"{$rootTable}\".\"ID\"" => $this->ID]);
-
-                // If table isn't localised, simple delete
-                if (!isset($localisedTables[$table])) {
-                    $baseTable = $this->getLocalisedTable($this->baseTable());
-
-                    // The base table isn't localised? Delete the record then.
-                    if ($baseTable === $rootTable) {
-                        $rootDelete->execute();
-                        continue;
-                    }
-
-                    $rootDelete
-                        ->setDelete("\"{$rootTable}\"")
-                        ->addLeftJoin(
-                            $baseTable,
-                            "\"{$rootTable}\".\"ID\" = \"{$baseTable}\".\"ID\""
-                        )
-                        // Only when join matches no localisations is it safe to delete
-                        ->addWhere("\"{$baseTable}\".\"ID\" IS NULL")
-                        ->execute();
-
-                    continue;
-                }
-
-                $localisedTable = $this->getLocalisedTable($table);
-                $localisedDelete = SQLDelete::create(
-                    "\"{$localisedTable}\"",
-                    [
-                        '"RecordID"' => $this->ID,
-                    ]
-                );
-                $localisedDelete->execute();
-            }
-        }
-
-        return $this;
     }
 
     // Permissions

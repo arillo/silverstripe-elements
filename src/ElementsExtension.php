@@ -334,7 +334,8 @@ class ElementsExtension extends DataExtension
         if ($this->owner->hasExtension(ElementBase::FLUENT_CLASS)) {
             $columns['Languages'] = _t(__CLASS__ . '.Languages', 'Lang');
         } else {
-            $columns['Visible'] = _t(__CLASS__ . '.Visible', 'Available');
+            // $columns['Visible'] = _t(__CLASS__ . '.Visible', 'Available');
+            $columns['CMSVisible'] = _t(__CLASS__ . '.Visible', 'Available');
         }
 
         if (count($relation) == 1
@@ -358,7 +359,12 @@ class ElementsExtension extends DataExtension
         $label = _t("Element_Relations.{$relationName}", $relationName);
 
         $detailForm = $config->getComponentByType(GridFieldDetailForm::class);
-        //$detailForm->setItemRequestClass(VersionedElement_ItemRequest::class);
+
+        // add publish page button in case of propper perms
+        $holderPage = is_a($this->owner, SiteTree::class) ? $this->owner : $this->owner->getHolderPage();
+        if ($holderPage && $holderPage->canPublish()) {
+            $detailForm->setItemRequestClass(VersionedElement_ItemRequest::class);
+        }
 
         $fields->addFieldToTab(
             $tabName,

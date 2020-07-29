@@ -41,6 +41,18 @@ class ElementBase extends DataObject implements CMSPreviewable
     private static $versioned_gridfield_extensions = false;
 
     private static $icon = 'font-icon-box';
+    
+    /**
+     * Determines if the Draft Preview panel will appear when in the CMS admin
+     * @var bool
+     */
+    private static $show_stage_link = true;
+
+    /**
+     * Determines if the Live Preview panel will appear when in the CMS admin
+     * @var bool
+     */
+    private static $show_live_link = true;
 
     private static $db = [
         'Title' => 'Text',

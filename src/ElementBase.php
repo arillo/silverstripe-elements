@@ -134,23 +134,23 @@ class ElementBase extends DataObject implements CMSPreviewable
      */
     public function generateUniqueURLSegment($title = null)
     {
-        $filter = URLSegmentFilter::create();
-
-        if (!$this->URLSegment) {
-            $this->URLSegment = $title ?? $this->Title;
-        }
-
-        $this->URLSegment = $filter->filter($this->URLSegment);
+        $this->URLSegment = URLSegmentFilter::create()->filter(
+            $title ?? $this->Title
+        );
 
         if (!$this->URLSegment) {
             $this->URLSegment = uniqid();
         }
 
-        $count = 2;
-
         // add a -n to the URLSegment if it already existed
-        while ($this->getByUrlSegment(__CLASS__, $this->URLSegment, $this->ID)) {
-            $this->URLSegment = preg_replace('/-[0-9]+$/', null, $this->URLSegment) . '-' . $count;
+        $count = 2;
+        while (
+            $this->getByUrlSegment(__CLASS__, $this->URLSegment, $this->ID)
+        ) {
+            $this->URLSegment =
+                preg_replace('/-[0-9]+$/', null, $this->URLSegment) .
+                '-' .
+                $count;
             $count++;
         }
         return $this;

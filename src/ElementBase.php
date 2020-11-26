@@ -40,6 +40,9 @@ class ElementBase extends DataObject implements CMSPreviewable
     private static $show_urlsegment_field = false;
     private static $versioned_gridfield_extensions = false;
 
+    private static $show_stage_link = true;
+    private static $show_live_link = true;
+
     private static $icon = 'font-icon-box';
 
     private static $db = [

@@ -3,6 +3,7 @@ de:
     CMSTypeInfo: 'Typ'
     CMSSummary: 'Inhalt'
     Languages: 'Sprachen'
+    CMSVisible: 'Anzeigen?'
 
   Arillo\Elements\ElementBase:
     ClassName: 'Typ'
@@ -11,6 +12,7 @@ de:
     URLSegment: 'URL-Segment'
     ShowInMenu: 'In Menü anzeigen'
     PublishPage: 'Seite veröffentlichen'
+    Visible: 'Element auf Webseite sichtbar?'
 
   Arillo\Elements\GridFieldDefaultElementsButton:
     CreateDefaultElements: 'Standard-Sektionen erstellen'

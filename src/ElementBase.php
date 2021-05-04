@@ -1,26 +1,28 @@
 <?php
 namespace Arillo\Elements;
 
-use SilverStripe\CMS\Controllers\CMSPageEditController;
-use SilverStripe\CMS\Model\SiteTree;
-use SilverStripe\Control\Controller;
-use SilverStripe\Control\Director;
+use SilverStripe\Forms\TabSet;
 use SilverStripe\Core\ClassInfo;
-use SilverStripe\Forms\CheckboxField;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\View\ArrayData;
 use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\TextField;
+use SilverStripe\Control\Director;
+use SilverStripe\Core\Environment;
 use SilverStripe\Forms\FormAction;
 use SilverStripe\Forms\HiddenField;
+use SilverStripe\CMS\Model\SiteTree;
+use SilverStripe\Control\Controller;
 use SilverStripe\Forms\LiteralField;
-use SilverStripe\Forms\TabSet;
-use SilverStripe\Forms\TextField;
 use SilverStripe\ORM\CMSPreviewable;
-use SilverStripe\ORM\DataObject;
-use SilverStripe\ORM\FieldType\DBField;
-use SilverStripe\ORM\Queries\SQLDelete;
+use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
-use SilverStripe\View\ArrayData;
+use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\ORM\Queries\SQLDelete;
+use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\View\Parsers\URLSegmentFilter;
+use SilverStripe\CMS\Controllers\CMSPageEditController;
 
 /**
  * Element base model.
@@ -44,6 +46,7 @@ class ElementBase extends DataObject implements CMSPreviewable
     private static $show_live_link = true;
 
     private static $icon = 'font-icon-box';
+    private static $omit_cache = false;
 
     private static $db = [
         'Title' => 'Text',
@@ -75,13 +78,9 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     private static $default_sort = 'Sort ASC';
 
-    private static $translate = [
-        'Title',
-    ];
+    private static $translate = ['Title'];
 
-    private static $searchable_fields = [
-        'ID',
-    ];
+    private static $searchable_fields = ['ID'];
 
     private static $summary_fields = [
         'CMSTypeInfo' => 'Type',
@@ -104,7 +103,11 @@ class ElementBase extends DataObject implements CMSPreviewable
                     return true;
                 }
 
-                if ($element->getSchema()->hasManyComponent(__CLASS__, 'Elements')) {
+                if (
+                    $element
+                        ->getSchema()
+                        ->hasManyComponent(__CLASS__, 'Elements')
+                ) {
                     ElementBase::has_modified_element($element->Elements());
                 }
             }
@@ -124,10 +127,10 @@ class ElementBase extends DataObject implements CMSPreviewable
                 $holderFilter = ['ElementID' => $this->ElementID];
             }
 
-            $this->Sort = self::get()
-                ->filter($holderFilter)
-                ->max('Sort') + 1
-            ;
+            $this->Sort =
+                self::get()
+                    ->filter($holderFilter)
+                    ->max('Sort') + 1;
         }
         return $this;
     }
@@ -162,10 +165,7 @@ class ElementBase extends DataObject implements CMSPreviewable
     public function onBeforeWrite()
     {
         parent::onBeforeWrite();
-        $this
-            ->generateUniqueURLSegment()
-            ->generateElementSortForHolder()
-        ;
+        $this->generateUniqueURLSegment()->generateElementSortForHolder();
     }
 
     /**
@@ -205,7 +205,7 @@ class ElementBase extends DataObject implements CMSPreviewable
     {
         $relationName = Controller::curr()->request->param('FieldName');
 
-        $description = "<div class='alert alert-dark'><i class='element-icon {$this->config()->icon}'></i> {$this->i18n_singular_name()} ({$this->ID}) &nbsp; –";
+        $description = "<div class='alert alert-dark'><i class='element-icon {$this->config()->icon}'></i> {$this->i18n_singular_name()} ({$this->ClassName})";
 
         if ($this->hasExtension(self::FLUENT_CLASS)) {
             $locale = $this->LocaleInformation(
@@ -219,14 +219,22 @@ class ElementBase extends DataObject implements CMSPreviewable
 
         $fields->addFieldsToTab('Root.Main', [
             LiteralField::create('ClassNameDescription', $description),
-            TextField::create('Title', _t(__CLASS__ . '.Title', 'Title'), null, 255),
+            TextField::create(
+                'Title',
+                _t(__CLASS__ . '.Title', 'Title'),
+                null,
+                255
+            ),
             HiddenField::create('RelationName', $relationName, $relationName),
         ]);
 
         if ($this->config()->show_urlsegment_field) {
             $fields->addFieldsToTab(
                 'Root.Main',
-                ElementURLSegmentField::create('URLSegment', _t(__CLASS__ . '.URLSegment', 'Url-Segment'))
+                ElementURLSegmentField::create(
+                    'URLSegment',
+                    _t(__CLASS__ . '.URLSegment', 'Url-Segment')
+                )
                 // TextField::create('URLSegment', _t(__CLASS__ . '.URLSegment', 'URLSegment'), null, 255)
             );
         }
@@ -234,7 +242,10 @@ class ElementBase extends DataObject implements CMSPreviewable
         if (!$this->hasExtension(self::FLUENT_CLASS)) {
             $fields->addFieldToTab(
                 'Root.Main',
-                CheckboxField::create('Visible', _t(__CLASS__ . '.Visible', 'Is element visible'))
+                CheckboxField::create(
+                    'Visible',
+                    _t(__CLASS__ . '.Visible', 'Is element visible')
+                )
             );
         }
     }
@@ -252,18 +263,22 @@ class ElementBase extends DataObject implements CMSPreviewable
         $this->addCMSFieldsHeader($fields);
 
         if (
-            !$this->isInDB()
-            && $this->class === ElementBase::class
-            && $elementRelation = Controller::curr()->request->param('FieldName')
+            !$this->isInDB() &&
+            $this->class === ElementBase::class &&
+            ($elementRelation = Controller::curr()->request->param('FieldName'))
         ) {
-            $relationNames = ElementsExtension::page_element_relation_names($this->Page());
+            $relationNames = ElementsExtension::page_element_relation_names(
+                $this->Page()
+            );
             if (isset($relationNames[$elementRelation])) {
                 $fields->addFieldToTab(
                     'Root.Main',
                     DropdownField::create(
                         'ClassName',
                         _t(__CLASS__ . '.ClassName', 'Type'),
-                        ElementsExtension::map_classnames($relationNames[$elementRelation])
+                        ElementsExtension::map_classnames(
+                            $relationNames[$elementRelation]
+                        )
                     )
                 );
             }
@@ -297,9 +312,9 @@ class ElementBase extends DataObject implements CMSPreviewable
 
         $holder = $this->getHolder();
         while (
-            $holder
-            && $holder->exists()
-            && !is_a($holder, SiteTree::class)
+            $holder &&
+            $holder->exists() &&
+            !is_a($holder, SiteTree::class)
         ) {
             $holder = $holder->getHolder();
         }
@@ -307,15 +322,80 @@ class ElementBase extends DataObject implements CMSPreviewable
         return $holder;
     }
 
+    /**
+     * Recursive look up for root element.
+     */
+    public function getRootElement()
+    {
+        $look = true;
+        $holder = $this;
+        while ($look) {
+            if ($parent = $holder->getHolder()) {
+                if (is_a($parent, SiteTree::class)) {
+                    $look = false;
+                    return $holder;
+                } else {
+                    $holder = $parent;
+                }
+            } else {
+                $look = false;
+            }
+        }
+
+        return $holder;
+    }
+
+    public function onAfterPublish($original)
+    {
+        $rootElement = $this->getRootElement();
+        if ($rootElement->exists() && $rootElement->ID !== $this->ID) {
+            $rootElement
+                ->update([
+                    'LastEdited' => DBDatetime::now()->format(
+                        DBDatetime::ISO_DATETIME
+                    ),
+                ])
+                ->write();
+
+            if ($rootElement->isPublished()) {
+                $rootElement->publishSingle();
+            }
+        }
+    }
+
+    public function getCacheKey()
+    {
+        $key = [
+            'section',
+            $this->ID,
+            $this->obj('LastEdited')->format('y-MM-dd-HH-mm-ss'),
+        ];
+
+        $rootElement = $this->getRootElement();
+
+        if ($rootElement->exists()) {
+            $key[] = $rootElement
+                ->obj('LastEdited')
+                ->format('y-MM-dd-HH-mm-ss');
+        }
+
+        return implode('-_-', $key);
+    }
+
+    public function getOmitCache()
+    {
+        return $this->config()->omit_cache;
+    }
+
     public function getCMSActions()
     {
         $fields = parent::getCMSActions();
 
         if (
-            $this->ID
-            && is_a(Controller::curr(), CMSPageEditController::class)
-            && ($this->stagesDiffer(Versioned::DRAFT, Versioned::LIVE)
-                || self::has_modified_element($this->Elements()))
+            $this->ID &&
+            is_a(Controller::curr(), CMSPageEditController::class) &&
+            ($this->stagesDiffer(Versioned::DRAFT, Versioned::LIVE) ||
+                self::has_modified_element($this->Elements()))
         ) {
             $fields->push(
                 FormAction::create(
@@ -323,7 +403,9 @@ class ElementBase extends DataObject implements CMSPreviewable
                     _t(__CLASS__ . '.PublishPage', 'Publish page')
                 )
                     ->setUseButtonTag(true)
-                    ->addExtraClass('btn action btn btn-primary font-icon-rocket')
+                    ->addExtraClass(
+                        'btn action btn btn-primary font-icon-rocket'
+                    )
             );
         }
         return $fields;
@@ -344,9 +426,8 @@ class ElementBase extends DataObject implements CMSPreviewable
         $notVisible = _t(__CLASS__ . '.State_hidden', 'hidden');
 
         $state[] = $this->isPublished()
-        ? "<span class='element-state active'>{$published}</span>"
-        : "<span class='element-state modified'>{$draft}</span>"
-        ;
+            ? "<span class='element-state active'>{$published}</span>"
+            : "<span class='element-state modified'>{$draft}</span>";
 
         if ($this->stagesDiffer('Stage', 'Live')) {
             $modified = true;
@@ -364,10 +445,12 @@ class ElementBase extends DataObject implements CMSPreviewable
             if (!$this->Visible) {
                 $state[] = "<span class='element-state inactive'>{$notVisible}</span>";
             }
-
         }
 
-        return DBField::create_field('HTMLVarchar', implode($separator, $state));
+        return DBField::create_field(
+            'HTMLVarchar',
+            implode($separator, $state)
+        );
     }
 
     /**
@@ -385,7 +468,9 @@ class ElementBase extends DataObject implements CMSPreviewable
         if ($this->hasExtension(self::FLUENT_CLASS)) {
             if ($locales = \TractorCow\Fluent\Model\Locale::get()) {
                 foreach ($locales as $locale) {
-                    $class = $this->isAvailableInLocale($locale) ? 'active' : 'inactive';
+                    $class = $this->isAvailableInLocale($locale)
+                        ? 'active'
+                        : 'inactive';
                     $pills .= "<span class='element-state $class'>{$locale->URLSegment}</span><br>";
                 }
             }
@@ -397,7 +482,7 @@ class ElementBase extends DataObject implements CMSPreviewable
     {
         $pills = '';
         $class = $this->Visible ? 'active' : 'inactive';
-        $icon = $this->Visible ? "&#9733;" : "&#9734;";
+        $icon = $this->Visible ? '&#9733;' : '&#9734;';
         $pills .= "<span class='element-state $class'>{$icon}</span><br>";
         return DBField::create_field('HTMLVarchar', $pills);
     }
@@ -452,10 +537,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         $this->IsLast = $IsLast;
         $this->IsEvenOdd = $IsEvenOdd;
         $controller = Controller::curr();
-        return $controller
-            ->customise($this)
-            ->renderWith($this->ClassName)
-        ;
+        return $controller->customise($this)->renderWith($this->ClassName);
     }
 
     /**
@@ -463,22 +545,24 @@ class ElementBase extends DataObject implements CMSPreviewable
      */
     public function publishPage()
     {
-        $look = true;
-        $parent = $this;
-        while ($look) {
-            if ($parent = $parent->getHolder()) {
-                if (is_a($parent, SiteTree::class)) {
-                    $look = false;
-                }
-            } else {
-                $look = false;
-            }
+        if ($parent = $this->getHolderPage()) {
+            $parent
+                ->update([
+                    'LastEdited' => DBDatetime::now()->format(
+                        DBDatetime::ISO_DATETIME
+                    ),
+                ])
+                ->write();
+            $parent->publishRecursive();
+            return _t(
+                __CLASS__ . '.PageAndElementsPublished',
+                'Page & elements published'
+            );
         }
-
-        if ($parent->doPublish()) {
-            return _t(__CLASS__ . '.PageAndElementsPublished', 'Page & elements published');
-        }
-        return _t(__CLASS__ . '.PageAndElementsPublishError', 'There was an error publishing the page');
+        return _t(
+            __CLASS__ . '.PageAndElementsPublishError',
+            'There was an error publishing the page'
+        );
     }
 
     /**
@@ -499,7 +583,8 @@ class ElementBase extends DataObject implements CMSPreviewable
             }
 
             $obj = $list->First();
-            static::$_cached_get_by_url[$str] = ($obj && $obj->exists()) ? $obj : false;
+            static::$_cached_get_by_url[$str] =
+                $obj && $obj->exists() ? $obj : false;
         }
         return static::$_cached_get_by_url[$str];
     }

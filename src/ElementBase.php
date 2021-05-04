@@ -359,6 +359,7 @@ class ElementBase extends DataObject implements CMSPreviewable
 
             if ($rootElement->isPublished()) {
                 $rootElement->publishSingle();
+                $this->extend('rootElementPublished', $rootElement);
             }
         }
     }

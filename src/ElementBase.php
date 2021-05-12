@@ -1,4 +1,5 @@
 <?php
+
 namespace Arillo\Elements;
 
 use SilverStripe\CMS\Controllers\CMSPageEditController;
@@ -41,7 +42,7 @@ class ElementBase extends DataObject implements CMSPreviewable
     private static $versioned_gridfield_extensions = false;
 
     private static $icon = 'font-icon-box';
-    
+
     /**
      * Determines if the Draft Preview panel will appear when in the CMS admin
      * @var bool
@@ -135,8 +136,7 @@ class ElementBase extends DataObject implements CMSPreviewable
 
             $this->Sort = self::get()
                 ->filter($holderFilter)
-                ->max('Sort') + 1
-            ;
+                ->max('Sort') + 1;
         }
         return $this;
     }
@@ -173,8 +173,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         parent::onBeforeWrite();
         $this
             ->generateUniqueURLSegment()
-            ->generateElementSortForHolder()
-        ;
+            ->generateElementSortForHolder();
     }
 
     /**
@@ -353,9 +352,8 @@ class ElementBase extends DataObject implements CMSPreviewable
         $notVisible = _t(__CLASS__ . '.State_hidden', 'hidden');
 
         $state[] = $this->isPublished()
-        ? "<span class='element-state active'>{$published}</span>"
-        : "<span class='element-state modified'>{$draft}</span>"
-        ;
+            ? "<span class='element-state active'>{$published}</span>"
+            : "<span class='element-state modified'>{$draft}</span>";
 
         if ($this->stagesDiffer('Stage', 'Live')) {
             $modified = true;
@@ -373,7 +371,6 @@ class ElementBase extends DataObject implements CMSPreviewable
             if (!$this->Visible) {
                 $state[] = "<span class='element-state inactive'>{$notVisible}</span>";
             }
-
         }
 
         return DBField::create_field('HTMLVarchar', implode($state, $separator));
@@ -411,20 +408,14 @@ class ElementBase extends DataObject implements CMSPreviewable
         return DBField::create_field('HTMLVarchar', $pills);
     }
 
-    public function PreviewLink($action = null)
+    public function getMimeType()
     {
-        return Controller::join_links(
-            Director::baseURL(),
-            'cms-preview',
-            'show',
-            str_replace('\\', '-', $this->ClassName),
-            $this->ID
-        );
+        return 'text/html';
     }
 
-    public function Link()
+    public function PreviewLink($action = null)
     {
-        return $this->Page()->Link('#' . $this->URLSegment);
+        return Controller::join_links(Director::baseURL(), 'cms-preview', 'show', urlencode($this->ClassName), $this->ID);
     }
 
     public function CMSEditLink()
@@ -432,14 +423,14 @@ class ElementBase extends DataObject implements CMSPreviewable
         return $this->Link();
     }
 
-    /**
-     * To determine preview mechanism (e.g. embedded / iframe)
-     *
-     * @return string
-     */
-    public function getMimeType()
+    public function AbsoluteLink()
     {
-        return 'embedded';
+        return Director::absoluteURL($this->Link());
+    }
+
+    public function Link()
+    {
+        return $this->Page()->Link('#' . $this->URLSegment);
     }
 
     /**
@@ -463,8 +454,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         $controller = Controller::curr();
         return $controller
             ->customise($this)
-            ->renderWith($this->ClassName)
-        ;
+            ->renderWith($this->ClassName);
     }
 
     /**

@@ -204,18 +204,7 @@ class ElementBase extends DataObject implements CMSPreviewable
     public function addCMSFieldsHeader($fields)
     {
         $relationName = Controller::curr()->request->param('FieldName');
-
-        $description = "<div class='alert alert-dark'><i class='element-icon {$this->config()->icon}'></i> {$this->i18n_singular_name()} ({$this->ClassName})";
-
-        if ($this->hasExtension(self::FLUENT_CLASS)) {
-            $locale = $this->LocaleInformation(
-                \TractorCow\Fluent\State\FluentState::singleton()->getLocale()
-            );
-
-            $description .= "&nbsp; <span class='element-state element-state-{$locale->URLSegment}'>{$locale->URLSegment}</span> &nbsp;";
-        }
-
-        $description .= "{$this->getStatusFlags('')} </div>";
+        $description = "<div class='alert alert-dark'><i class='element-icon {$this->config()->icon}'></i> {$this->i18n_singular_name()} ({$this->ClassName})</div>";
 
         $fields->addFieldsToTab('Root.Main', [
             LiteralField::create('ClassNameDescription', $description),

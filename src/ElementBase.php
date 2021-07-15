@@ -337,12 +337,15 @@ class ElementBase extends DataObject implements CMSPreviewable
     public function onAfterPublish($original)
     {
         $rootElement = $this->getRootElement();
-        if ($rootElement->exists() && $rootElement->ID !== $this->ID) {
+        $now = DBDatetime::now()->format(DBDatetime::ISO_DATETIME);
+        if (
+            $rootElement->exists() &&
+            $rootElement->ID !== $this->ID &&
+            $rootElement->LastEdited < $now
+        ) {
             $rootElement
                 ->update([
-                    'LastEdited' => DBDatetime::now()->format(
-                        DBDatetime::ISO_DATETIME
-                    ),
+                    'LastEdited' => $now,
                 ])
                 ->write();
 

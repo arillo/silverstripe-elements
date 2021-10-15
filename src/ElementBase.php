@@ -241,7 +241,7 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     public function populate($type, $id, $relation)
     {
-        $this->Title = $this->i18n_singular_name() . ' title';
+        $this->Title = $this->i18n_singular_name();
         $this->PageID = $id;
         $this->RelationName = $relation;
     }

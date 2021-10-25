@@ -1,26 +1,27 @@
 <?php
 namespace Arillo\Elements;
 
+use SilverStripe\Core\ClassInfo;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\Forms\FieldList;
 use SilverStripe\Admin\LeftAndMain;
+use SilverStripe\ORM\DataExtension;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
-use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
-use SilverStripe\Forms\FieldList;
-use SilverStripe\Forms\GridField\GridField;
-use SilverStripe\Forms\GridField\GridFieldAddExistingAutocompleter;
-use SilverStripe\Forms\GridField\GridFieldAddNewButton;
-use SilverStripe\Forms\GridField\GridFieldConfig_RelationEditor;
-use SilverStripe\Forms\GridField\GridFieldDataColumns;
-use SilverStripe\Forms\GridField\GridFieldDeleteAction;
-use SilverStripe\Forms\GridField\GridFieldDetailForm;
-use SilverStripe\Forms\GridField\GridFieldFilterHeader;
-use SilverStripe\Forms\GridField\GridFieldPaginator;
-use SilverStripe\ORM\DataExtension;
-use SilverStripe\ORM\DataObject;
 use SilverStripe\Versioned\Versioned;
-use Symbiote\GridFieldExtensions\GridFieldAddNewMultiClass;
+use SilverStripe\Forms\GridField\GridField;
+use SilverStripe\Control\HTTPResponse_Exception;
+use SilverStripe\Forms\GridField\GridFieldPaginator;
+use SilverStripe\Forms\GridField\GridFieldDetailForm;
+use SilverStripe\Forms\GridField\GridFieldDataColumns;
+use SilverStripe\Forms\GridField\GridFieldAddNewButton;
+use SilverStripe\Forms\GridField\GridFieldDeleteAction;
+use SilverStripe\Forms\GridField\GridFieldFilterHeader;
 use Symbiote\GridFieldExtensions\GridFieldOrderableRows;
+use Symbiote\GridFieldExtensions\GridFieldAddNewMultiClass;
+use SilverStripe\Forms\GridField\GridFieldConfig_RelationEditor;
+use SilverStripe\Forms\GridField\GridFieldAddExistingAutocompleter;
 
 /**
  * Establishes multiple has_many elements relations, which can be set up via the config system
@@ -89,7 +90,7 @@ class ElementsExtension extends DataExtension
     {
         $count = 0;
         if (!$record || !$record->ID) {
-            throw new SS_HTTPResponse_Exception(
+            throw new HTTPResponse_Exception(
                 'Bad record ID #' . (int) $data['ID'],
                 404
             );
@@ -142,7 +143,7 @@ class ElementsExtension extends DataExtension
                 return $className;
             }
             user_error(
-                'Your element needs to extend from ' . ElementBase::class,
+                $className . ' does not extend from' . ElementBase::class,
                 E_USER_WARNING
             );
         });
@@ -154,34 +155,66 @@ class ElementsExtension extends DataExtension
         foreach ($elementClasses as $elementClass) {
             $result[$elementClass] = singleton($elementClass)->getType();
         }
+        asort($result);
         return $result;
     }
 
     public static function page_element_relation_names(
         DataObject $record
     ): array {
+        return self::gather_element_relations_inherit_config(
+            $record,
+            'element_relations'
+        );
+    }
+
+    /**
+     * Collect element relations config.
+     * $configName can be 'element_relations' or 'element_defaults'
+     *
+     * @param DataObject $record
+     * @param string $configName
+     * @return array
+     */
+    public static function gather_element_relations_inherit_config(
+        DataObject $record,
+        string $configName
+    ): array {
         $relations = $record->uninherited('element_relations');
         if (!$relations) {
             $relations = [];
         }
 
-        // inherit relations from another record type
         if (
             $inherit_relations_from = $record->uninherited(
                 'element_relations_inherit_from'
             )
         ) {
-            if (
-                $inherit_relations = Config::inst()->get(
-                    $inherit_relations_from,
-                    'element_relations',
-                    Config::UNINHERITED
-                )
-            ) {
-                $relations = array_merge_recursive(
-                    $relations,
-                    $inherit_relations
+            $allInheritances = [];
+            if (is_string($inherit_relations_from)) {
+                $allInheritances = $inherit_relations_from;
+            } elseif (is_array($inherit_relations_from)) {
+                $allInheritances = array_merge(
+                    $allInheritances,
+                    $inherit_relations_from
                 );
+            }
+
+            if (count($allInheritances)) {
+                foreach ($allInheritances as $inheritance) {
+                    if (
+                        $inheritRelations = Config::inst()->get(
+                            $inheritance,
+                            $configName,
+                            Config::UNINHERITED
+                        )
+                    ) {
+                        $relations = array_merge_recursive(
+                            $relations,
+                            $inheritRelations
+                        );
+                    }
+                }
             }
         }
         return $relations;
@@ -252,31 +285,10 @@ class ElementsExtension extends DataExtension
      */
     public function getDefaultElements()
     {
-        $relations = $this->owner->uninherited('element_defaults');
-        if (!$relations) {
-            $relations = [];
-        }
-
-        // inherit relations from another PageType
-        if (
-            $inherit_relations_from = $this->owner->uninherited(
-                'element_relations_inherit_from'
-            )
-        ) {
-            if (
-                $inherit_relations = Config::inst()->get(
-                    $inherit_relations_from,
-                    'element_defaults',
-                    Config::UNINHERITED
-                )
-            ) {
-                $relations = array_merge_recursive(
-                    $relations,
-                    $inherit_relations
-                );
-            }
-        }
-        return $relations;
+        return self::gather_element_relations_inherit_config(
+            $this->owner,
+            'element_defaults'
+        );
     }
 
     /**

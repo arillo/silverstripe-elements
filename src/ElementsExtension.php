@@ -180,7 +180,7 @@ class ElementsExtension extends DataExtension
         DataObject $record,
         string $configName
     ): array {
-        $relations = $record->uninherited('element_relations');
+        $relations = $record->uninherited($configName);
         if (!$relations) {
             $relations = [];
         }

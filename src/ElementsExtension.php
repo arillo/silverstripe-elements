@@ -186,17 +186,17 @@ class ElementsExtension extends DataExtension
         }
 
         if (
-            $inherit_relations_from = $record->uninherited(
+            $inheritRelationsFrom = $record->uninherited(
                 'element_relations_inherit_from'
             )
         ) {
             $allInheritances = [];
-            if (is_string($inherit_relations_from)) {
-                $allInheritances = $inherit_relations_from;
-            } elseif (is_array($inherit_relations_from)) {
+            if (is_string($inheritRelationsFrom)) {
+                $allInheritances = [$inheritRelationsFrom];
+            } elseif (is_array($inheritRelationsFrom)) {
                 $allInheritances = array_merge(
                     $allInheritances,
-                    $inherit_relations_from
+                    $inheritRelationsFrom
                 );
             }
 
@@ -389,9 +389,9 @@ class ElementsExtension extends DataExtension
         ];
 
         if ($this->owner->hasExtension(ElementBase::FLUENT_CLASS)) {
-            $columns['Languages'] = _t(__CLASS__ . '.Languages', '');
+            $columns['Languages'] = _t(__CLASS__ . '.Languages', ' ');
         } else {
-            $columns['CMSVisible'] = _t(__CLASS__ . '.CMSVisible', '');
+            $columns['CMSVisible'] = _t(__CLASS__ . '.CMSVisible', ' ');
         }
 
         if (

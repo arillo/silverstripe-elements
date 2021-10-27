@@ -2,13 +2,11 @@
 namespace Arillo\Elements;
 
 use SilverStripe\Forms\TabSet;
-use SilverStripe\Core\ClassInfo;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\ArrayData;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\TextField;
 use SilverStripe\Control\Director;
-use SilverStripe\Core\Environment;
 use SilverStripe\Forms\FormAction;
 use SilverStripe\Forms\HiddenField;
 use SilverStripe\CMS\Model\SiteTree;
@@ -19,7 +17,6 @@ use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
 use SilverStripe\ORM\FieldType\DBField;
-use SilverStripe\ORM\Queries\SQLDelete;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\View\Parsers\URLSegmentFilter;
 use SilverStripe\CMS\Controllers\CMSPageEditController;

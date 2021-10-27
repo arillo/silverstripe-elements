@@ -398,7 +398,7 @@ class ElementsExtension extends DataExtension
             count($relation) == 1 &&
             ($summaryFields = singleton($relation[0])->summaryFields())
         ) {
-            $columns = array_merge($columns, $summaryFields);
+            $columns = array_merge($summaryFields, $columns);
         }
 
         $config

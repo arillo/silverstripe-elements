@@ -12,6 +12,7 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Versioned\Versioned;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Control\HTTPResponse_Exception;
+use TractorCow\Fluent\Forms\DeleteAllLocalesAction;
 use SilverStripe\Forms\GridField\GridFieldPaginator;
 use SilverStripe\Forms\GridField\GridFieldDetailForm;
 use SilverStripe\Forms\GridField\GridFieldDataColumns;
@@ -294,29 +295,29 @@ class ElementsExtension extends DataExtension
     /**
      * Publish all related elements.
      */
-    public function onAfterVersionedPublish()
-    {
-        $this->publishElements($this->owner->Elements());
-    }
+    // public function onAfterVersionedPublish()
+    // {
+    //     // $this->publishElements($this->owner->Elements());
+    // }
 
-    private function publishElements($elements)
-    {
-        if ($elements->Count() > 0) {
-            foreach ($elements as $subElement) {
-                $subElement->copyVersionToStage(
-                    Versioned::DRAFT,
-                    Versioned::LIVE
-                );
-                if (
-                    $subElement
-                        ->getSchema()
-                        ->hasManyComponent(ElementBase::class, 'Elements')
-                ) {
-                    $this->publishElements($subElement->Elements());
-                }
-            }
-        }
-    }
+    // private function publishElements($elements)
+    // {
+    //     if ($elements->Count() > 0) {
+    //         foreach ($elements as $subElement) {
+    //             $subElement->copyVersionToStage(
+    //                 Versioned::DRAFT,
+    //                 Versioned::LIVE
+    //             );
+    //             if (
+    //                 $subElement
+    //                     ->getSchema()
+    //                     ->hasManyComponent(ElementBase::class, 'Elements')
+    //             ) {
+    //                 $this->publishElements($subElement->Elements());
+    //             }
+    //         }
+    //     }
+    // }
 
     /**
      * Getter for items by relation name
@@ -392,6 +393,10 @@ class ElementsExtension extends DataExtension
             $columns['Languages'] = _t(__CLASS__ . '.Languages', ' ');
         } else {
             $columns['CMSVisible'] = _t(__CLASS__ . '.CMSVisible', ' ');
+        }
+
+        if ($this->owner->hasExtension(ElementBase::FLUENT_CLASS)) {
+            $config->addComponent(new DeleteAllLocalesAction());
         }
 
         if (

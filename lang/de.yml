@@ -16,3 +16,6 @@ de:
 
   Arillo\Elements\GridFieldDefaultElementsButton:
     CreateDefaultElements: 'Standard-Sektionen erstellen'
+
+  TractorCow\Fluent\Forms\DeleteAllLocalesAction:
+    Delete: 'In allen Sprachen löschen'

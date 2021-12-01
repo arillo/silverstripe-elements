@@ -505,7 +505,7 @@ class ElementBase extends DataObject implements CMSPreviewable
      */
     public function getMimeType()
     {
-        return 'embedded';
+        return 'text/html';
     }
 
     /**

@@ -359,6 +359,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             'section',
             $this->ID,
             $this->obj('LastEdited')->format('y-MM-dd-HH-mm-ss'),
+            $this->Locale,
         ];
 
         $rootElement = $this->getRootElement();
@@ -369,7 +370,7 @@ class ElementBase extends DataObject implements CMSPreviewable
                 ->format('y-MM-dd-HH-mm-ss');
         }
 
-        return implode('-_-', $key);
+        return implode('-_-', array_filter($key, 'strlen'));
     }
 
     public function getOmitCache()

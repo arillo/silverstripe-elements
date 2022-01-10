@@ -373,7 +373,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             }
         }
 
-        return DBField::create_field('HTMLVarchar', implode($state, $separator));
+        return DBField::create_field('HTMLVarchar', implode($separator, $state));
     }
 
     /**

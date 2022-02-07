@@ -125,7 +125,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             }
 
             $this->Sort =
-                self::get()
+                ElementBase::get()
                     ->filter($holderFilter)
                     ->max('Sort') + 1;
         }

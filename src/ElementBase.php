@@ -375,7 +375,18 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     public function getOmitCache()
     {
+        if ($this->IsStage()) {
+            return true;
+        }
+        
         return $this->config()->omit_cache;
+    }
+
+    public function IsStage()
+    {
+        return Controller::curr()
+            ->getRequest()
+            ->getVar('stage') == 'Stage';
     }
 
     public function getCMSActions()

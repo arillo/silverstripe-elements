@@ -88,6 +88,8 @@ class ElementBase extends DataObject implements CMSPreviewable
         'Visible' => true,
     ];
 
+    protected $virtualHolderElement = null;
+
     /**
      * @param  $elements
      * @return boolean
@@ -274,8 +276,23 @@ class ElementBase extends DataObject implements CMSPreviewable
         return $fields;
     }
 
+    public function setVirtualHolderElement($element)
+    {
+        $this->virtualHolderElement = $element;
+        return $this;
+    }
+
+    public function getVirtualHolderElement()
+    {
+        return $this->virtualHolderElement;
+    }
+
     public function getHolder()
     {
+        if ($this->getVirtualHolderElement()) {
+            return $this->getVirtualHolderElement()->getHolder();
+        }
+
         if ($this->Element()->exists()) {
             return $this->Element();
         }
@@ -292,6 +309,9 @@ class ElementBase extends DataObject implements CMSPreviewable
      */
     public function getHolderPage()
     {
+        if ($this->getVirtualHolderElement()) {
+            return $this->getVirtualHolderElement()->getHolderPage();
+        }
         if (!$this->PageID && !$this->ElementID) {
             return null;
         }
@@ -378,7 +398,7 @@ class ElementBase extends DataObject implements CMSPreviewable
         if ($this->IsStage()) {
             return true;
         }
-        
+
         return $this->config()->omit_cache;
     }
 

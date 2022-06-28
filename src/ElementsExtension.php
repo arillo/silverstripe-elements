@@ -9,7 +9,6 @@ use SilverStripe\ORM\DataExtension;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Config;
-use SilverStripe\Versioned\Versioned;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Control\HTTPResponse_Exception;
 use TractorCow\Fluent\Forms\DeleteAllLocalesAction;
@@ -91,10 +90,7 @@ class ElementsExtension extends DataExtension
     {
         $count = 0;
         if (!$record || !$record->ID) {
-            throw new HTTPResponse_Exception(
-                'Bad record ID #' . (int) $data['ID'],
-                404
-            );
+            throw new HTTPResponse_Exception('Bad record ID', 404);
         }
 
         if (

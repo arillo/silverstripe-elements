@@ -615,21 +615,38 @@ class ElementBase extends DataObject implements CMSPreviewable
     // Permissions
     public function canView($member = null, $context = [])
     {
+        $extended = $this->extendedCan('canView', $member);
+        if ($extended !== null) {
+            return $extended;
+        }
+
         return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
 
     public function canEdit($member = null, $context = [])
     {
+        $extended = $this->extendedCan('canEdit', $member);
+        if ($extended !== null) {
+            return $extended;
+        }
         return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
 
     public function canDelete($member = null, $context = [])
     {
+        $extended = $this->extendedCan('canDelete', $member);
+        if ($extended !== null) {
+            return $extended;
+        }
         return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
 
     public function canCreate($member = null, $context = [])
     {
+        $extended = $this->extendedCan('canCreate', $member);
+        if ($extended !== null) {
+            return $extended;
+        }
         return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
 }

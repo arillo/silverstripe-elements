@@ -21,6 +21,12 @@
     "symbiote/silverstripe-gridfieldextensions": "^3",
     "colymba/gridfield-bulk-editing-tools": "dev-master"
   },
+  "repositories": [
+      {
+          "type": "git",
+          "url": "https://github.com/arillo-ch/silverstripe-gridfieldextensions.git"
+      }
+  ],
   "extra": {
     "installer-name": "elements",
     "expose": ["client"]

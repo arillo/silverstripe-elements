@@ -23,7 +23,7 @@
   },
   "repositories": [
       {
-          "type": "git",
+          "type": "vcs",
           "url": "git@github.com:arillo-ch/silverstripe-gridfieldextensions.git"
       }
   ],

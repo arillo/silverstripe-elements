@@ -462,6 +462,50 @@ class ElementsExtension extends DataExtension
         }
         return $this->owner;
     }
+    
+        public function updateStagesDiffer(&$stagesDiffer)
+    {
+        if ($stagesDiffer) {
+            return $stagesDiffer;
+        }
+
+        if (($elements = $this->owner->Elements()) && $elements->exists()) {
+            return $stagesDiffer = array_reduce(
+                $elements->toArray(),
+                function ($acc, $el) {
+                    if ($acc) {
+                        return $acc;
+                    }
+                    return $el->stagesDiffer();
+                },
+                false
+            );
+        }
+
+        return $stagesDiffer;
+    }
+
+    public function updateIsOnDraft(&$isOnDraft)
+    {
+        if ($isOnDraft) {
+            return $isOnDraft;
+        }
+
+        if (($elements = $this->owner->Elements()) && $elements->exists()) {
+            return $isOnDraft = array_reduce(
+                $elements->toArray(),
+                function ($acc, $el) {
+                    if ($acc) {
+                        return $acc;
+                    }
+                    return $el->isOnDraft();
+                },
+                false
+            );
+        }
+
+        return $isOnDraft;
+    }
 
     public function updateStatusFlags(&$flags)
     {

@@ -9,7 +9,6 @@ use SilverStripe\ORM\DataExtension;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Config;
-use SilverStripe\Versioned\Versioned;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Control\HTTPResponse_Exception;
 use TractorCow\Fluent\Forms\DeleteAllLocalesAction;
@@ -91,10 +90,7 @@ class ElementsExtension extends DataExtension
     {
         $count = 0;
         if (!$record || !$record->ID) {
-            throw new HTTPResponse_Exception(
-                'Bad record ID #' . (int) $data['ID'],
-                404
-            );
+            throw new HTTPResponse_Exception('Bad record ID', 404);
         }
 
         if (
@@ -465,6 +461,50 @@ class ElementsExtension extends DataExtension
             $fields->findOrMakeTab($tabName)->setTitle($label);
         }
         return $this->owner;
+    }
+    
+        public function updateStagesDiffer(&$stagesDiffer)
+    {
+        if ($stagesDiffer) {
+            return $stagesDiffer;
+        }
+
+        if (($elements = $this->owner->Elements()) && $elements->exists()) {
+            return $stagesDiffer = array_reduce(
+                $elements->toArray(),
+                function ($acc, $el) {
+                    if ($acc) {
+                        return $acc;
+                    }
+                    return $el->stagesDiffer();
+                },
+                false
+            );
+        }
+
+        return $stagesDiffer;
+    }
+
+    public function updateIsOnDraft(&$isOnDraft)
+    {
+        if ($isOnDraft) {
+            return $isOnDraft;
+        }
+
+        if (($elements = $this->owner->Elements()) && $elements->exists()) {
+            return $isOnDraft = array_reduce(
+                $elements->toArray(),
+                function ($acc, $el) {
+                    if ($acc) {
+                        return $acc;
+                    }
+                    return $el->isOnDraft();
+                },
+                false
+            );
+        }
+
+        return $isOnDraft;
     }
 
     public function updateStatusFlags(&$flags)

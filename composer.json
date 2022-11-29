@@ -18,15 +18,9 @@
   "require": {
     "silverstripe/framework": "^4",
     "arillo/silverstripe-dataobject-preview": "dev-master",
-    "symbiote/silverstripe-gridfieldextensions": "^3",
+    "symbiote/silverstripe-gridfieldextensions": "^3.4",
     "colymba/gridfield-bulk-editing-tools": "dev-master"
   },
-  "repositories": [
-      {
-          "type": "vcs",
-          "url": "git@github.com:arillo-ch/silverstripe-gridfieldextensions.git"
-      }
-  ],
   "extra": {
     "installer-name": "elements",
     "expose": ["client"]

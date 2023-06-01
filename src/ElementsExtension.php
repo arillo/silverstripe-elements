@@ -54,7 +54,7 @@ class ElementsExtension extends DataExtension
 
     /**
      * Holds parsed relations taking into consideration the inheritance.
-     * @var string
+     * @var array
      */
     protected $elementRelations;
 
@@ -289,33 +289,6 @@ class ElementsExtension extends DataExtension
     }
 
     /**
-     * Publish all related elements.
-     */
-    // public function onAfterVersionedPublish()
-    // {
-    //     // $this->publishElements($this->owner->Elements());
-    // }
-
-    // private function publishElements($elements)
-    // {
-    //     if ($elements->Count() > 0) {
-    //         foreach ($elements as $subElement) {
-    //             $subElement->copyVersionToStage(
-    //                 Versioned::DRAFT,
-    //                 Versioned::LIVE
-    //             );
-    //             if (
-    //                 $subElement
-    //                     ->getSchema()
-    //                     ->hasManyComponent(ElementBase::class, 'Elements')
-    //             ) {
-    //                 $this->publishElements($subElement->Elements());
-    //             }
-    //         }
-    //     }
-    // }
-
-    /**
      * Getter for items by relation name
      *
      * @param  string $relationName
@@ -462,27 +435,14 @@ class ElementsExtension extends DataExtension
         }
         return $this->owner;
     }
-    
-        public function updateStagesDiffer(&$stagesDiffer)
+
+    public function updateStagesDiffer(&$stagesDiffer)
     {
         if ($stagesDiffer) {
             return $stagesDiffer;
         }
 
-        if (($elements = $this->owner->Elements()) && $elements->exists()) {
-            return $stagesDiffer = array_reduce(
-                $elements->toArray(),
-                function ($acc, $el) {
-                    if ($acc) {
-                        return $acc;
-                    }
-                    return $el->stagesDiffer();
-                },
-                false
-            );
-        }
-
-        return $stagesDiffer;
+        return $stagesDiffer = ElementBase::has_modified_element($this->owner);
     }
 
     public function updateIsOnDraft(&$isOnDraft)
@@ -505,18 +465,5 @@ class ElementsExtension extends DataExtension
         }
 
         return $isOnDraft;
-    }
-
-    public function updateStatusFlags(&$flags)
-    {
-        if (ElementBase::has_modified_element($this->owner->Elements())) {
-            $flags['modified'] = [
-                'text' => _t('SiteTree.MODIFIEDONDRAFTSHORT', 'Modified'),
-                'title' => _t(
-                    'SiteTree.MODIFIEDONDRAFTHELP',
-                    'Page has unpublished changes'
-                ),
-            ];
-        }
     }
 }

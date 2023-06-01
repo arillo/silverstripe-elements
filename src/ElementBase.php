@@ -1,6 +1,7 @@
 <?php
 namespace Arillo\Elements;
 
+use SilverStripe\ORM\DB;
 use SilverStripe\Forms\TabSet;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\ArrayData;
@@ -13,11 +14,12 @@ use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
 use SilverStripe\Forms\LiteralField;
 use SilverStripe\ORM\CMSPreviewable;
-use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\CheckboxField;
+use SilverStripe\Forms\DropdownField;
 use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
 use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\ORM\Queries\SQLSelect;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\View\Parsers\URLSegmentFilter;
 use SilverStripe\CMS\Controllers\CMSPageEditController;
@@ -92,26 +94,81 @@ class ElementBase extends DataObject implements CMSPreviewable
     protected $virtualHolderElement = null;
 
     /**
-     * @param  $elements
+     * @param  $holder
      * @return boolean
      */
-    public static function has_modified_element($elements)
+    public static function has_modified_element($holder)
     {
-        if ($elements->Count() > 0) {
-            foreach ($elements as $element) {
-                if ($element->stagesDiffer(Versioned::DRAFT, Versioned::LIVE)) {
-                    return true;
-                }
+        if (!$holder->hasMethod('Elements')) {
+            return false;
+        }
+        $elementIds = $holder->Elements()->column('ID');
 
-                if (
-                    $element
-                        ->getSchema()
-                        ->hasManyComponent(__CLASS__, 'Elements')
-                ) {
-                    ElementBase::has_modified_element($element->Elements());
-                }
+        if (empty($elementIds)) {
+            return false;
+        }
+
+        // fetch max 2 levels deep subelement ids
+        for ($i = 0; $i < 2; $i++) {
+            $elementIdsStr = implode(',', $elementIds);
+            $idsToAdd = (new SQLSelect())
+                ->setFrom(ElementBase::config()->table_name)
+                ->setSelect(['ID'])
+                ->setWhere("ElementID IN ({$elementIdsStr})")
+                ->execute()
+                ->map();
+
+            $elementIds = array_merge($elementIds, array_keys($idsToAdd));
+            $elementIds = array_unique($elementIds);
+        }
+
+        $schema = DataObject::getSchema();
+        $baseClass = $schema->baseDataClass(ElementBase::class);
+        $stageTable = $schema->tableName($baseClass);
+
+        $versionSuffix =
+            \TractorCow\Fluent\Extension\FluentVersionedExtension::SUFFIX_VERSIONS;
+        $liveTable = $stageTable . $versionSuffix;
+        $stagedTable =
+            ElementBase::singleton()->getLocalisedTable($stageTable) .
+            $versionSuffix;
+
+        $elementIds = '(' . implode(',', $elementIds) . ')';
+
+        // notes:
+        // VL - Versions localised table
+        // V - Versions table
+        $query = <<<SQL
+SELECT "VL"."RecordID", MAX("VL"."Version")
+FROM "$stagedTable" as "VL"
+INNER JOIN "$liveTable" as "V"
+    ON "VL"."RecordID" = "V"."RecordID"
+    AND "VL"."Version" = "V"."Version"
+WHERE "VL"."RecordID" IN $elementIds
+AND "VL"."Locale" = ?
+AND "V"."WasPublished" = ?
+GROUP BY "VL"."RecordID"
+ORDER BY "VL"."RecordID" DESC
+SQL;
+
+        $draftVersions = DB::prepared_query($query, [
+            $holder->Locale,
+            0,
+        ])->map();
+
+        $liveVersions = DB::prepared_query($query, [$holder->Locale, 1])->map();
+
+        foreach ($draftVersions as $id => $draftVersion) {
+            if (empty($liveVersions[$id])) {
+                return true;
+            }
+
+            if ($draftVersion > $liveVersions[$id]) {
+                return true;
             }
         }
+
+        return false;
     }
 
     /**
@@ -418,7 +475,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             $this->ID &&
             is_a(Controller::curr(), CMSPageEditController::class) &&
             ($this->stagesDiffer(Versioned::DRAFT, Versioned::LIVE) ||
-                self::has_modified_element($this->Elements()))
+                self::has_modified_element($this))
         ) {
             $fields->push(
                 FormAction::create(
@@ -456,7 +513,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             $modified = true;
         }
 
-        if (ElementBase::has_modified_element($this->owner->Elements())) {
+        if (ElementBase::has_modified_element($this)) {
             $modified = true;
         }
 

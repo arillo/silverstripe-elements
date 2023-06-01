@@ -122,23 +122,23 @@ class ElementBase extends DataObject implements CMSPreviewable
             $elementIds = array_unique($elementIds);
         }
 
+        $elementIds = '(' . implode(',', $elementIds) . ')';
         $schema = DataObject::getSchema();
         $baseClass = $schema->baseDataClass(ElementBase::class);
         $stageTable = $schema->tableName($baseClass);
 
-        $versionSuffix =
-            \TractorCow\Fluent\Extension\FluentVersionedExtension::SUFFIX_VERSIONS;
-        $liveTable = $stageTable . $versionSuffix;
-        $stagedTable =
-            ElementBase::singleton()->getLocalisedTable($stageTable) .
-            $versionSuffix;
+        if (self::singleton()->hasExtension(self::FLUENT_CLASS)) {
+            $versionSuffix =
+                \TractorCow\Fluent\Extension\FluentVersionedExtension::SUFFIX_VERSIONS;
+            $liveTable = $stageTable . $versionSuffix;
+            $stagedTable =
+                ElementBase::singleton()->getLocalisedTable($stageTable) .
+                $versionSuffix;
 
-        $elementIds = '(' . implode(',', $elementIds) . ')';
-
-        // notes:
-        // VL - Versions localised table
-        // V - Versions table
-        $query = <<<SQL
+            // notes:
+            // VL - Versions localised table
+            // V - Versions table
+            $query = <<<SQL
 SELECT "VL"."RecordID", MAX("VL"."Version")
 FROM "$stagedTable" as "VL"
 INNER JOIN "$liveTable" as "V"
@@ -151,12 +151,31 @@ GROUP BY "VL"."RecordID"
 ORDER BY "VL"."RecordID" DESC
 SQL;
 
-        $draftVersions = DB::prepared_query($query, [
-            $holder->Locale,
-            0,
-        ])->map();
+            $draftVersions = DB::prepared_query($query, [
+                $holder->Locale,
+                0,
+            ])->map();
 
-        $liveVersions = DB::prepared_query($query, [$holder->Locale, 1])->map();
+            $liveVersions = DB::prepared_query($query, [
+                $holder->Locale,
+                1,
+            ])->map();
+        } else {
+            $versionsTable = $stageTable . '_Versions';
+
+            // notes:
+            // V - Versions table
+            $query = <<<SQL
+SELECT "V"."RecordID", MAX("V"."Version")
+FROM "$versionsTable" as "V"
+WHERE "V"."RecordID" IN $elementIds
+AND "V"."WasPublished" = ?
+GROUP BY "V"."RecordID"
+ORDER BY "V"."RecordID" DESC
+SQL;
+            $draftVersions = DB::prepared_query($query, [0])->map();
+            $liveVersions = DB::prepared_query($query, [1])->map();
+        }
 
         foreach ($draftVersions as $id => $draftVersion) {
             if (empty($liveVersions[$id])) {

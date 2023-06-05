@@ -230,7 +230,7 @@ SQL;
             $this->getByUrlSegment(__CLASS__, $this->URLSegment, $this->ID)
         ) {
             $this->URLSegment =
-                preg_replace('/-[0-9]+$/', null, $this->URLSegment) .
+                preg_replace('/-[0-9]+$/', '', $this->URLSegment) .
                 '-' .
                 $count;
             $count++;

@@ -635,8 +635,12 @@ SQL;
         $this->IsFirst = $IsFirst;
         $this->IsLast = $IsLast;
         $this->IsEvenOdd = $IsEvenOdd;
-        $controller = Controller::curr();
-        return $controller->customise($this)->renderWith($this->ClassName);
+        if (Controller::has_curr()) {
+            return Controller::curr()
+                ->customise($this)
+                ->renderWith($this->ClassName);
+        }
+        return $this->renderWith($this->ClassName);
     }
 
     /**

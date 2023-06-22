@@ -467,6 +467,8 @@ SQL;
                 ->format('y-MM-dd-HH-mm-ss');
         }
 
+        $key = array_filter($key);
+        $key = array_filter($key, 'strlen');
         return implode('-_-', array_filter($key, 'strlen'));
     }
 

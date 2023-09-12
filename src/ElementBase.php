@@ -162,7 +162,7 @@ class ElementBase extends DataObject implements CMSPreviewable
 
         // add a -n to the URLSegment if it already existed
         while ($this->getByUrlSegment(__CLASS__, $this->URLSegment, $this->ID)) {
-            $this->URLSegment = preg_replace('/-[0-9]+$/', null, $this->URLSegment) . '-' . $count;
+            $this->URLSegment = preg_replace('/-[0-9]+$/', "", $this->URLSegment) . '-' . $count;
             $count++;
         }
         return $this;

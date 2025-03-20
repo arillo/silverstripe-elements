@@ -3,7 +3,10 @@
   "description": "Elements",
   "type": "silverstripe-vendormodule",
   "homepage": "https://github.com/arillo/silverstripe-elements",
-  "keywords": ["silverstripe", "elements"],
+  "keywords": [
+    "silverstripe",
+    "elements"
+  ],
   "license": "MIT",
   "authors": [
     {
@@ -16,14 +19,16 @@
     }
   ],
   "require": {
-    "silverstripe/framework": "^4",
-     "arillo/silverstripe-dataobject-preview": "dev-2.x-dev",
-    "symbiote/silverstripe-gridfieldextensions": "^3.3",
-    "colymba/gridfield-bulk-editing-tools": "^3.1"
+    "silverstripe/framework": "^5",
+    "arillo/silverstripe-dataobject-preview": "dev-2.x-dev",
+    "symbiote/silverstripe-gridfieldextensions": "^4.1",
+    "colymba/gridfield-bulk-editing-tools": "^4.1"
   },
   "extra": {
     "installer-name": "elements",
-    "expose": ["client"]
+    "expose": [
+      "client"
+    ]
   },
   "autoload": {
     "psr-4": {

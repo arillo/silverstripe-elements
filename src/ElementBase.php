@@ -7,7 +7,6 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\View\ArrayData;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\TextField;
-use SilverStripe\Control\Director;
 use SilverStripe\Forms\FormAction;
 use SilverStripe\Forms\HiddenField;
 use SilverStripe\CMS\Model\SiteTree;
@@ -590,18 +589,20 @@ SQL;
 
     public function PreviewLink($action = null)
     {
-        return Controller::join_links(
-            Director::baseURL(),
-            'cms-preview',
-            'show',
-            str_replace('\\', '-', $this->ClassName),
-            $this->ID
-        );
+        $link = null;
+        if (!$this->isInDB()) {
+            return $link;
+        }
+
+        $action = $action . '?DataObjectPreview=' . mt_rand();
+        $link = $this->Link($action);
+        $this->extend('updatePreviewLink', $link, $action);
+        return $link;
     }
 
-    public function Link()
+    public function Link($action = null)
     {
-        return $this->Page()->Link('#' . $this->URLSegment);
+        return $this->getHolderPage()->Link($action) . '#' . $this->URLSegment;
     }
 
     public function CMSEditLink()

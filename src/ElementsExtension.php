@@ -9,6 +9,7 @@ use SilverStripe\ORM\DataExtension;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Config;
+use SilverStripe\View\Parsers\HTMLValue;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Control\HTTPResponse_Exception;
 use TractorCow\Fluent\Forms\DeleteAllLocalesAction;
@@ -71,7 +72,7 @@ class ElementsExtension extends DataExtension
         FieldList $fields,
         string $relationName,
         string $newTabName = 'Root.Main',
-        string $insertBefore = null
+        ?string $insertBefore = null
     ): FieldList {
         $itemsGf = $fields->dataFieldByName($relationName);
         $fields
@@ -217,10 +218,7 @@ class ElementsExtension extends DataExtension
         return $relations;
     }
 
-    /**
-     * @return bool
-     */
-    public function defaultsCreated()
+    public function defaultsCreated(): bool
     {
         $defaultElements = $this->getDefaultElements();
         $relationNames = ElementsExtension::page_element_relation_names(
@@ -266,6 +264,26 @@ class ElementsExtension extends DataExtension
             }
         }
     }
+
+    public function MetaTags(&$tags)
+        {
+            if (!Controller::has_curr()) {
+                return;
+            }
+            $controller = Controller::curr();
+            $request = $controller->getRequest();
+            if ($request->getVar('DataObjectPreview') !== null) {
+                $html = HTMLValue::create($tags);
+                $xpath = "//meta[@name='x-page-id' or @name='x-cms-edit-link']";
+                $removeTags = $html->query($xpath);
+                $body = $html->getBody();
+                foreach ($removeTags as $tag) {
+                    $body->removeChild($tag);
+                }
+                $tags = $html->getContent();
+            }
+            return $tags;
+        }
 
     /**
      * Elements to generate withi create default elements action.

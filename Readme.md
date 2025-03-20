@@ -9,7 +9,7 @@ Decorates a SiteTree class with multiple named element relations through a has_m
 
 SilverStripe CMS ^5.0
 
-For a SilverStripe 4.x compatible version of this module, please see the [1 branch, or 0.x release line](https://github.com/arillo/silverstripe-elements/tree/2.x).
+For a SilverStripe 4.x compatible version of this module, please see the [2.x release line](https://github.com/arillo/silverstripe-elements/tree/2.x).
 
 For a SilverStripe 3.x compatible version of this module, please see the [1 branch, or 0.x release line](https://github.com/arillo/silverstripe-elements/tree/1.x).
 

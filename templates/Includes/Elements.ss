@@ -1,3 +1,3 @@
 <% loop $ElementsByRelation(Elements).Sort(Sort) %>
-  $Render($Pos, $First, $Last, $EvenOdd)
+  $Render($Pos, $IsFirst, $IsLast, $EvenOdd)
 <% end_loop %>

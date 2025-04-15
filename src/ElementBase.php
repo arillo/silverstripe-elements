@@ -203,9 +203,7 @@ SQL;
             }
 
             $this->Sort =
-                ElementBase::get()
-                    ->filter($holderFilter)
-                    ->max('Sort') + 1;
+                ElementBase::get()->filter($holderFilter)->max('Sort') + 1;
         }
         return $this;
     }
@@ -482,9 +480,7 @@ SQL;
 
     public function IsStage()
     {
-        return Controller::curr()
-            ->getRequest()
-            ->getVar('stage') == 'Stage';
+        return Controller::curr()->getRequest()->getVar('stage') == 'Stage';
     }
 
     public function getCMSActions()
@@ -602,7 +598,11 @@ SQL;
 
     public function Link($action = null)
     {
-        return $this->getHolderPage()->Link($action) . '#' . $this->URLSegment;
+        if ($p = $this->getHolderPage()) {
+            return $p->Link($action) . '#' . $this->URLSegment;
+        }
+
+        return null;
     }
 
     public function CMSEditLink()

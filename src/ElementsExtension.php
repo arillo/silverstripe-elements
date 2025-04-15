@@ -266,24 +266,24 @@ class ElementsExtension extends DataExtension
     }
 
     public function MetaTags(&$tags)
-        {
-            if (!Controller::has_curr()) {
-                return;
-            }
-            $controller = Controller::curr();
-            $request = $controller->getRequest();
-            if ($request->getVar('DataObjectPreview') !== null) {
-                $html = HTMLValue::create($tags);
-                $xpath = "//meta[@name='x-page-id' or @name='x-cms-edit-link']";
-                $removeTags = $html->query($xpath);
-                $body = $html->getBody();
-                foreach ($removeTags as $tag) {
-                    $body->removeChild($tag);
-                }
-                $tags = $html->getContent();
-            }
-            return $tags;
+    {
+        if (!Controller::has_curr()) {
+            return;
         }
+        $controller = Controller::curr();
+        $request = $controller->getRequest();
+        if ($request->getVar('DataObjectPreview') !== null) {
+            $html = HTMLValue::create($tags);
+            $xpath = "//meta[@name='x-page-id' or @name='x-cms-edit-link']";
+            $removeTags = $html->query($xpath);
+            $body = $html->getBody();
+            foreach ($removeTags as $tag) {
+                $body->removeChild($tag);
+            }
+            $tags = $html->getContent();
+        }
+        return $tags;
+    }
 
     /**
      * Elements to generate withi create default elements action.

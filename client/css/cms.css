@@ -86,6 +86,10 @@
   background: #98aab6;
 }
 
+.element-state.not-localised {
+  background: #d43637;
+}
+
 .element-state.modified {
   background: #f46b00;
 }

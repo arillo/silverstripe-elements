@@ -564,9 +564,16 @@ SQL;
         if ($this->hasExtension(self::FLUENT_CLASS)) {
             if ($locales = \TractorCow\Fluent\Model\Locale::get()) {
                 foreach ($locales as $locale) {
-                    $class = $this->isAvailableInLocale($locale)
-                        ? 'active'
-                        : 'inactive';
+                    if (!$this->isDraftedInLocale($locale->Locale)) {
+                        $class = 'not-localised';
+                    } elseif (
+                        $this->hasMethod('isAvailableInLocale') &&
+                        !$this->isAvailableInLocale($locale)
+                    ) {
+                        $class = 'inactive';
+                    } else {
+                        $class = 'active';
+                    }
                     $pills .= "<span class='element-state $class'>{$locale->URLSegment}</span><br>";
                 }
             }

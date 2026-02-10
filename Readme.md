@@ -206,6 +206,23 @@ Arillo\Elements\ElementBase:
     - 'TractorCow\Fluent\Extension\FluentFilteredExtension'
 ```
 
+#### Frontend publish mode
+
+When using Fluent with multiple locales, you should configure `frontend_publish_required` on `ElementBase` to control how elements are displayed on the frontend across locales.
+
+```yml
+Arillo\Elements\ElementBase:
+  frontend_publish_required: exact
+```
+
+The available modes are:
+
+- **`exact`** — An element is only shown on the frontend if it has been published in the current locale. This prevents content from one locale (e.g. German) from appearing on another locale's frontend (e.g. French) when the element has not been translated yet. **Recommended for multi-locale setups.**
+- **`fallback`** — An element is shown if it has been published in the current locale or any of its configured fallback locales.
+- **`any`** (or `false`) — An element is shown regardless of which locale it was published in. Content from other locales will be used as fallback. This can lead to untranslated content appearing on the frontend and is generally not recommended for multi-locale sites.
+
+With `frontend_publish_required: exact`, publishing a page in one locale will only make elements visible on that locale's frontend. Editors need to explicitly publish each locale to make elements appear there.
+
 ### Options
 
 Use a tab instead of inline field when only one relation available

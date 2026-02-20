@@ -5,7 +5,7 @@ use SilverStripe\Core\ClassInfo;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Admin\LeftAndMain;
-use SilverStripe\ORM\DataExtension;
+use SilverStripe\Core\Extension;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Config;
@@ -43,7 +43,7 @@ use SilverStripe\Forms\GridField\GridFieldAddExistingAutocompleter;
  * @package Arillo\Elements
  *
  */
-class ElementsExtension extends DataExtension
+class ElementsExtension extends Extension
 {
     private static $has_many = [
         'Elements' => ElementBase::class,

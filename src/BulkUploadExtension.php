@@ -1,7 +1,7 @@
 <?php
 namespace Arillo\Elements;
 
-use SilverStripe\ORM\DataExtension;
+use SilverStripe\Core\Extension;
 use SilverStripe\Forms\GridField\GridField;
 
 /**
@@ -10,7 +10,7 @@ use SilverStripe\Forms\GridField\GridField;
  *
  * @package Arillo\Elements
  */
-class BulkUploadExtension extends DataExtension
+class BulkUploadExtension extends Extension
 {
     public function onBulkUpload(GridField $gridField)
     {

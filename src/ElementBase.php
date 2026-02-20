@@ -4,7 +4,7 @@ namespace Arillo\Elements;
 use SilverStripe\ORM\DB;
 use SilverStripe\Forms\TabSet;
 use SilverStripe\ORM\DataObject;
-use SilverStripe\View\ArrayData;
+use SilverStripe\Model\ArrayData;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\FormAction;

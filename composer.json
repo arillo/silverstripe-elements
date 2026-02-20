@@ -19,9 +19,9 @@
     }
   ],
   "require": {
-    "silverstripe/framework": "^5",
-    "symbiote/silverstripe-gridfieldextensions": "^4.1",
-    "colymba/gridfield-bulk-editing-tools": "^4.1"
+    "silverstripe/framework": "^6",
+    "symbiote/silverstripe-gridfieldextensions": "^5",
+    "colymba/gridfield-bulk-editing-tools": "^5.0"
   },
   "extra": {
     "installer-name": "elements",

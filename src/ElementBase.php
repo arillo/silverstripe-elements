@@ -512,7 +512,7 @@ SQL;
         return $this->i18n_singular_name();
     }
 
-    public function getStatusFlags($separator = '<br>')
+    public function getElementStatusFlags($separator = '<br>')
     {
         $modified = false;
         $state = [];

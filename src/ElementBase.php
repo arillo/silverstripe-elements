@@ -113,7 +113,7 @@ class ElementBase extends DataObject implements CMSPreviewable
             $idsToAdd = (new SQLSelect())
                 ->setFrom(ElementBase::config()->table_name)
                 ->setSelect(['ID'])
-                ->setWhere("ElementID IN ({$elementIdsStr})")
+                ->setWhere(['ElementID IN (' . DB::placeholders($elementIds) . ')' => $elementIds])
                 ->execute()
                 ->map();
 

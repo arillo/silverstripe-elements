@@ -267,10 +267,11 @@ class ElementsExtension extends Extension
 
     public function MetaTags(&$tags)
     {
-        if (!Controller::has_curr()) {
+        try {
+            $controller = Controller::curr();
+        } catch (\LogicException $e) {
             return;
         }
-        $controller = Controller::curr();
         $request = $controller->getRequest();
         if ($request->getVar('DataObjectPreview') !== null) {
             $html = HTMLValue::create($tags);

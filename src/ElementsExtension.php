@@ -52,6 +52,7 @@ class ElementsExtension extends DataExtension
     private static $owns = ['Elements'];
 
     private static $use_custom_tab = false;
+    private static $show_duplicate_action = true;
 
     /**
      * Holds parsed relations taking into consideration the inheritance.
@@ -72,7 +73,7 @@ class ElementsExtension extends DataExtension
         FieldList $fields,
         string $relationName,
         string $newTabName = 'Root.Main',
-        ?string $insertBefore = null
+        ?string $insertBefore = null,
     ): FieldList {
         $itemsGf = $fields->dataFieldByName($relationName);
         $fields
@@ -96,7 +97,7 @@ class ElementsExtension extends DataExtension
 
         if (
             $relationNames = ElementsExtension::page_element_relation_names(
-                $record
+                $record,
             )
         ) {
             $defaultElements = $record->getDefaultElements();
@@ -113,7 +114,7 @@ class ElementsExtension extends DataExtension
                                 $element->populate(
                                     'PageID',
                                     $record->ID,
-                                    $relationName
+                                    $relationName,
                                 );
                                 $element->write();
                                 $count++;
@@ -142,7 +143,7 @@ class ElementsExtension extends DataExtension
             }
             user_error(
                 $className . ' does not extend from' . ElementBase::class,
-                E_USER_WARNING
+                E_USER_WARNING,
             );
         });
     }
@@ -158,11 +159,11 @@ class ElementsExtension extends DataExtension
     }
 
     public static function page_element_relation_names(
-        DataObject $record
+        DataObject $record,
     ): array {
         return self::gather_element_relations_inherit_config(
             $record,
-            'element_relations'
+            'element_relations',
         );
     }
 
@@ -176,7 +177,7 @@ class ElementsExtension extends DataExtension
      */
     public static function gather_element_relations_inherit_config(
         DataObject $record,
-        string $configName
+        string $configName,
     ): array {
         $relations = $record->uninherited($configName);
         if (!$relations) {
@@ -185,7 +186,7 @@ class ElementsExtension extends DataExtension
 
         if (
             $inheritRelationsFrom = $record->uninherited(
-                'element_relations_inherit_from'
+                'element_relations_inherit_from',
             )
         ) {
             $allInheritances = [];
@@ -194,7 +195,7 @@ class ElementsExtension extends DataExtension
             } elseif (is_array($inheritRelationsFrom)) {
                 $allInheritances = array_merge(
                     $allInheritances,
-                    $inheritRelationsFrom
+                    $inheritRelationsFrom,
                 );
             }
 
@@ -204,12 +205,12 @@ class ElementsExtension extends DataExtension
                         $inheritRelations = Config::inst()->get(
                             $inheritance,
                             $configName,
-                            Config::UNINHERITED
+                            Config::UNINHERITED,
                         )
                     ) {
                         $relations = array_merge_recursive(
                             $relations,
-                            $inheritRelations
+                            $inheritRelations,
                         );
                     }
                 }
@@ -222,7 +223,7 @@ class ElementsExtension extends DataExtension
     {
         $defaultElements = $this->getDefaultElements();
         $relationNames = ElementsExtension::page_element_relation_names(
-            $this->owner
+            $this->owner,
         );
         if (count($relationNames) > 0) {
             foreach ($relationNames as $relationName => $elementsClasses) {
@@ -250,7 +251,7 @@ class ElementsExtension extends DataExtension
         }
 
         $relations = ElementsExtension::page_element_relation_names(
-            $this->owner
+            $this->owner,
         );
 
         if ($relations) {
@@ -259,7 +260,7 @@ class ElementsExtension extends DataExtension
                 $this->gridFieldForElementRelation(
                     $fields,
                     $key,
-                    self::validate_class_inheritance($relation)
+                    self::validate_class_inheritance($relation),
                 );
             }
         }
@@ -302,7 +303,7 @@ class ElementsExtension extends DataExtension
     {
         return self::gather_element_relations_inherit_config(
             $this->owner,
-            'element_defaults'
+            'element_defaults',
         );
     }
 
@@ -335,7 +336,7 @@ class ElementsExtension extends DataExtension
     public function gridFieldForElementRelation(
         FieldList $fields,
         $relationName,
-        $relation
+        $relation,
     ) {
         // sort relations
         asort($relation);
@@ -346,6 +347,10 @@ class ElementsExtension extends DataExtension
             ->removeComponentsByType(GridFieldFilterHeader::class)
             ->addComponent(new GridFieldOrderableRows('Sort'))
             ->addComponent(new GridFieldDeleteAction());
+
+        if ($this->owner->config()->show_duplicate_action) {
+            $config->addComponent(new GridFieldDuplicateElementAction());
+        }
 
         // attach default elements action
         if (
@@ -363,7 +368,7 @@ class ElementsExtension extends DataExtension
                 ->addComponent($multiClass = new GridFieldAddNewMultiClass());
 
             $multiClass->setClasses(
-                ElementsExtension::map_classnames($relation)
+                ElementsExtension::map_classnames($relation),
             );
         }
 
@@ -424,7 +429,7 @@ class ElementsExtension extends DataExtension
             : $this->owner->getHolderPage();
         if ($holderPage && $holderPage->canPublish()) {
             $detailForm->setItemRequestClass(
-                VersionedElement_ItemRequest::class
+                VersionedElement_ItemRequest::class,
             );
         }
 
@@ -434,8 +439,8 @@ class ElementsExtension extends DataExtension
                 $relationName,
                 $label,
                 $this->owner->ElementsByRelation($relationName),
-                $config
-            )
+                $config,
+            ),
         );
 
         $gridField->addExtraClass('elements-gridfield');
@@ -478,7 +483,7 @@ class ElementsExtension extends DataExtension
                     }
                     return $el->isOnDraft();
                 },
-                false
+                false,
             );
         }
 

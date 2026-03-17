@@ -19,3 +19,6 @@ de:
 
   TractorCow\Fluent\Forms\DeleteAllLocalesAction:
     Delete: 'In allen Sprachen löschen'
+
+  Arillo\Elements\GridFieldDuplicateElementAction:
+    Duplicate: 'Duplizieren'

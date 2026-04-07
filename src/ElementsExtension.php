@@ -249,6 +249,10 @@ class ElementsExtension extends Extension
             return;
         }
 
+        $fields->removeByName([
+            'Elements'
+        ]);
+
         $relations = ElementsExtension::page_element_relation_names(
             $this->owner
         );

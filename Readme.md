@@ -223,6 +223,50 @@ The available modes are:
 
 With `frontend_publish_required: exact`, publishing a page in one locale will only make elements visible on that locale's frontend. Editors need to explicitly publish each locale to make elements appear there.
 
+#### Fluent duplication support
+
+SilverStripe's built-in `duplicate()` does not copy Fluent's localised data for has_many relations (e.g. Elements). This module ships a `FluentDuplicateFixExtension` that fixes this. It copies `_Localised` rows, `_FilteredLocales` state, and recurses into child elements — so duplicated pages/elements get all their translations.
+
+**Note:** This extension does not require Fluent as a dependency. Only apply it if your project uses Fluent.
+
+1. Apply the extension to your `Page` class:
+
+```yml
+Page:
+  extensions:
+    - Arillo\Elements\FluentDuplicateFixExtension
+```
+
+2. Override `duplicate()` in your `Page.php` to fix URLSegments after all hooks complete:
+
+```php
+use Arillo\Elements\FluentDuplicateFixExtension;
+
+public function duplicate(bool $doWrite = true, array|null $relations = null): static
+{
+    $new = parent::duplicate($doWrite, $relations);
+
+    if ($doWrite) {
+        $ext = $new->getExtensionInstance(FluentDuplicateFixExtension::class);
+        if ($ext) {
+            $ext->makeURLSegmentsUnique($new);
+        }
+    }
+
+    return $new;
+}
+```
+
+3. Make sure your Page has `cascade_duplicates` configured so elements are included:
+
+```yml
+Page:
+  cascade_duplicates:
+    - Elements
+```
+
+The extension uses `duplicate_relations_sort` config to know which relations to recurse into (defaults to `Elements` sorted by `Sort ASC`). You can override this if your setup uses different relation names.
+
 ### Options
 
 Use a tab instead of inline field when only one relation available

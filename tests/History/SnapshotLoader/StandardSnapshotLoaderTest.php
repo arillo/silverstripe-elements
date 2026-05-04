@@ -2,7 +2,6 @@
 namespace Arillo\Elements\Tests\History\SnapshotLoader;
 
 use SilverStripe\Dev\SapphireTest;
-use SilverStripe\CMS\Model\SiteTree;
 use Arillo\Elements\ElementBase;
 use Arillo\Elements\History\SnapshotLoader\StandardSnapshotLoader;
 
@@ -13,7 +12,7 @@ class StandardSnapshotLoaderTest extends SapphireTest
 
     public function testLoadsElementsAtCurrentVersion(): void
     {
-        $page = $this->objFromFixture(SiteTree::class, 'page1');
+        $page = $this->objFromFixture(\Page::class, 'page1');
         $page->publishRecursive();
         $page->flushCache();
 
@@ -29,7 +28,7 @@ class StandardSnapshotLoaderTest extends SapphireTest
 
     public function testLoadsElementSnapshotAtOlderVersion(): void
     {
-        $page = $this->objFromFixture(SiteTree::class, 'page1');
+        $page = $this->objFromFixture(\Page::class, 'page1');
         $el1 = $this->objFromFixture(ElementBase::class, 'el1');
         $page->publishRecursive();
         $oldVersion = $page->Version;
@@ -58,7 +57,7 @@ class StandardSnapshotLoaderTest extends SapphireTest
 
     public function testReturnsEmptyArrayForUnknownVersion(): void
     {
-        $page = $this->objFromFixture(SiteTree::class, 'page1');
+        $page = $this->objFromFixture(\Page::class, 'page1');
         $loader = new StandardSnapshotLoader();
         $this->assertSame([], $loader->loadAtVersion($page, 'Elements', 99999));
     }

@@ -1,4 +1,4 @@
-SilverStripe\CMS\Model\SiteTree:
+Page:
   page1:
     Title: 'Test Page'
     URLSegment: test-page
@@ -9,11 +9,11 @@ Arillo\Elements\ElementBase:
     RelationName: Elements
     Sort: 1
     Visible: 1
-    Page: =>SilverStripe\CMS\Model\SiteTree.page1
+    Page: =>Page.page1
   el2:
     Title: 'Element Two'
     URLSegment: element-two
     RelationName: Elements
     Sort: 2
     Visible: 1
-    Page: =>SilverStripe\CMS\Model\SiteTree.page1
+    Page: =>Page.page1

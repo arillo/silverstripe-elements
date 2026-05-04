@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="tests/bootstrap.php" colors="true">
+    <testsuites>
+        <testsuite name="Unit">
+            <file>tests/History/Diff/DiffTreeTest.php</file>
+        </testsuite>
+    </testsuites>
+    <filter>
+        <whitelist addUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">src/History/Diff/</directory>
+            <exclude>
+                <directory suffix=".php">tests/</directory>
+            </exclude>
+        </whitelist>
+    </filter>
+</phpunit>

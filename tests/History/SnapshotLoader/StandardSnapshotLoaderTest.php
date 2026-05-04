@@ -8,59 +8,18 @@ use Arillo\Elements\History\SnapshotLoader\StandardSnapshotLoader;
 
 class StandardSnapshotLoaderTest extends SapphireTest
 {
+    protected static $fixture_file = '../fixtures/elements_basic.yml';
     protected $usesDatabase = true;
-
-    /** @var SiteTree */
-    private SiteTree $page;
-
-    /** @var ElementBase */
-    private ElementBase $el1;
-
-    /** @var ElementBase */
-    private ElementBase $el2;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $page = SiteTree::create([
-            'Title' => 'Test Page',
-            'URLSegment' => 'test-page',
-        ]);
-        $page->write();
-        $this->page = $page;
-
-        $el1 = ElementBase::create([
-            'Title' => 'Element One',
-            'URLSegment' => 'element-one',
-            'RelationName' => 'Elements',
-            'Sort' => 1,
-            'Visible' => 1,
-            'PageID' => $page->ID,
-        ]);
-        $el1->write();
-        $this->el1 = $el1;
-
-        $el2 = ElementBase::create([
-            'Title' => 'Element Two',
-            'URLSegment' => 'element-two',
-            'RelationName' => 'Elements',
-            'Sort' => 2,
-            'Visible' => 1,
-            'PageID' => $page->ID,
-        ]);
-        $el2->write();
-        $this->el2 = $el2;
-    }
 
     public function testLoadsElementsAtCurrentVersion(): void
     {
-        $this->page->publishRecursive();
-        $this->page->flushCache();
+        $page = $this->objFromFixture(SiteTree::class, 'page1');
+        $page->publishRecursive();
+        $page->flushCache();
 
         $loader = new StandardSnapshotLoader();
-        $version = $this->page->Version;
-        $elements = $loader->loadAtVersion($this->page, 'Elements', $version);
+        $version = $page->Version;
+        $elements = $loader->loadAtVersion($page, 'Elements', $version);
 
         $this->assertCount(2, $elements);
         $titles = array_map(fn($e) => $e->Title, $elements);
@@ -70,22 +29,25 @@ class StandardSnapshotLoaderTest extends SapphireTest
 
     public function testLoadsElementSnapshotAtOlderVersion(): void
     {
-        $this->page->publishRecursive();
-        $oldVersion = $this->page->Version;
+        $page = $this->objFromFixture(SiteTree::class, 'page1');
+        $el1 = $this->objFromFixture(ElementBase::class, 'el1');
+        $page->publishRecursive();
+        $oldVersion = $page->Version;
 
-        // Sleep 1s to ensure LastEdited timestamps differ between publish rounds
+        // LastEdited resolves to seconds; we need a real second of separation
+        // for the cutoff query to distinguish snapshots. v1 limitation.
         sleep(1);
 
-        $this->el1->Title = 'Element One Updated';
-        $this->el1->write();
-        $this->page->publishRecursive();
-        $this->page->flushCache();
+        $el1->Title = 'Element One Updated';
+        $el1->write();
+        $page->publishRecursive();
+        $page->flushCache();
 
         $loader = new StandardSnapshotLoader();
-        $oldElements = $loader->loadAtVersion($this->page, 'Elements', $oldVersion);
+        $oldElements = $loader->loadAtVersion($page, 'Elements', $oldVersion);
         $found = null;
         foreach ($oldElements as $e) {
-            if ($e->ID === $this->el1->ID) {
+            if ($e->ID === $el1->ID) {
                 $found = $e;
                 break;
             }
@@ -96,7 +58,8 @@ class StandardSnapshotLoaderTest extends SapphireTest
 
     public function testReturnsEmptyArrayForUnknownVersion(): void
     {
+        $page = $this->objFromFixture(SiteTree::class, 'page1');
         $loader = new StandardSnapshotLoader();
-        $this->assertSame([], $loader->loadAtVersion($this->page, 'Elements', 99999));
+        $this->assertSame([], $loader->loadAtVersion($page, 'Elements', 99999));
     }
 }

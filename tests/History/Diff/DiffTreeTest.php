@@ -1,13 +1,14 @@
 <?php
 namespace Arillo\Elements\Tests\History\Diff;
 
-use PHPUnit\Framework\TestCase;
+use SilverStripe\Dev\SapphireTest;
 use Arillo\Elements\History\Diff\DiffTree;
 use Arillo\Elements\History\Diff\ElementDiff;
 use Arillo\Elements\History\Diff\FieldDiff;
 
-class DiffTreeTest extends TestCase
+class DiffTreeTest extends SapphireTest
 {
+    protected $usesDatabase = false;
 
     public function testEmptyTree(): void
     {

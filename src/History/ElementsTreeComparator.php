@@ -54,7 +54,7 @@ class ElementsTreeComparator
             if (!isset($oldById[$newEl->ID])) {
                 $tree->changes[] = $this->classifyAdded($newEl);
             } else {
-                $tree->changes[] = $this->classifyPair($oldById[$newEl->ID], $newEl);
+                $tree->changes[] = $this->classifyPair($oldById[$newEl->ID], $newEl, $depth);
             }
         }
 
@@ -115,7 +115,7 @@ class ElementsTreeComparator
         return $diff;
     }
 
-    private function classifyPair(ElementBase $oldEl, ElementBase $newEl): ElementDiff
+    private function classifyPair(ElementBase $oldEl, ElementBase $newEl, int $depth = 0): ElementDiff
     {
         $diff = new ElementDiff();
         $diff->elementId = $newEl->ID;
@@ -126,7 +126,28 @@ class ElementsTreeComparator
 
         $fieldChanges = $this->fieldDiffer->diff($oldEl, $newEl);
         $diff->fieldChanges = $fieldChanges;
-        $diff->status = empty($fieldChanges) ? 'unchanged' : 'modified';
+
+        // Recurse into nested children if depth allows
+        if ($this->maxDepth === null || $depth < $this->maxDepth) {
+            $childTree = $this->compareLevel(
+                $newEl,
+                'Elements',
+                $oldEl->Version,
+                $newEl->Version,
+                $depth + 1,
+            );
+            $childChanges = array_filter(
+                $childTree->changes,
+                fn($c) => $c->status !== 'unchanged',
+            );
+            $diff->childChanges = array_values($childChanges);
+        }
+
+        if (!empty($fieldChanges) || !empty($diff->childChanges)) {
+            $diff->status = 'modified';
+        } else {
+            $diff->status = 'unchanged';
+        }
         return $diff;
     }
 

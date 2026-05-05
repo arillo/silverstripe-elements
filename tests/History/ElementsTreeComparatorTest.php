@@ -108,6 +108,74 @@ class ElementsTreeComparatorTest extends SapphireTest
         $this->assertCount(1, $added);
     }
 
+    public function testNestedChildChangeFlagsParentModified(): void
+    {
+        $loader = new \SilverStripe\Dev\YamlFixture(__DIR__ . '/fixtures/elements_nested.yml');
+        $loader->writeInto($this->fixtureFactory);
+        $page = $this->fixtureFactory->get(\Page::class, 'page2');
+        $parent = $this->fixtureFactory->get(ElementBase::class, 'parent1');
+        $child = $this->fixtureFactory->get(ElementBase::class, 'child1');
+
+        $page->Title = 'Nested Page v1';
+        $page->write();
+        $page->publishRecursive();
+        $oldV = $page->Version;
+
+        sleep(1);
+
+        $child->Title = 'Child Updated';
+        $child->write();
+        $page->Title = 'Nested Page v2';
+        $page->write();
+        $page->publishRecursive();
+        $newV = $page->Version;
+        $this->assertGreaterThan($oldV, $newV);
+
+        $comparator = new ElementsTreeComparator(
+            $page,
+            'Elements',
+            new StandardSnapshotLoader(),
+            new FieldDiffer(),
+        );
+        $tree = $comparator->compare($oldV, $newV);
+
+        $parentDiff = null;
+        foreach ($tree->changes as $d) {
+            if ($d->elementId === $parent->ID) {
+                $parentDiff = $d;
+                break;
+            }
+        }
+        $this->assertNotNull($parentDiff);
+        $this->assertSame('modified', $parentDiff->status);
+        $this->assertNotEmpty($parentDiff->childChanges);
+        $this->assertSame('modified', $parentDiff->childChanges[0]->status);
+    }
+
+    public function testMaxDepthCollapsesGrandchildren(): void
+    {
+        $loader = new \SilverStripe\Dev\YamlFixture(__DIR__ . '/fixtures/elements_nested.yml');
+        $loader->writeInto($this->fixtureFactory);
+        $page = $this->fixtureFactory->get(\Page::class, 'page2');
+        $page->Title = 'Nested v1';
+        $page->write();
+        $page->publishRecursive();
+        $v = $page->Version;
+
+        $comparator = new ElementsTreeComparator(
+            $page,
+            'Elements',
+            new StandardSnapshotLoader(),
+            new FieldDiffer(),
+            0,
+        );
+        $tree = $comparator->compare($v, $v);
+
+        foreach ($tree->changes as $d) {
+            $this->assertEmpty($d->childChanges, 'Children should be excluded at depth 0');
+        }
+    }
+
     public function testReorderProducesReorderMarker(): void
     {
         $page = $this->objFromFixture(\Page::class, 'page1');

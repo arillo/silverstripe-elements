@@ -1,14 +1,23 @@
 <?php
 namespace Arillo\Elements\Tests\History;
 
+use SilverStripe\Assets\File;
+use SilverStripe\Assets\Image;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\Security\Group;
 use Arillo\Elements\History\FieldDiffer;
 use Arillo\Elements\Tests\History\Stubs\TextElementStub;
 use Arillo\Elements\Tests\History\Stubs\HtmlElementStub;
+use Arillo\Elements\Tests\History\Stubs\RelationElementStub;
 
 class FieldDifferTest extends SapphireTest
 {
-    protected $usesDatabase = false;
+    protected $usesDatabase = true;
+    protected static $extra_dataobjects = [
+        TextElementStub::class,
+        HtmlElementStub::class,
+        RelationElementStub::class,
+    ];
 
     public function testTextFieldDiff(): void
     {
@@ -21,10 +30,7 @@ class FieldDifferTest extends SapphireTest
         $differ = new FieldDiffer();
         $diffs = $differ->diff($old, $new);
 
-        $titleDiff = null;
-        foreach ($diffs as $d) {
-            if ($d->fieldName === 'Title') { $titleDiff = $d; break; }
-        }
+        $titleDiff = $this->findDiff($diffs, 'Title');
         $this->assertNotNull($titleDiff);
         $this->assertSame('text', $titleDiff->kind);
         $this->assertSame('old title', $titleDiff->oldValue);
@@ -42,10 +48,7 @@ class FieldDifferTest extends SapphireTest
         $differ = new FieldDiffer();
         $diffs = $differ->diff($old, $new);
 
-        $bodyDiff = null;
-        foreach ($diffs as $d) {
-            if ($d->fieldName === 'Body') { $bodyDiff = $d; break; }
-        }
+        $bodyDiff = $this->findDiff($diffs, 'Body');
         $this->assertNotNull($bodyDiff);
         $this->assertSame('html', $bodyDiff->kind);
     }
@@ -60,5 +63,108 @@ class FieldDifferTest extends SapphireTest
 
         $differ = new FieldDiffer();
         $this->assertSame([], $differ->diff($old, $new));
+    }
+
+    public function testHasOneImageKind(): void
+    {
+        // Skip writing real Image records — the host project's
+        // AutoPublishFileExtension recurses when File::write() is called from a
+        // test. Kind classification is schema-level so arbitrary IDs suffice.
+        $old = RelationElementStub::create();
+        $old->PrimaryImageID = 100;
+
+        $new = RelationElementStub::create();
+        $new->PrimaryImageID = 200;
+
+        $differ = new FieldDiffer();
+        $diff = $this->findDiff($differ->diff($old, $new), 'PrimaryImage');
+        $this->assertNotNull($diff);
+        $this->assertSame('has_one_image', $diff->kind);
+    }
+
+    public function testHasOneFileKind(): void
+    {
+        // Same workaround as testHasOneImageKind.
+        $old = RelationElementStub::create();
+        $old->AttachedFileID = 100;
+
+        $new = RelationElementStub::create();
+        $new->AttachedFileID = 200;
+
+        $differ = new FieldDiffer();
+        $diff = $this->findDiff($differ->diff($old, $new), 'AttachedFile');
+        $this->assertNotNull($diff);
+        $this->assertSame('has_one_file', $diff->kind);
+    }
+
+    public function testHasOneGenericKind(): void
+    {
+        $oldGroup = Group::create(['Title' => 'Group A']);
+        $oldGroup->write();
+        $newGroup = Group::create(['Title' => 'Group B']);
+        $newGroup->write();
+
+        $old = RelationElementStub::create();
+        $old->OwnerGroupID = $oldGroup->ID;
+        $old->write();
+        $new = RelationElementStub::create();
+        $new->OwnerGroupID = $newGroup->ID;
+        $new->write();
+
+        $differ = new FieldDiffer();
+        $diff = $this->findDiff($differ->diff($old, $new), 'OwnerGroup');
+        $this->assertNotNull($diff);
+        $this->assertSame('has_one', $diff->kind);
+        $this->assertStringContainsString('Group A', $diff->oldValue);
+        $this->assertStringContainsString('Group B', $diff->newValue);
+    }
+
+    public function testManyManyKind(): void
+    {
+        $g1 = Group::create(['Title' => 'G1']);
+        $g1->write();
+        $g2 = Group::create(['Title' => 'G2']);
+        $g2->write();
+
+        $old = RelationElementStub::create();
+        $old->write();
+        $old->TaggedGroups()->add($g1);
+
+        $new = RelationElementStub::create();
+        $new->write();
+        $new->TaggedGroups()->add($g1);
+        $new->TaggedGroups()->add($g2);
+
+        $differ = new FieldDiffer();
+        $diff = $this->findDiff($differ->diff($old, $new), 'TaggedGroups');
+        $this->assertNotNull($diff);
+        $this->assertSame('many_many', $diff->kind);
+    }
+
+    public function testHasOneFkColumnsAreNotDiffedAsText(): void
+    {
+        $old = RelationElementStub::create();
+        $old->PrimaryImageID = 100;
+        $new = RelationElementStub::create();
+        $new->PrimaryImageID = 200;
+
+        $differ = new FieldDiffer();
+        $diffs = $differ->diff($old, $new);
+
+        $this->assertNull(
+            $this->findDiff($diffs, 'PrimaryImageID'),
+            'has_one FK column (PrimaryImageID) should not appear as a separate text diff'
+        );
+        $this->assertNotNull($this->findDiff($diffs, 'PrimaryImage'));
+    }
+
+    private function findDiff(array $diffs, string $name)
+    {
+        foreach ($diffs as $d) {
+            if ($d->fieldName === $name) {
+                return $d;
+            }
+        }
+        return null;
     }
 }

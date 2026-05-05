@@ -47,6 +47,16 @@ class ElementBase extends DataObject implements CMSPreviewable
     private static $icon = 'font-icon-box';
     private static $omit_cache = false;
 
+    private static $history_excluded_fields = [
+        'Sort',
+        'RelationName',
+        'Version',
+        'RecordID',
+        'WasPublished',
+        'LastEdited',
+        'Created',
+    ];
+
     private static $db = [
         'Title' => 'Text',
         'URLSegment' => 'Varchar(255)',

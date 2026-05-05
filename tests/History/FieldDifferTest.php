@@ -205,6 +205,37 @@ class FieldDifferTest extends SapphireTest
         );
     }
 
+    public function testConfigurableExclusions(): void
+    {
+        TextElementStub::config()->merge('history_excluded_fields', ['Title']);
+
+        try {
+            $old = TextElementStub::create();
+            $old->Title = 'A';
+            $new = TextElementStub::create();
+            $new->Title = 'B';
+
+            $differ = new FieldDiffer();
+            $diff = $this->findDiff($differ->diff($old, $new), 'Title');
+            $this->assertNull($diff, 'Title should be excluded by config override');
+        } finally {
+            TextElementStub::config()->remove('history_excluded_fields');
+        }
+    }
+
+    public function testFieldLabelsResolveFromI18n(): void
+    {
+        $old = TextElementStub::create();
+        $old->Title = 'A';
+        $new = TextElementStub::create();
+        $new->Title = 'B';
+
+        $differ = new FieldDiffer();
+        $diff = $this->findDiff($differ->diff($old, $new), 'Title');
+        $this->assertNotNull($diff);
+        $this->assertNotEmpty($diff->fieldLabel, 'A label should resolve');
+    }
+
     private function findDiff(array $diffs, string $name)
     {
         foreach ($diffs as $d) {

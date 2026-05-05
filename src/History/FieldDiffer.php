@@ -28,7 +28,7 @@ class FieldDiffer
         $hasOneRelations = $new->config()->get('has_one') ?? [];
 
         foreach ($fields as $name => $spec) {
-            if ($this->isExcluded($name)) {
+            if ($this->isExcluded($new, $name)) {
                 continue;
             }
             if ($name === 'ArbitrarySettingsValue') {
@@ -50,7 +50,7 @@ class FieldDiffer
 
             $diff = new FieldDiff();
             $diff->fieldName = $name;
-            $diff->fieldLabel = $name;
+            $diff->fieldLabel = $this->resolveLabel($new, $name);
             $diff->kind = $this->classifyDbField($new, $name);
             $diff->oldValue = $oldValue;
             $diff->newValue = $newValue;
@@ -74,7 +74,7 @@ class FieldDiffer
 
             $diff = new FieldDiff();
             $diff->fieldName = $name;
-            $diff->fieldLabel = $name;
+            $diff->fieldLabel = $this->resolveLabel($new, $name);
             $diff->kind = $this->classifyHasOne($targetClass);
             $diff->oldValue = $this->renderHasOne($targetClass, $oldId);
             $diff->newValue = $this->renderHasOne($targetClass, $newId);
@@ -98,7 +98,7 @@ class FieldDiffer
 
             $diff = new FieldDiff();
             $diff->fieldName = $name;
-            $diff->fieldLabel = $name;
+            $diff->fieldLabel = $this->resolveLabel($new, $name);
             $diff->kind = 'many_many';
             $diff->oldValue = $oldList;
             $diff->newValue = $newList;
@@ -187,9 +187,16 @@ class FieldDiffer
         return false;
     }
 
-    private function isExcluded(string $fieldName): bool
+    private function isExcluded(DataObject $record, string $fieldName): bool
     {
-        return in_array($fieldName, ['Sort', 'RelationName', 'Version', 'RecordID', 'WasPublished'], true);
+        $excluded = $record->config()->get('history_excluded_fields') ?? [];
+        return in_array($fieldName, $excluded, true);
+    }
+
+    private function resolveLabel(DataObject $record, string $fieldName): string
+    {
+        $labels = $record->fieldLabels();
+        return $labels[$fieldName] ?? $fieldName;
     }
 
     private function classifyDbField(DataObject $record, string $fieldName): string

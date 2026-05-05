@@ -4,6 +4,7 @@ namespace Arillo\Elements\History\SnapshotLoader;
 use Arillo\Elements\ElementBase;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\DB;
 use SilverStripe\ORM\Queries\SQLSelect;
 use SilverStripe\Versioned\Versioned;
 
@@ -33,8 +34,24 @@ class StandardSnapshotLoader implements ElementSnapshotLoader
 
         $elements = [];
         foreach ($rows as $row) {
+            // Skip records whose latest-at-cutoff version was a deletion.
+            // (Stage-aware isArchived() reflects the current state, which is
+            // wrong for historical version snapshots — a record archived
+            // at newV would otherwise also drop out of the oldV snapshot.)
+            $wasDeleted = false;
+            foreach (DB::prepared_query(
+                "SELECT \"WasDeleted\" FROM \"$versionsTable\" WHERE \"RecordID\" = ? AND \"Version\" = ?",
+                [$row['RecordID'], $row['MaxVersion']]
+            ) as $vRow) {
+                $wasDeleted = (bool) $vRow['WasDeleted'];
+                break;
+            }
+            if ($wasDeleted) {
+                continue;
+            }
+
             $element = Versioned::get_version(ElementBase::class, $row['RecordID'], $row['MaxVersion']);
-            if ($element && !$element->isArchived()) {
+            if ($element) {
                 $elements[] = $element;
             }
         }

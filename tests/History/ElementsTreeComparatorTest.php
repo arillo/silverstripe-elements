@@ -108,6 +108,40 @@ class ElementsTreeComparatorTest extends SapphireTest
         $this->assertCount(1, $added);
     }
 
+    public function testReorderProducesReorderMarker(): void
+    {
+        $page = $this->objFromFixture(\Page::class, 'page1');
+        $el1 = $this->objFromFixture(ElementBase::class, 'el1');
+        $el2 = $this->objFromFixture(ElementBase::class, 'el2');
+        $page->Title = 'Test Page v1';
+        $page->write();
+        $page->publishRecursive();
+        $oldV = $page->Version;
+
+        sleep(1);
+
+        $el1->Sort = 2;
+        $el1->write();
+        $el2->Sort = 1;
+        $el2->write();
+        $page->Title = 'Test Page v2';
+        $page->write();
+        $page->publishRecursive();
+        $newV = $page->Version;
+        $this->assertGreaterThan($oldV, $newV);
+
+        $comparator = new ElementsTreeComparator(
+            $page,
+            'Elements',
+            new StandardSnapshotLoader(),
+            new FieldDiffer(),
+        );
+        $tree = $comparator->compare($oldV, $newV);
+
+        $this->assertNotNull($tree->reorder, 'Reorder should be detected');
+        $this->assertSame('reordered', $tree->reorder->status);
+    }
+
     public function testRemovedElementClassifiedRemoved(): void
     {
         $page = $this->objFromFixture(\Page::class, 'page1');

@@ -66,7 +66,31 @@ class ElementsTreeComparator
             }
         }
 
+        $tree->reorder = $this->detectReorder($oldElements, $newElements, $oldById, $newById);
+
         return $tree;
+    }
+
+    private function detectReorder(array $oldElements, array $newElements, array $oldById, array $newById): ?ElementDiff
+    {
+        $commonOldIds = [];
+        foreach ($oldElements as $e) {
+            if (isset($newById[$e->ID])) {
+                $commonOldIds[] = $e->ID;
+            }
+        }
+        $commonNewIds = [];
+        foreach ($newElements as $e) {
+            if (isset($oldById[$e->ID])) {
+                $commonNewIds[] = $e->ID;
+            }
+        }
+        if ($commonOldIds === $commonNewIds) {
+            return null;
+        }
+        $marker = new ElementDiff();
+        $marker->status = 'reordered';
+        return $marker;
     }
 
     private function classifyAdded(ElementBase $newEl): ElementDiff

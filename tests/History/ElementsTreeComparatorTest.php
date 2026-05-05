@@ -176,6 +176,42 @@ class ElementsTreeComparatorTest extends SapphireTest
         }
     }
 
+    public function testExceptionInOneElementIsolated(): void
+    {
+        $page = $this->objFromFixture(\Page::class, 'page1');
+        $el1 = $this->objFromFixture(ElementBase::class, 'el1');
+        $page->Title = 'Test Page v1';
+        $page->write();
+        $page->publishRecursive();
+
+        $throwingDiffer = new class extends FieldDiffer {
+            public function diff(\SilverStripe\ORM\DataObject $old, \SilverStripe\ORM\DataObject $new): array
+            {
+                if ($new->Title === 'Element One') {
+                    throw new \RuntimeException('boom');
+                }
+                return parent::diff($old, $new);
+            }
+        };
+
+        $comparator = new ElementsTreeComparator(
+            $page,
+            'Elements',
+            new StandardSnapshotLoader(),
+            $throwingDiffer,
+        );
+        $tree = $comparator->compare($page->Version, $page->Version);
+
+        $errors = array_filter($tree->changes, fn($d) => $d->status === 'error');
+        $this->assertCount(1, $errors);
+        $err = array_values($errors)[0];
+        $this->assertSame($el1->ID, $err->elementId);
+        $this->assertSame('boom', $err->errorMessage);
+
+        $okStatuses = array_map(fn($d) => $d->status, $tree->changes);
+        $this->assertContains('unchanged', $okStatuses, 'Other elements should be unaffected');
+    }
+
     public function testReorderProducesReorderMarker(): void
     {
         $page = $this->objFromFixture(\Page::class, 'page1');

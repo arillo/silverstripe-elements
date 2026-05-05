@@ -53,8 +53,18 @@ class ElementsTreeComparator
         foreach ($newElements as $newEl) {
             if (!isset($oldById[$newEl->ID])) {
                 $tree->changes[] = $this->classifyAdded($newEl);
-            } else {
+                continue;
+            }
+            try {
                 $tree->changes[] = $this->classifyPair($oldById[$newEl->ID], $newEl, $depth);
+            } catch (\Throwable $e) {
+                $err = new ElementDiff();
+                $err->status = 'error';
+                $err->elementId = $newEl->ID;
+                $err->elementClass = $newEl->ClassName;
+                $err->elementSummary = (string) $newEl->getCMSSummary();
+                $err->errorMessage = $e->getMessage();
+                $tree->changes[] = $err;
             }
         }
 

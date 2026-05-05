@@ -6,12 +6,12 @@ use Arillo\Elements\History\Diff\DiffTree;
 use Arillo\Elements\History\SnapshotLoader\ElementSnapshotLoader;
 use Arillo\Elements\History\SnapshotLoader\FluentSnapshotLoader;
 use Arillo\Elements\History\SnapshotLoader\StandardSnapshotLoader;
-use SilverStripe\Forms\FormField;
+use SilverStripe\Forms\HTMLReadonlyField;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\ArrayData;
 
-class ElementsHistoryField extends FormField
+class ElementsHistoryField extends HTMLReadonlyField
 {
     private DataObject $holder;
     private string $relationName;
@@ -45,6 +45,11 @@ class ElementsHistoryField extends FormField
     }
 
     public function Field($properties = [])
+    {
+        return $this->Value();
+    }
+
+    public function Value()
     {
         if ($this->diffTree !== null) {
             return $this->renderCompare();

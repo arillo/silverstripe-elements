@@ -15,7 +15,14 @@ class FluentSnapshotLoader implements ElementSnapshotLoader
 {
     public function loadAtVersion(DataObject $holder, string $relationName, int $version): array
     {
-        $locale = FluentState::singleton()->getLocale() ?: Locale::getDefault()->Locale;
+        $locale = FluentState::singleton()->getLocale();
+        if (!$locale) {
+            $default = Locale::getDefault();
+            $locale = $default ? $default->Locale : null;
+        }
+        if (!$locale) {
+            return [];
+        }
 
         // Fetch the holder version record without locale scoping so that Fluent's
         // augmentSQL does not restrict to a locale-specific versions table join.

@@ -4,6 +4,7 @@ namespace Arillo\Elements\History;
 use Arillo\Elements\ElementBase;
 use Arillo\Elements\History\Diff\DiffTree;
 use Arillo\Elements\History\SnapshotLoader\ElementSnapshotLoader;
+use Arillo\Elements\History\SnapshotLoader\FluentSnapshotLoader;
 use Arillo\Elements\History\SnapshotLoader\StandardSnapshotLoader;
 use SilverStripe\Forms\FormField;
 use SilverStripe\ORM\ArrayList;
@@ -158,6 +159,9 @@ class ElementsHistoryField extends FormField
 
     private function getLoader(): ElementSnapshotLoader
     {
+        if (ElementBase::singleton()->hasExtension(ElementBase::FLUENT_CLASS)) {
+            return new FluentSnapshotLoader();
+        }
         return new StandardSnapshotLoader();
     }
 }

@@ -4,7 +4,6 @@ namespace Arillo\Elements\Tests\History;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\VersionedAdmin\Forms\HistoryViewerField;
 use Arillo\Elements\ElementBase;
-use Arillo\Elements\History\ElementHistoryExtension;
 
 class ElementHistoryExtensionTest extends SapphireTest
 {
@@ -14,9 +13,6 @@ class ElementHistoryExtensionTest extends SapphireTest
     protected function setUp(): void
     {
         parent::setUp();
-        // Wire the extension at runtime since _config/history.yml lands in T18.
-        ElementBase::add_extension(ElementHistoryExtension::class);
-
         // The host project has a Deepl translator extension that reads Fluent
         // locale from FluentState; provide a Locale record so the lookup
         // succeeds in test setup.

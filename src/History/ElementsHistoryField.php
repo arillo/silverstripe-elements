@@ -151,8 +151,8 @@ class ElementsHistoryField extends FormField
             'fieldName' => $f->fieldName,
             'fieldLabel' => $f->fieldLabel,
             'kind' => $f->kind,
-            'oldValue' => $f->oldValue,
-            'newValue' => $f->newValue,
+            'oldValue' => is_array($f->oldValue) ? ArrayData::create($f->oldValue) : $f->oldValue,
+            'newValue' => is_array($f->newValue) ? ArrayData::create($f->newValue) : $f->newValue,
         ]);
     }
 

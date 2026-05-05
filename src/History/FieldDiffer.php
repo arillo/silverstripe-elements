@@ -76,12 +76,39 @@ class FieldDiffer
             $diff->fieldName = $name;
             $diff->fieldLabel = $this->resolveLabel($new, $name);
             $diff->kind = $this->classifyHasOne($targetClass);
-            $diff->oldValue = $this->renderHasOne($targetClass, $oldId);
-            $diff->newValue = $this->renderHasOne($targetClass, $newId);
+            if ($diff->kind === 'has_one_image') {
+                $diff->oldValue = $this->renderImage($targetClass, $oldId);
+                $diff->newValue = $this->renderImage($targetClass, $newId);
+            } else {
+                $diff->oldValue = $this->renderHasOne($targetClass, $oldId);
+                $diff->newValue = $this->renderHasOne($targetClass, $newId);
+            }
             $diffs[] = $diff;
         }
 
         return $diffs;
+    }
+
+    private function renderImage(string $targetClass, int $id): array
+    {
+        if (!$id) {
+            return ['thumbnailUrl' => null, 'filename' => null, 'id' => 0];
+        }
+        $img = DataObject::get_by_id($targetClass, $id);
+        if (!$img || !$img->exists()) {
+            return ['thumbnailUrl' => null, 'filename' => "missing #$id", 'id' => $id];
+        }
+        try {
+            $thumb = $img->Pad(200, 200);
+            $url = $thumb ? $thumb->getURL() : null;
+        } catch (\Throwable $e) {
+            $url = null;
+        }
+        return [
+            'thumbnailUrl' => $url,
+            'filename' => $img->Filename ?: $img->Title,
+            'id' => $id,
+        ];
     }
 
     private function diffManyMany(DataObject $old, DataObject $new): array

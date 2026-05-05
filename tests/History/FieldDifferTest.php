@@ -82,6 +82,10 @@ class FieldDifferTest extends SapphireTest
         $diff = $this->findDiff($differ->diff($old, $new), 'PrimaryImage');
         $this->assertNotNull($diff);
         $this->assertSame('has_one_image', $diff->kind);
+        $this->assertIsArray($diff->oldValue);
+        $this->assertArrayHasKey('thumbnailUrl', $diff->oldValue);
+        $this->assertArrayHasKey('filename', $diff->oldValue);
+        $this->assertArrayHasKey('id', $diff->oldValue);
     }
 
     public function testHasOneFileKind(): void

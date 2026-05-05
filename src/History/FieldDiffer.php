@@ -16,6 +16,7 @@ class FieldDiffer
             $this->diffDbFields($old, $new),
             $this->diffHasOne($old, $new),
             $this->diffManyMany($old, $new),
+            $this->diffSettings($old, $new),
         );
     }
 
@@ -28,6 +29,10 @@ class FieldDiffer
 
         foreach ($fields as $name => $spec) {
             if ($this->isExcluded($name)) {
+                continue;
+            }
+            if ($name === 'ArbitrarySettingsValue') {
+                // handled by diffSettings()
                 continue;
             }
             // Skip the *ID FK columns of has_one relations; diffHasOne handles those.
@@ -100,6 +105,35 @@ class FieldDiffer
             $diffs[] = $diff;
         }
 
+        return $diffs;
+    }
+
+    private function diffSettings(DataObject $old, DataObject $new): array
+    {
+        $diffs = [];
+        if (!$new->hasField('ArbitrarySettingsValue')) {
+            return $diffs;
+        }
+
+        $oldSettings = json_decode((string) $old->getField('ArbitrarySettingsValue') ?: '{}', true) ?: [];
+        $newSettings = json_decode((string) $new->getField('ArbitrarySettingsValue') ?: '{}', true) ?: [];
+        $allKeys = array_unique(array_merge(array_keys($oldSettings), array_keys($newSettings)));
+
+        foreach ($allKeys as $key) {
+            $oldValue = $oldSettings[$key] ?? null;
+            $newValue = $newSettings[$key] ?? null;
+            if ($oldValue === $newValue) {
+                continue;
+            }
+
+            $diff = new FieldDiff();
+            $diff->fieldName = "settings.$key";
+            $diff->fieldLabel = "settings.$key";
+            $diff->kind = 'settings';
+            $diff->oldValue = $oldValue;
+            $diff->newValue = $newValue;
+            $diffs[] = $diff;
+        }
         return $diffs;
     }
 

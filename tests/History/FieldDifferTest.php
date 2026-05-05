@@ -9,6 +9,7 @@ use Arillo\Elements\History\FieldDiffer;
 use Arillo\Elements\Tests\History\Stubs\TextElementStub;
 use Arillo\Elements\Tests\History\Stubs\HtmlElementStub;
 use Arillo\Elements\Tests\History\Stubs\RelationElementStub;
+use Arillo\Elements\Tests\History\Stubs\SettingsElementStub;
 
 class FieldDifferTest extends SapphireTest
 {
@@ -17,6 +18,7 @@ class FieldDifferTest extends SapphireTest
         TextElementStub::class,
         HtmlElementStub::class,
         RelationElementStub::class,
+        SettingsElementStub::class,
     ];
 
     public function testTextFieldDiff(): void
@@ -156,6 +158,51 @@ class FieldDifferTest extends SapphireTest
             'has_one FK column (PrimaryImageID) should not appear as a separate text diff'
         );
         $this->assertNotNull($this->findDiff($diffs, 'PrimaryImage'));
+    }
+
+    public function testArbitrarySettingsDiff(): void
+    {
+        if (!class_exists(\Arillo\ArbitrarySettings\SettingsExtension::class)) {
+            $this->markTestSkipped('ArbitrarySettings module not installed');
+        }
+
+        $old = SettingsElementStub::create();
+        $old->ArbitrarySettingsValue = json_encode(['bg' => 'light', 'size' => 'sm']);
+
+        $new = SettingsElementStub::create();
+        $new->ArbitrarySettingsValue = json_encode(['bg' => 'dark', 'size' => 'sm']);
+
+        $differ = new FieldDiffer();
+        $diff = $this->findDiff($differ->diff($old, $new), 'settings.bg');
+        $this->assertNotNull($diff);
+        $this->assertSame('settings', $diff->kind);
+        $this->assertSame('light', $diff->oldValue);
+        $this->assertSame('dark', $diff->newValue);
+        $this->assertNull(
+            $this->findDiff($differ->diff($old, $new), 'settings.size'),
+            'Unchanged setting key should not appear in diff'
+        );
+    }
+
+    public function testArbitrarySettingsValueRawColumnNotDiffedAsText(): void
+    {
+        if (!class_exists(\Arillo\ArbitrarySettings\SettingsExtension::class)) {
+            $this->markTestSkipped('ArbitrarySettings module not installed');
+        }
+
+        $old = SettingsElementStub::create();
+        $old->ArbitrarySettingsValue = json_encode(['bg' => 'light']);
+
+        $new = SettingsElementStub::create();
+        $new->ArbitrarySettingsValue = json_encode(['bg' => 'dark']);
+
+        $differ = new FieldDiffer();
+        $diffs = $differ->diff($old, $new);
+
+        $this->assertNull(
+            $this->findDiff($diffs, 'ArbitrarySettingsValue'),
+            'Raw ArbitrarySettingsValue blob should not appear; only per-key diffs'
+        );
     }
 
     private function findDiff(array $diffs, string $name)

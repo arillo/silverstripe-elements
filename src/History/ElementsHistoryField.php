@@ -58,6 +58,18 @@ class ElementsHistoryField extends HTMLReadonlyField
     }
 
     /**
+     * The React form schema reads state['value'] (defaults to dataValue()).
+     * Our content is dynamically rendered, not stored in $value, so we put
+     * it into the schema state explicitly here.
+     */
+    public function getSchemaStateDefaults()
+    {
+        $state = parent::getSchemaStateDefaults();
+        $state['value'] = (string) $this->Value();
+        return $state;
+    }
+
+    /**
      * Hook for SS DiffTransformation. When two versions are being compared,
      * the form factory invokes this. We replace the field with a clone in
      * compare mode, computing a DiffTree from the configured versions.

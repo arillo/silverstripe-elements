@@ -1,5 +1,10 @@
 <% if $kind == 'has_one_image' %>
     <% include Arillo/Elements/History/FieldDiff_Image %>
+<% else_if $inlineDiff %>
+    <div class="field-diff field-diff--$kind">
+        <strong class="field-diff__label">$fieldLabel</strong>
+        <div class="field-diff__inline">$inlineDiff.RAW</div>
+    </div>
 <% else %>
     <div class="field-diff field-diff--$kind">
         <strong class="field-diff__label">$fieldLabel</strong>

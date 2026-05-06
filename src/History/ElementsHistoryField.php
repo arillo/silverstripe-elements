@@ -10,6 +10,7 @@ use SilverStripe\Forms\HTMLReadonlyField;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\ArrayData;
+use SilverStripe\View\Parsers\HtmlDiff;
 
 class ElementsHistoryField extends HTMLReadonlyField
 {
@@ -165,13 +166,33 @@ class ElementsHistoryField extends HTMLReadonlyField
 
     private function wrapFieldDiff(\Arillo\Elements\History\Diff\FieldDiff $f): ArrayData
     {
-        return ArrayData::create([
+        $data = [
             'fieldName' => $f->fieldName,
             'fieldLabel' => $f->fieldLabel,
             'kind' => $f->kind,
             'oldValue' => is_array($f->oldValue) ? ArrayData::create($f->oldValue) : $f->oldValue,
             'newValue' => is_array($f->newValue) ? ArrayData::create($f->newValue) : $f->newValue,
-        ]);
+        ];
+
+        // For string-valued kinds, pre-compute an inline ins/del diff using
+        // SilverStripe's HtmlDiff so the rendered output matches the standard
+        // page-CMS-field diff style. has_one_image is structural (array of
+        // {thumbnailUrl,filename,id}) and is rendered side-by-side instead.
+        if ($f->kind !== 'has_one_image' && is_string($f->oldValue) && is_string($f->newValue)) {
+            $escape = $f->kind !== 'html';
+            $data['inlineDiff'] = HtmlDiff::compareHtml(
+                $f->oldValue,
+                $f->newValue,
+                $escape,
+            );
+        } elseif ($f->kind === 'settings') {
+            // settings values can be scalar (bool/int/string) or null
+            $oldStr = $f->oldValue === null ? '' : (string) $f->oldValue;
+            $newStr = $f->newValue === null ? '' : (string) $f->newValue;
+            $data['inlineDiff'] = HtmlDiff::compareHtml($oldStr, $newStr, true);
+        }
+
+        return ArrayData::create($data);
     }
 
     private function getLoader(): ElementSnapshotLoader

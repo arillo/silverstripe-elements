@@ -40,6 +40,9 @@ class PageHistoryFormFactoryExtension extends Extension
             return;
         }
 
+        $oldVersion = isset($context['RecordVersionFrom']) ? (int) $context['RecordVersionFrom'] : null;
+        $newVersion = isset($context['RecordVersionTo']) ? (int) $context['RecordVersionTo'] : null;
+
         foreach (array_keys($relationNames) as $relationName) {
             $existing = $fields->dataFieldByName($relationName);
             if (!$existing) {
@@ -49,6 +52,10 @@ class PageHistoryFormFactoryExtension extends Extension
             $newField = ElementsHistoryField::create($relationName, $existing->Title())
                 ->setHolder($record)
                 ->setRelationName($relationName);
+
+            if ($oldVersion !== null && $newVersion !== null) {
+                $newField->setVersions($oldVersion, $newVersion);
+            }
 
             $fields->replaceField($relationName, $newField);
         }

@@ -174,25 +174,42 @@ class ElementsHistoryField extends HTMLReadonlyField
             'newValue' => is_array($f->newValue) ? ArrayData::create($f->newValue) : $f->newValue,
         ];
 
-        // For string-valued kinds, pre-compute an inline ins/del diff using
-        // SilverStripe's HtmlDiff so the rendered output matches the standard
-        // page-CMS-field diff style. has_one_image is structural (array of
-        // {thumbnailUrl,filename,id}) and is rendered side-by-side instead.
-        if ($f->kind !== 'has_one_image' && is_string($f->oldValue) && is_string($f->newValue)) {
+        // has_one_image is structural (array of {thumbnailUrl,filename,id})
+        // and rendered side-by-side by FieldDiff_Image.ss. Every other kind
+        // is rendered as an inline ins/del diff via HtmlDiff so output matches
+        // the standard page-CMS-field diff style. We coerce both values to
+        // strings here so the fallback branch in FieldDiff.ss is never reached
+        // for unexpected types (e.g. composite DB fields).
+        if ($f->kind !== 'has_one_image') {
             $escape = $f->kind !== 'html';
             $data['inlineDiff'] = HtmlDiff::compareHtml(
-                $f->oldValue,
-                $f->newValue,
+                $this->coerceToString($f->oldValue),
+                $this->coerceToString($f->newValue),
                 $escape,
             );
-        } elseif ($f->kind === 'settings') {
-            // settings values can be scalar (bool/int/string) or null
-            $oldStr = $f->oldValue === null ? '' : (string) $f->oldValue;
-            $newStr = $f->newValue === null ? '' : (string) $f->newValue;
-            $data['inlineDiff'] = HtmlDiff::compareHtml($oldStr, $newStr, true);
         }
 
         return ArrayData::create($data);
+    }
+
+    private function coerceToString(mixed $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+        if (is_string($value)) {
+            return $value;
+        }
+        if (is_scalar($value)) {
+            return (string) $value;
+        }
+        if (is_array($value)) {
+            return json_encode($value) ?: '';
+        }
+        if (is_object($value) && method_exists($value, '__toString')) {
+            return (string) $value;
+        }
+        return '';
     }
 
     private function getLoader(): ElementSnapshotLoader

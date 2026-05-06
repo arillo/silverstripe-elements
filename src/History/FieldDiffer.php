@@ -5,6 +5,7 @@ use Arillo\Elements\History\Diff\FieldDiff;
 use SilverStripe\Assets\File;
 use SilverStripe\Assets\Image;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\FieldType\DBComposite;
 use SilverStripe\ORM\FieldType\DBHTMLText;
 
 class FieldDiffer
@@ -39,6 +40,15 @@ class FieldDiffer
             if (str_ends_with($name, 'ID')
                 && isset($hasOneRelations[substr($name, 0, -2)])
             ) {
+                continue;
+            }
+            // Skip composite DB fields (e.g. MultiValueField, DBMoney). Their
+            // getField() returns the DBComposite object whose .RAW resolves
+            // to a non-string (often an array), which would then crash the
+            // FieldDiff template. Their leaf columns are diffed separately,
+            // and known composites like ArbitrarySettings are handled above.
+            $dbObj = $new->dbObject($name);
+            if ($dbObj instanceof DBComposite) {
                 continue;
             }
 

@@ -209,6 +209,31 @@ class FieldDifferTest extends SapphireTest
         );
     }
 
+    public function testCompositeFieldNotEmittedAsTextDiffWithArrayValue(): void
+    {
+        if (!class_exists(\Arillo\ArbitrarySettings\SettingsExtension::class)) {
+            $this->markTestSkipped('ArbitrarySettings module not installed');
+        }
+
+        $old = SettingsElementStub::create();
+        $old->ArbitrarySettingsValue = json_encode(['bg' => 'light']);
+
+        $new = SettingsElementStub::create();
+        $new->ArbitrarySettingsValue = json_encode(['bg' => 'dark']);
+
+        $differ = new FieldDiffer();
+        $diffs = $differ->diff($old, $new);
+
+        // The composite field name itself (without Value suffix) reaches
+        // diffDbFields() via fieldSpecs() and would otherwise produce a
+        // bogus text-kind diff whose old/new values are PHP arrays. That
+        // crashes the FieldDiff template with "Array to string conversion".
+        $this->assertNull(
+            $this->findDiff($diffs, 'ArbitrarySettings'),
+            'Composite DB field (ArbitrarySettings) must not appear as a text diff'
+        );
+    }
+
     public function testConfigurableExclusions(): void
     {
         TextElementStub::config()->merge('history_excluded_fields', ['Title']);

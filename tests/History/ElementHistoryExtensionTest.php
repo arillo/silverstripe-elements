@@ -39,6 +39,35 @@ class ElementHistoryExtensionTest extends SapphireTest
         });
     }
 
+    public function testPublishingElementBumpsHolderPage(): void
+    {
+        $this->withFluentLocale(function () {
+            $page = $this->objFromFixture(\Page::class, 'page1');
+            $el1 = $this->objFromFixture(ElementBase::class, 'el1');
+
+            $page->Title = 'Test Page v1';
+            $page->write();
+            $page->publishRecursive();
+            $oldVersion = $page->Version;
+
+            sleep(1);
+
+            // Publish ONLY the element. The page should still get a new
+            // version courtesy of ElementHistoryExtension::onAfterPublish.
+            $el1->Title = 'Element One Updated';
+            $el1->write();
+            $el1->publishRecursive();
+
+            // Re-fetch the page to see its updated version.
+            $page = \Page::get_by_id(\Page::class, $page->ID);
+            $this->assertGreaterThan(
+                $oldVersion,
+                $page->Version,
+                'Holder page should get a new version when an element is published',
+            );
+        });
+    }
+
     public function testHistoryTabSkippedWhenDisabled(): void
     {
         ElementBase::config()->set('history_per_element_tab', false);

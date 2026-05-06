@@ -50,7 +50,6 @@ class ElementBase extends DataObject implements CMSPreviewable
     private static $history_enabled = true;
     private static $history_max_depth = null;
     private static $history_per_element_tab = true;
-    private static $history_bump_holder_page_on_publish = true;
 
     private static $history_excluded_fields = [
         'Sort',

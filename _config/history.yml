@@ -7,7 +7,3 @@ After:
 SilverStripe\VersionedAdmin\Forms\DataObjectVersionFormFactory:
   extensions:
     - Arillo\Elements\History\PageHistoryFormFactoryExtension
-
-Arillo\Elements\ElementBase:
-  extensions:
-    - Arillo\Elements\History\ElementHistoryExtension

@@ -4,10 +4,7 @@ namespace Arillo\Elements\History\SnapshotLoader;
 use Arillo\Elements\ElementBase;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\ORM\DataObject;
-use SilverStripe\ORM\Queries\SQLSelect;
 use SilverStripe\Versioned\Versioned;
-use TractorCow\Fluent\Extension\FluentExtension;
-use TractorCow\Fluent\Extension\FluentVersionedExtension;
 use TractorCow\Fluent\Model\Locale;
 use TractorCow\Fluent\State\FluentState;
 
@@ -24,8 +21,9 @@ class FluentSnapshotLoader implements ElementSnapshotLoader
             return [];
         }
 
-        // Fetch the holder version record without locale scoping so that Fluent's
-        // augmentSQL does not restrict to a locale-specific versions table join.
+        // Resolve the holder cutoff with locale scoping disabled, so
+        // FluentVersionedExtension::augmentSQL doesn't restrict the lookup
+        // to a single localised versions table.
         $cutoff = null;
         FluentState::singleton()->withState(function ($state) use ($holder, $version, &$cutoff) {
             $state->setLocale(null);
@@ -34,41 +32,46 @@ class FluentSnapshotLoader implements ElementSnapshotLoader
                 $cutoff = $holderVersion->LastEdited;
             }
         });
-
         if (!$cutoff) {
             return [];
         }
 
         $holderField = is_a($holder, SiteTree::class) ? 'PageID' : 'ElementID';
-        $baseTable = DataObject::getSchema()->tableName(ElementBase::class);
-        $versionsTable = $baseTable . FluentVersionedExtension::SUFFIX_VERSIONS;
-        // FluentExtension::SUFFIX = 'Localised'; getLocalisedTable() appends '_' . SUFFIX
-        $localisedVersionsTable = $baseTable . '_' . FluentExtension::SUFFIX . FluentVersionedExtension::SUFFIX_VERSIONS;
-
-        $rows = (new SQLSelect())
-            ->setFrom("\"$localisedVersionsTable\" AS \"VL\"")
-            ->addInnerJoin($versionsTable, "\"VL\".\"RecordID\" = \"V\".\"RecordID\" AND \"VL\".\"Version\" = \"V\".\"Version\"", 'V')
-            ->setSelect(['"VL"."RecordID"', 'MAX("VL"."Version") AS "MaxVersion"'])
-            ->setWhere([
-                "\"V\".\"$holderField\" = ?" => $holder->ID,
-                "\"V\".\"RelationName\" = ?" => $relationName,
-                "\"V\".\"LastEdited\" <= ?" => $cutoff,
-                '"VL"."Locale" = ?' => $locale,
-            ])
-            ->setGroupBy('"VL"."RecordID"')
-            ->execute();
-
         $elements = [];
-        foreach ($rows as $row) {
-            FluentState::singleton()->withState(function ($state) use ($row, &$elements, $locale) {
-                $state->setLocale($locale);
-                $element = Versioned::get_version(ElementBase::class, $row['RecordID'], $row['MaxVersion']);
-                if ($element && !$element->isArchived()) {
-                    $elements[] = $element;
-                }
+
+        // Versioned archive mode rewrites all tables in the class hierarchy
+        // to their _Versions counterparts and applies WasDeleted=0; Fluent's
+        // augmentSQL hooks into 'archive' mode and rewrites the localised
+        // tables plus locale fallback chain. Subclass fields are joined via
+        // the regular schema so any subclass adding its own DB fields is
+        // included in the snapshot.
+        FluentState::singleton()->withState(function ($state) use (
+            $locale,
+            $holder,
+            $holderField,
+            $relationName,
+            $cutoff,
+            &$elements,
+        ) {
+            $state->setLocale($locale);
+            Versioned::withVersionedMode(function () use (
+                $holder,
+                $holderField,
+                $relationName,
+                $cutoff,
+                &$elements,
+            ) {
+                Versioned::reading_archived_date($cutoff);
+                $elements = ElementBase::get()
+                    ->filter([
+                        $holderField => $holder->ID,
+                        'RelationName' => $relationName,
+                    ])
+                    ->sort('Sort', 'ASC')
+                    ->toArray();
             });
-        }
-        usort($elements, fn($a, $b) => $a->Sort <=> $b->Sort);
+        });
+
         return $elements;
     }
 }

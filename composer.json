@@ -34,6 +34,11 @@
       "Arillo\\Elements\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Arillo\\Elements\\Tests\\": "tests/"
+    }
+  },
   "support": {
     "issues": "https://github.com/arillo/silverstripe-elements/issues"
   }

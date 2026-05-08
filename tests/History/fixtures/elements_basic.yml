@@ -1,0 +1,19 @@
+Page:
+  page1:
+    Title: 'Test Page'
+    URLSegment: test-page
+Arillo\Elements\ElementBase:
+  el1:
+    Title: 'Element One'
+    URLSegment: element-one
+    RelationName: Elements
+    Sort: 1
+    Visible: 1
+    Page: =>Page.page1
+  el2:
+    Title: 'Element Two'
+    URLSegment: element-two
+    RelationName: Elements
+    Sort: 2
+    Visible: 1
+    Page: =>Page.page1

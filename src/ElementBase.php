@@ -235,7 +235,7 @@ SQL;
         return $this;
     }
 
-    public function onBeforeWrite()
+    protected function onBeforeWrite()
     {
         parent::onBeforeWrite();
         $this->generateUniqueURLSegment()->generateElementSortForHolder();
@@ -276,7 +276,7 @@ SQL;
 
     public function addCMSFieldsHeader($fields)
     {
-        $relationName = Controller::curr()->request->param('FieldName');
+        $relationName = Controller::curr()?->getRequest()?->param('FieldName');
         $description = "<div class='alert alert-dark'><i class='element-icon {$this->config()->icon}'></i> {$this->i18n_singular_name()} ({$this->ClassName})</div>";
 
         $fields->addFieldsToTab('Root.Main', [
@@ -327,7 +327,7 @@ SQL;
         if (
             !$this->isInDB() &&
             $this->class === ElementBase::class &&
-            ($elementRelation = Controller::curr()->request->param('FieldName'))
+            ($elementRelation = Controller::curr()?->getRequest()?->param('FieldName'))
         ) {
             $relationNames = ElementsExtension::page_element_relation_names(
                 $this->Page()
@@ -425,7 +425,7 @@ SQL;
         return $holder;
     }
 
-    public function onAfterPublish($original)
+    protected function onAfterPublish($original)
     {
         $rootElement = $this->getRootElement();
         $now = DBDatetime::now()->format(DBDatetime::ISO_DATETIME);
@@ -464,9 +464,10 @@ SQL;
                 ->format('y-MM-dd-HH-mm-ss');
         }
 
-        $key = array_filter($key);
-        $key = array_filter($key, 'strlen');
-        return implode('-_-', array_filter($key, 'strlen'));
+        // array_filter() with no callback drops null/''/false/0 — and is null-safe
+        // on PHP 8.4 (unlike `array_filter($key, 'strlen')` which would deprecate-warn
+        // when a member is null).
+        return implode('-_-', array_filter($key));
     }
 
     public function getOmitCache()
@@ -480,7 +481,7 @@ SQL;
 
     public function IsStage()
     {
-        return Controller::curr()->getRequest()->getVar('stage') == 'Stage';
+        return Controller::curr()?->getRequest()?->getVar('stage') === 'Stage';
     }
 
     public function getCMSActions()
@@ -650,7 +651,10 @@ SQL;
             return $controller
                 ->customise($this)
                 ->renderWith($this->ClassName);
-        } catch (\LogicException $e) {
+        } catch (\Throwable $e) {
+            // SS6: Controller::curr() returns null (no longer throws LogicException),
+            // so null->customise() raises an Error not an Exception. Catch \Throwable
+            // to keep the original "no controller → bare renderWith" fallback intent.
             return $this->renderWith($this->ClassName);
         }
     }

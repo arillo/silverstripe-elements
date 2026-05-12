@@ -243,7 +243,7 @@ class ElementsExtension extends Extension
         return true;
     }
 
-    public function updateCMSFields(FieldList $fields)
+    protected function updateCMSFields(FieldList $fields)
     {
         if (!$this->owner->exists()) {
             return;
@@ -271,9 +271,9 @@ class ElementsExtension extends Extension
 
     public function MetaTags(&$tags)
     {
-        try {
-            $controller = Controller::curr();
-        } catch (\LogicException $e) {
+        // SS6: Controller::curr() returns null (not throws). Pre-check rather than try/catch.
+        $controller = Controller::curr();
+        if (!$controller) {
             return;
         }
         $request = $controller->getRequest();
@@ -459,7 +459,7 @@ class ElementsExtension extends Extension
         return $this->owner;
     }
 
-    public function updateStagesDiffer(&$stagesDiffer)
+    protected function updateStagesDiffer(&$stagesDiffer)
     {
         if ($stagesDiffer) {
             return $stagesDiffer;
@@ -468,7 +468,7 @@ class ElementsExtension extends Extension
         return $stagesDiffer = ElementBase::has_modified_element($this->owner);
     }
 
-    public function updateIsOnDraft(&$isOnDraft)
+    protected function updateIsOnDraft(&$isOnDraft)
     {
         if ($isOnDraft) {
             return $isOnDraft;

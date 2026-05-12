@@ -10,7 +10,7 @@ class VersionedGridFieldItemRequestExtension extends Extension
      * @param  FieldList $actions
      * @return FieldList
      */
-    public function updateFormActions(FieldList $actions)
+    protected function updateFormActions(FieldList $actions)
     {
         if (is_a($this->owner->getRecord(), ElementBase::class))
         {

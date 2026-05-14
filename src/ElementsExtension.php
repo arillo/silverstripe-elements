@@ -474,7 +474,26 @@ class ElementsExtension extends Extension
             return $isOnDraft;
         }
 
-        if (($elements = $this->owner->Elements()) && $elements->exists()) {
+        $holder = $this->owner;
+        $locale = $holder->hasMethod('isDraftedInLocale')
+            ? ($holder->Locale ?: null)
+            : null;
+        $cacheKey = $holder->ID . '_' . ($locale ?: '');
+
+        if ($locale) {
+            // Ensure bulk load has run (triggered by has_modified_element on first call)
+            if (!array_key_exists($cacheKey, ElementBase::$holderHasOnDraftCache)) {
+                // Trigger the bulk load via has_modified_element which also populates
+                // $holderHasOnDraftCache as a side effect
+                ElementBase::has_modified_element($holder);
+            }
+            if (array_key_exists($cacheKey, ElementBase::$holderHasOnDraftCache)) {
+                return $isOnDraft = ElementBase::$holderHasOnDraftCache[$cacheKey];
+            }
+        }
+
+        // Non-Fluent / no-locale fallback
+        if (($elements = $holder->Elements()) && $elements->exists()) {
             return $isOnDraft = array_reduce(
                 $elements->toArray(),
                 function ($acc, $el) {

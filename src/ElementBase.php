@@ -93,6 +93,21 @@ class ElementBase extends DataObject implements CMSPreviewable
     protected $virtualHolderElement = null;
 
     /**
+     * Per-request cache keyed by "holderID_locale" — has any element modified since publish?
+     */
+    protected static $hasModifiedCache = [];
+
+    /**
+     * Per-request cache keyed by "holderID_locale" — does any element exist in draft?
+     */
+    public static $holderHasOnDraftCache = [];
+
+    /**
+     * Tracks which locales have already been bulk-loaded.
+     */
+    protected static $hasModifiedBulkLoaded = [];
+
+    /**
      * @param  $holder
      * @return boolean
      */
@@ -101,6 +116,150 @@ class ElementBase extends DataObject implements CMSPreviewable
         if (!$holder->hasMethod('Elements')) {
             return false;
         }
+
+        $locale = self::singleton()->hasExtension(self::FLUENT_CLASS)
+            ? ($holder->Locale ?: null)
+            : null;
+        $cacheKey = $holder->ID . '_' . ($locale ?: '');
+
+        if (array_key_exists($cacheKey, static::$hasModifiedCache)) {
+            return static::$hasModifiedCache[$cacheKey];
+        }
+
+        if ($locale) {
+            // Ensure the bulk load has run for this locale
+            if (empty(static::$hasModifiedBulkLoaded[$locale])) {
+                static::bulkLoadHasModifiedCache($locale);
+            }
+            // Post-bulk: any holder still missing from cache has no elements
+            return static::$hasModifiedCache[$cacheKey] = static::$hasModifiedCache[$cacheKey] ?? false;
+        }
+
+        // Non-Fluent / no-locale fallback: compute per-holder
+        return static::$hasModifiedCache[$cacheKey] = static::computeHasModifiedElement($holder);
+    }
+
+    /**
+     * Bulk-loads the has_modified_element result for all holders in the given locale.
+     * Replaces ~5 per-page queries with 6 queries total for the entire site, and also
+     * pre-populates Fluent's $idsInLocaleCache for elements and the $holderHasOnDraftCache
+     * used by ElementsExtension::updateIsOnDraft().
+     */
+    protected static function bulkLoadHasModifiedCache(string $locale): void
+    {
+        static::$hasModifiedBulkLoaded[$locale] = true;
+
+        $schema = DataObject::getSchema();
+        $baseClass = $schema->baseDataClass(ElementBase::class);
+        $elementTable = $schema->tableName($baseClass);
+
+        // Load all elements with their direct holder mapping
+        $rows = DB::query(sprintf('SELECT "ID", "PageID", "ElementID" FROM "%s"', $elementTable));
+
+        $elementToPage = [];
+        $elementToParent = [];
+
+        foreach ($rows as $row) {
+            $id = (int)$row['ID'];
+            $pageId = (int)($row['PageID'] ?? 0);
+            $parentId = (int)($row['ElementID'] ?? 0);
+
+            if ($pageId > 0) {
+                $elementToPage[$id] = $pageId;
+            } elseif ($parentId > 0) {
+                $elementToParent[$id] = $parentId;
+            }
+        }
+
+        // Resolve sub-elements to their root PageID (max 2 levels, matching original logic)
+        for ($i = 0; $i < 2; $i++) {
+            foreach ($elementToParent as $id => $parentId) {
+                if (isset($elementToPage[$parentId])) {
+                    $elementToPage[$id] = $elementToPage[$parentId];
+                    unset($elementToParent[$id]);
+                } elseif (isset($elementToParent[$parentId])) {
+                    $elementToParent[$id] = $elementToParent[$parentId];
+                }
+            }
+        }
+
+        if (empty($elementToPage)) {
+            return;
+        }
+
+        // Pre-seed all known pages as false (no modified / no on-draft elements)
+        foreach (array_unique(array_values($elementToPage)) as $pageId) {
+            static::$hasModifiedCache[$pageId . '_' . $locale] = false;
+            static::$holderHasOnDraftCache[$pageId . '_' . $locale] = false;
+        }
+
+        $versionSuffix = \TractorCow\Fluent\Extension\FluentVersionedExtension::SUFFIX_VERSIONS;
+        $liveTable = $elementTable . $versionSuffix;
+        $localisedTable = ElementBase::singleton()->getLocalisedTable($elementTable);
+        $stagedTable = $localisedTable . $versionSuffix;
+        $allIds = implode(',', array_keys($elementToPage));
+
+        // Pre-populate Fluent's $idsInLocaleCache for elements so that
+        // isDraftedInLocale() / isPublishedInLocale() calls are cache hits.
+        \TractorCow\Fluent\Extension\FluentVersionedExtension::prepoulateIdsInLocale(
+            $locale,
+            ElementBase::class
+        );
+
+        // Determine which pages have ANY element drafted in locale.
+        // We read directly from the localised draft table (same source as isDraftedInLocale).
+        $draftedRows = DB::prepared_query(
+            sprintf('SELECT "RecordID" FROM "%s" WHERE "Locale" = ?', $localisedTable),
+            [$locale]
+        );
+        foreach ($draftedRows as $row) {
+            $elementId = (int)$row['RecordID'];
+            $pageId = $elementToPage[$elementId] ?? null;
+            if ($pageId) {
+                static::$holderHasOnDraftCache[$pageId . '_' . $locale] = true;
+            }
+        }
+
+        // notes:
+        // VL - Versions localised table
+        // V - Versions table
+        $query = <<<SQL
+SELECT "VL"."RecordID", MAX("VL"."Version")
+FROM "$stagedTable" as "VL"
+INNER JOIN "$liveTable" as "V"
+    ON "VL"."RecordID" = "V"."RecordID"
+    AND "VL"."Version" = "V"."Version"
+WHERE "VL"."RecordID" IN ($allIds)
+AND "VL"."Locale" = ?
+AND "V"."WasPublished" = ?
+GROUP BY "VL"."RecordID"
+ORDER BY "VL"."RecordID" DESC
+SQL;
+
+        $draftVersions = DB::prepared_query($query, [$locale, 0])->map();
+        $liveVersions = DB::prepared_query($query, [$locale, 1])->map();
+
+        foreach ($draftVersions as $elementId => $draftVersion) {
+            $pageId = $elementToPage[$elementId] ?? null;
+            if (!$pageId) {
+                continue;
+            }
+            $holderKey = $pageId . '_' . $locale;
+            if (!empty(static::$hasModifiedCache[$holderKey])) {
+                continue;
+            }
+            $liveVersion = $liveVersions[$elementId] ?? null;
+            if ($liveVersion === null || $draftVersion > $liveVersion) {
+                static::$hasModifiedCache[$holderKey] = true;
+            }
+        }
+    }
+
+    /**
+     * Original per-holder computation, used as fallback when bulk cache misses.
+     */
+    protected static function computeHasModifiedElement($holder): bool
+    {
         $elementIds = $holder->Elements()->column('ID');
 
         if (empty($elementIds)) {
@@ -109,7 +268,6 @@ class ElementBase extends DataObject implements CMSPreviewable
 
         // fetch max 2 levels deep subelement ids
         for ($i = 0; $i < 2; $i++) {
-            $elementIdsStr = implode(',', $elementIds);
             $idsToAdd = (new SQLSelect())
                 ->setFrom(ElementBase::config()->table_name)
                 ->setSelect(['ID'])

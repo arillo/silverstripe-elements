@@ -10,12 +10,25 @@ class StandardSnapshotLoader implements ElementSnapshotLoader
 {
     public function loadAtVersion(DataObject $holder, string $relationName, int $version): array
     {
+        $cutoff = $this->resolveCutoff($holder, $version);
+        if (!$cutoff) {
+            return [];
+        }
+        return $this->loadAtCutoff($holder, $relationName, $cutoff);
+    }
+
+    public function resolveCutoff(DataObject $holder, int $version): ?string
+    {
         $holderVersion = Versioned::get_version(get_class($holder), $holder->ID, $version);
-        if (!$holderVersion) {
+        return $holderVersion ? $holderVersion->LastEdited : null;
+    }
+
+    public function loadAtCutoff(DataObject $holder, string $relationName, ?string $cutoff): array
+    {
+        if (!$cutoff) {
             return [];
         }
 
-        $cutoff = $holderVersion->LastEdited;
         $holderField = is_a($holder, SiteTree::class) ? 'PageID' : 'ElementID';
 
         // Use Versioned's archive reading mode so the ORM rewrites every

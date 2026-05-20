@@ -246,6 +246,95 @@ class ElementsTreeComparatorTest extends SapphireTest
         $this->assertSame('reordered', $tree->reorder->status);
     }
 
+    public function testDeepDraftChangeWithoutIntermediateEditIsDetected(): void
+    {
+        // Reproduces a real-world bug: when comparing two draft versions of a
+        // page where only a deeply-nested grandchild element was edited (and
+        // the intermediate parent elements were not directly touched), the
+        // change must still be visible. The original implementation derived
+        // the snapshot cutoff from each intermediate element's own version
+        // timestamp, which is earlier than the grandchild edit when the
+        // intermediate elements weren't bumped — so the change was silently
+        // dropped from the diff.
+        $page = $this->objFromFixture(\Page::class, 'page1');
+
+        $parent = ElementBase::create([
+            'Title' => 'Deep Parent',
+            'PageID' => $page->ID,
+            'RelationName' => 'Elements',
+            'Sort' => 10,
+            'Visible' => 1,
+        ]);
+        $parent->write();
+
+        $child = ElementBase::create([
+            'Title' => 'Deep Child',
+            'ElementID' => $parent->ID,
+            'RelationName' => 'Elements',
+            'Sort' => 1,
+            'Visible' => 1,
+        ]);
+        $child->write();
+
+        $grandchild = ElementBase::create([
+            'Title' => 'Grandchild original',
+            'ElementID' => $child->ID,
+            'RelationName' => 'Elements',
+            'Sort' => 1,
+            'Visible' => 1,
+        ]);
+        $grandchild->write();
+
+        // Cutoffs depend on LastEdited (second-resolution), so each step needs
+        // a real second of separation. v1 limitation.
+        sleep(1);
+
+        $page->Title = 'Draft v_old';
+        $page->write();
+        $oldV = $page->Version;
+
+        sleep(1);
+
+        // Edit ONLY the grandchild. Do not touch parent or child — the bug
+        // depends on intermediate element versions staying constant.
+        $grandchild->Title = 'Grandchild updated';
+        $grandchild->write();
+
+        sleep(1);
+
+        $page->Title = 'Draft v_new';
+        $page->write();
+        $newV = $page->Version;
+        $this->assertGreaterThan($oldV, $newV);
+
+        $comparator = new ElementsTreeComparator(
+            $page,
+            'Elements',
+            new StandardSnapshotLoader(),
+            new FieldDiffer(),
+        );
+        $tree = $comparator->compare($oldV, $newV);
+
+        $parentDiff = null;
+        foreach ($tree->changes as $d) {
+            if ($d->elementId === $parent->ID) {
+                $parentDiff = $d;
+                break;
+            }
+        }
+        $this->assertNotNull($parentDiff, 'Parent element should appear in diff tree');
+        $this->assertSame('modified', $parentDiff->status, 'Parent must be flagged modified due to deep grandchild change');
+        $this->assertNotEmpty($parentDiff->childChanges, 'Parent must have child changes from deep edit');
+
+        $childDiff = $parentDiff->childChanges[0];
+        $this->assertSame('modified', $childDiff->status, 'Child must be flagged modified due to grandchild change');
+        $this->assertNotEmpty($childDiff->childChanges, 'Child must have grandchild changes');
+
+        $grandchildDiff = $childDiff->childChanges[0];
+        $this->assertSame('modified', $grandchildDiff->status, 'Grandchild must be flagged modified');
+        $this->assertNotEmpty($grandchildDiff->fieldChanges, 'Grandchild must have field changes');
+    }
+
     public function testRemovedElementClassifiedRemoved(): void
     {
         $page = $this->objFromFixture(\Page::class, 'page1');

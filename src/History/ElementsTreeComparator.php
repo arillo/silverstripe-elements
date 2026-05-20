@@ -19,11 +19,18 @@ class ElementsTreeComparator
 
     public function compare(int $oldVersion, int $newVersion): DiffTree
     {
+        // Resolve cutoffs ONCE from the top-level holder versions, then propagate
+        // them down through recursion. Re-deriving the cutoff from each
+        // intermediate element's own version drops edits that happened after
+        // the parent element's last touch but inside the page-version window.
+        $oldCutoff = $this->loader->resolveCutoff($this->holder, $oldVersion);
+        $newCutoff = $this->loader->resolveCutoff($this->holder, $newVersion);
+
         return $this->compareLevel(
             $this->holder,
             $this->relationName,
-            $oldVersion,
-            $newVersion,
+            $oldCutoff,
+            $newCutoff,
             0,
         );
     }
@@ -31,14 +38,14 @@ class ElementsTreeComparator
     private function compareLevel(
         DataObject $holder,
         string $relationName,
-        int $oldVersion,
-        int $newVersion,
+        ?string $oldCutoff,
+        ?string $newCutoff,
         int $depth,
     ): DiffTree {
         $tree = new DiffTree();
 
-        $oldElements = $this->loader->loadAtVersion($holder, $relationName, $oldVersion);
-        $newElements = $this->loader->loadAtVersion($holder, $relationName, $newVersion);
+        $oldElements = $this->loader->loadAtCutoff($holder, $relationName, $oldCutoff);
+        $newElements = $this->loader->loadAtCutoff($holder, $relationName, $newCutoff);
 
         $oldById = [];
         foreach ($oldElements as $e) {
@@ -56,7 +63,7 @@ class ElementsTreeComparator
                 continue;
             }
             try {
-                $tree->changes[] = $this->classifyPair($oldById[$newEl->ID], $newEl, $depth);
+                $tree->changes[] = $this->classifyPair($oldById[$newEl->ID], $newEl, $oldCutoff, $newCutoff, $depth);
             } catch (\Throwable $e) {
                 $err = new ElementDiff();
                 $err->status = 'error';
@@ -125,8 +132,13 @@ class ElementsTreeComparator
         return $diff;
     }
 
-    private function classifyPair(ElementBase $oldEl, ElementBase $newEl, int $depth = 0): ElementDiff
-    {
+    private function classifyPair(
+        ElementBase $oldEl,
+        ElementBase $newEl,
+        ?string $oldCutoff,
+        ?string $newCutoff,
+        int $depth = 0,
+    ): ElementDiff {
         $diff = new ElementDiff();
         $diff->elementId = $newEl->ID;
         $diff->elementClass = $newEl->ClassName;
@@ -137,13 +149,14 @@ class ElementsTreeComparator
         $fieldChanges = $this->fieldDiffer->diff($oldEl, $newEl);
         $diff->fieldChanges = $fieldChanges;
 
-        // Recurse into nested children if depth allows
+        // Recurse into nested children if depth allows, propagating the same
+        // page-level cutoffs so deep edits aren't masked by unchanged parents.
         if ($this->maxDepth === null || $depth < $this->maxDepth) {
             $childTree = $this->compareLevel(
                 $newEl,
                 'Elements',
-                $oldEl->Version,
-                $newEl->Version,
+                $oldCutoff,
+                $newCutoff,
                 $depth + 1,
             );
             $childChanges = array_filter(

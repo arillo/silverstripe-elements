@@ -12,18 +12,17 @@ class FluentSnapshotLoader implements ElementSnapshotLoader
 {
     public function loadAtVersion(DataObject $holder, string $relationName, int $version): array
     {
-        $locale = FluentState::singleton()->getLocale();
-        if (!$locale) {
-            $default = Locale::getDefault();
-            $locale = $default ? $default->Locale : null;
-        }
-        if (!$locale) {
+        $cutoff = $this->resolveCutoff($holder, $version);
+        if (!$cutoff) {
             return [];
         }
+        return $this->loadAtCutoff($holder, $relationName, $cutoff);
+    }
 
-        // Resolve the holder cutoff with locale scoping disabled, so
-        // FluentVersionedExtension::augmentSQL doesn't restrict the lookup
-        // to a single localised versions table.
+    public function resolveCutoff(DataObject $holder, int $version): ?string
+    {
+        // Resolve with locale scoping disabled, so FluentVersionedExtension::augmentSQL
+        // doesn't restrict the lookup to a single localised versions table.
         $cutoff = null;
         FluentState::singleton()->withState(function ($state) use ($holder, $version, &$cutoff) {
             $state->setLocale(null);
@@ -32,7 +31,21 @@ class FluentSnapshotLoader implements ElementSnapshotLoader
                 $cutoff = $holderVersion->LastEdited;
             }
         });
+        return $cutoff;
+    }
+
+    public function loadAtCutoff(DataObject $holder, string $relationName, ?string $cutoff): array
+    {
         if (!$cutoff) {
+            return [];
+        }
+
+        $locale = FluentState::singleton()->getLocale();
+        if (!$locale) {
+            $default = Locale::getDefault();
+            $locale = $default ? $default->Locale : null;
+        }
+        if (!$locale) {
             return [];
         }
 

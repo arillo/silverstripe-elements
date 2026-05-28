@@ -92,6 +92,10 @@ class ElementBase extends DataObject implements CMSPreviewable
 
     protected $virtualHolderElement = null;
 
+    private $_holderCache = false; // false = not yet cached, null/false-result = cached as no-holder
+    private $_holderPageCache = false;
+    private $_rootElementCache = false;
+
     /**
      * Per-request cache keyed by "holderID_locale" — has any element modified since publish?
      */
@@ -521,19 +525,23 @@ SQL;
 
     public function getHolder()
     {
+        if ($this->_holderCache !== false) {
+            return $this->_holderCache;
+        }
+
         if ($this->getVirtualHolderElement()) {
-            return $this->getVirtualHolderElement()->getHolder();
+            return $this->_holderCache = $this->getVirtualHolderElement()->getHolder();
         }
 
         if ($this->Element()->exists()) {
-            return $this->Element();
+            return $this->_holderCache = $this->Element();
         }
 
         if ($this->Page()->exists()) {
-            return $this->Page();
+            return $this->_holderCache = $this->Page();
         }
 
-        return false;
+        return $this->_holderCache = null;
     }
 
     /**
@@ -541,11 +549,15 @@ SQL;
      */
     public function getHolderPage()
     {
+        if ($this->_holderPageCache !== false) {
+            return $this->_holderPageCache;
+        }
+
         if ($this->getVirtualHolderElement()) {
-            return $this->getVirtualHolderElement()->getHolderPage();
+            return $this->_holderPageCache = $this->getVirtualHolderElement()->getHolderPage();
         }
         if (!$this->PageID && !$this->ElementID) {
-            return null;
+            return $this->_holderPageCache = null;
         }
 
         $holder = $this->getHolder();
@@ -557,7 +569,7 @@ SQL;
             $holder = $holder->getHolder();
         }
 
-        return $holder;
+        return $this->_holderPageCache = $holder;
     }
 
     /**
@@ -565,22 +577,23 @@ SQL;
      */
     public function getRootElement()
     {
-        $look = true;
+        if ($this->_rootElementCache !== false) {
+            return $this->_rootElementCache;
+        }
+
         $holder = $this;
-        while ($look) {
+        while (true) {
             if ($parent = $holder->getHolder()) {
                 if (is_a($parent, SiteTree::class)) {
-                    $look = false;
-                    return $holder;
-                } else {
-                    $holder = $parent;
+                    break;
                 }
+                $holder = $parent;
             } else {
-                $look = false;
+                break;
             }
         }
 
-        return $holder;
+        return $this->_rootElementCache = $holder;
     }
 
     protected function onAfterPublish($original)
@@ -721,7 +734,11 @@ SQL;
     {
         $pills = '';
         if ($this->hasExtension(self::FLUENT_CLASS)) {
-            if ($locales = \TractorCow\Fluent\Model\Locale::get()) {
+            static $locales = null;
+            if ($locales === null) {
+                $locales = \TractorCow\Fluent\Model\Locale::get()->toArray();
+            }
+            if ($locales) {
                 foreach ($locales as $locale) {
                     if (!$this->isDraftedInLocale($locale->Locale)) {
                         $class = 'not-localised';

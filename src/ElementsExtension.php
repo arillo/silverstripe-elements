@@ -104,10 +104,10 @@ class ElementsExtension extends Extension
                 foreach ($relationNames as $relationName => $elementsClasses) {
                     if (isset($defaultElements[$relationName])) {
                         $elementClasses = $defaultElements[$relationName];
+                        $definedElements = $record
+                            ->ElementsByRelation($relationName)
+                            ->map('ClassName', 'ClassName');
                         foreach ($elementClasses as $className) {
-                            $definedElements = $record
-                                ->ElementsByRelation($relationName)
-                                ->map('ClassName', 'ClassName');
                             if (!isset($definedElements[$className])) {
                                 $element = new $className();
                                 $element->populate(
@@ -353,11 +353,12 @@ class ElementsExtension extends Extension
             ->addComponent(new GridFieldDeleteAction());
 
         // attach default elements action
+        $defaultElements = $this->owner->getDefaultElements();
         if (
             $this->owner->canEdit() &&
             !$this->defaultsCreated() &&
-            $this->owner->getDefaultElements() &&
-            isset($this->owner->getDefaultElements()[$relationName])
+            $defaultElements &&
+            isset($defaultElements[$relationName])
         ) {
             $config->addComponent(new GridFieldDefaultElementsButton());
         }
@@ -385,6 +386,10 @@ class ElementsExtension extends Extension
             $columns['Languages'] = _t(__CLASS__ . '.Languages', ' ');
         } else {
             $columns['CMSVisible'] = _t(__CLASS__ . '.CMSVisible', ' ');
+        }
+
+        if (!empty(array_filter($relation, fn($class) => method_exists($class, 'getCMSCacheStatus')))) {
+            $columns['CMSCacheStatus'] = _t(__CLASS__ . '.CMSCacheStatus', 'Cache');
         }
 
         if ($this->owner->hasExtension(ElementBase::FLUENT_CLASS)) {
@@ -492,18 +497,13 @@ class ElementsExtension extends Extension
             }
         }
 
-        // Non-Fluent / no-locale fallback
+        // Non-Fluent / no-locale fallback — iterate without materializing the full list
         if (($elements = $holder->Elements()) && $elements->exists()) {
-            return $isOnDraft = array_reduce(
-                $elements->toArray(),
-                function ($acc, $el) {
-                    if ($acc) {
-                        return $acc;
-                    }
-                    return $el->isOnDraft();
-                },
-                false
-            );
+            foreach ($elements as $el) {
+                if ($el->isOnDraft()) {
+                    return $isOnDraft = true;
+                }
+            }
         }
 
         return $isOnDraft;

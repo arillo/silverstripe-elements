@@ -375,9 +375,8 @@ SQL;
      */
     public function generateUniqueURLSegment($title = null)
     {
-        $this->URLSegment = URLSegmentFilter::create()->filter(
-            $title ?? $this->Title
-        );
+        $source = $title ?? (!empty($this->URLSegment) ? $this->URLSegment : $this->Title);
+        $this->URLSegment = URLSegmentFilter::create()->filter($source);
 
         if (!$this->URLSegment) {
             $this->URLSegment = uniqid();

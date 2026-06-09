@@ -213,6 +213,20 @@ SQL;
      */
     public function generateUniqueURLSegment($title = null)
     {
+        // No explicit new value requested and an existing URLSegment is set:
+        // keep it stable as long as it doesn't collide with another element.
+        // Without this, every write (including each publish) would re-derive
+        // the segment from Title and shuffle the suffix.
+        if ($title === null && $this->URLSegment) {
+            $conflict = ElementBase::get()
+                ->exclude('ID', $this->ID)
+                ->filter('URLSegment', $this->URLSegment)
+                ->exists();
+            if (!$conflict) {
+                return $this;
+            }
+        }
+
         $this->URLSegment = URLSegmentFilter::create()->filter(
             $title ?? $this->Title
         );

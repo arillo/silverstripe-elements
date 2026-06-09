@@ -1,0 +1,8 @@
+fr:
+  Arillo\Elements\History:
+    Added: 'Ajouté'
+    Removed: 'Supprimé'
+    Modified: 'Modifié'
+    Error: 'Erreur'
+    DepthLimit: 'Limite de profondeur atteinte'
+    Reordered: 'L''ordre des éléments a été modifié'

@@ -1,0 +1,19 @@
+Page:
+  page2:
+    Title: 'Nested Page'
+    URLSegment: nested-page
+Arillo\Elements\ElementBase:
+  parent1:
+    Title: 'Parent Section'
+    URLSegment: parent-section
+    RelationName: Elements
+    Sort: 1
+    Visible: 1
+    Page: =>Page.page2
+  child1:
+    Title: 'Child Element'
+    URLSegment: child-element
+    RelationName: Elements
+    Sort: 1
+    Visible: 1
+    Element: =>Arillo\Elements\ElementBase.parent1

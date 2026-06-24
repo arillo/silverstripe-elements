@@ -22,6 +22,7 @@ use SilverStripe\ORM\Queries\SQLSelect;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\View\Parsers\URLSegmentFilter;
 use SilverStripe\CMS\Controllers\CMSPageEditController;
+use SilverStripe\Dev\Debug;
 
 /**
  * Element base model.
@@ -122,7 +123,8 @@ class ElementBase extends DataObject implements CMSPreviewable
         }
 
         $locale = self::singleton()->hasExtension(self::FLUENT_CLASS)
-            ? ($holder->Locale ?: null)
+            ? ($holder->Locale ?:
+            null)
             : null;
         $cacheKey = $holder->ID . '_' . ($locale ?: '');
 
@@ -136,11 +138,14 @@ class ElementBase extends DataObject implements CMSPreviewable
                 static::bulkLoadHasModifiedCache($locale);
             }
             // Post-bulk: any holder still missing from cache has no elements
-            return static::$hasModifiedCache[$cacheKey] = static::$hasModifiedCache[$cacheKey] ?? false;
+            return static::$hasModifiedCache[$cacheKey] =
+                static::$hasModifiedCache[$cacheKey] ?? false;
         }
 
         // Non-Fluent / no-locale fallback: compute per-holder
-        return static::$hasModifiedCache[$cacheKey] = static::computeHasModifiedElement($holder);
+        return static::$hasModifiedCache[
+            $cacheKey
+        ] = static::computeHasModifiedElement($holder);
     }
 
     /**
@@ -158,15 +163,20 @@ class ElementBase extends DataObject implements CMSPreviewable
         $elementTable = $schema->tableName($baseClass);
 
         // Load all elements with their direct holder mapping
-        $rows = DB::query(sprintf('SELECT "ID", "PageID", "ElementID" FROM "%s"', $elementTable));
+        $rows = DB::query(
+            sprintf(
+                'SELECT "ID", "PageID", "ElementID" FROM "%s"',
+                $elementTable,
+            ),
+        );
 
         $elementToPage = [];
         $elementToParent = [];
 
         foreach ($rows as $row) {
-            $id = (int)$row['ID'];
-            $pageId = (int)($row['PageID'] ?? 0);
-            $parentId = (int)($row['ElementID'] ?? 0);
+            $id = (int) $row['ID'];
+            $pageId = (int) ($row['PageID'] ?? 0);
+            $parentId = (int) ($row['ElementID'] ?? 0);
 
             if ($pageId > 0) {
                 $elementToPage[$id] = $pageId;
@@ -197,9 +207,12 @@ class ElementBase extends DataObject implements CMSPreviewable
             static::$holderHasOnDraftCache[$pageId . '_' . $locale] = false;
         }
 
-        $versionSuffix = \TractorCow\Fluent\Extension\FluentVersionedExtension::SUFFIX_VERSIONS;
+        $versionSuffix =
+            \TractorCow\Fluent\Extension\FluentVersionedExtension::SUFFIX_VERSIONS;
         $liveTable = $elementTable . $versionSuffix;
-        $localisedTable = ElementBase::singleton()->getLocalisedTable($elementTable);
+        $localisedTable = ElementBase::singleton()->getLocalisedTable(
+            $elementTable,
+        );
         $stagedTable = $localisedTable . $versionSuffix;
         $allIds = implode(',', array_keys($elementToPage));
 
@@ -207,17 +220,20 @@ class ElementBase extends DataObject implements CMSPreviewable
         // isDraftedInLocale() / isPublishedInLocale() calls are cache hits.
         \TractorCow\Fluent\Extension\FluentVersionedExtension::prepoulateIdsInLocale(
             $locale,
-            ElementBase::class
+            ElementBase::class,
         );
 
         // Determine which pages have ANY element drafted in locale.
         // We read directly from the localised draft table (same source as isDraftedInLocale).
         $draftedRows = DB::prepared_query(
-            sprintf('SELECT "RecordID" FROM "%s" WHERE "Locale" = ?', $localisedTable),
-            [$locale]
+            sprintf(
+                'SELECT "RecordID" FROM "%s" WHERE "Locale" = ?',
+                $localisedTable,
+            ),
+            [$locale],
         );
         foreach ($draftedRows as $row) {
-            $elementId = (int)$row['RecordID'];
+            $elementId = (int) $row['RecordID'];
             $pageId = $elementToPage[$elementId] ?? null;
             if ($pageId) {
                 static::$holderHasOnDraftCache[$pageId . '_' . $locale] = true;
@@ -228,17 +244,17 @@ class ElementBase extends DataObject implements CMSPreviewable
         // VL - Versions localised table
         // V - Versions table
         $query = <<<SQL
-SELECT "VL"."RecordID", MAX("VL"."Version")
-FROM "$stagedTable" as "VL"
-INNER JOIN "$liveTable" as "V"
-    ON "VL"."RecordID" = "V"."RecordID"
-    AND "VL"."Version" = "V"."Version"
-WHERE "VL"."RecordID" IN ($allIds)
-AND "VL"."Locale" = ?
-AND "V"."WasPublished" = ?
-GROUP BY "VL"."RecordID"
-ORDER BY "VL"."RecordID" DESC
-SQL;
+        SELECT "VL"."RecordID", MAX("VL"."Version")
+        FROM "$stagedTable" as "VL"
+        INNER JOIN "$liveTable" as "V"
+            ON "VL"."RecordID" = "V"."RecordID"
+            AND "VL"."Version" = "V"."Version"
+        WHERE "VL"."RecordID" IN ($allIds)
+        AND "VL"."Locale" = ?
+        AND "V"."WasPublished" = ?
+        GROUP BY "VL"."RecordID"
+        ORDER BY "VL"."RecordID" DESC
+        SQL;
 
         $draftVersions = DB::prepared_query($query, [$locale, 0])->map();
         $liveVersions = DB::prepared_query($query, [$locale, 1])->map();
@@ -275,7 +291,11 @@ SQL;
             $idsToAdd = (new SQLSelect())
                 ->setFrom(ElementBase::config()->table_name)
                 ->setSelect(['ID'])
-                ->setWhere(['ElementID IN (' . DB::placeholders($elementIds) . ')' => $elementIds])
+                ->setWhere([
+                    'ElementID IN (' .
+                    DB::placeholders($elementIds) .
+                    ')' => $elementIds,
+                ])
                 ->execute()
                 ->map();
 
@@ -300,17 +320,17 @@ SQL;
             // VL - Versions localised table
             // V - Versions table
             $query = <<<SQL
-SELECT "VL"."RecordID", MAX("VL"."Version")
-FROM "$stagedTable" as "VL"
-INNER JOIN "$liveTable" as "V"
-    ON "VL"."RecordID" = "V"."RecordID"
-    AND "VL"."Version" = "V"."Version"
-WHERE "VL"."RecordID" IN $elementIds
-AND "VL"."Locale" = ?
-AND "V"."WasPublished" = ?
-GROUP BY "VL"."RecordID"
-ORDER BY "VL"."RecordID" DESC
-SQL;
+            SELECT "VL"."RecordID", MAX("VL"."Version")
+            FROM "$stagedTable" as "VL"
+            INNER JOIN "$liveTable" as "V"
+                ON "VL"."RecordID" = "V"."RecordID"
+                AND "VL"."Version" = "V"."Version"
+            WHERE "VL"."RecordID" IN $elementIds
+            AND "VL"."Locale" = ?
+            AND "V"."WasPublished" = ?
+            GROUP BY "VL"."RecordID"
+            ORDER BY "VL"."RecordID" DESC
+            SQL;
 
             $draftVersions = DB::prepared_query($query, [
                 $holder->Locale,
@@ -327,13 +347,13 @@ SQL;
             // notes:
             // V - Versions table
             $query = <<<SQL
-SELECT "V"."RecordID", MAX("V"."Version")
-FROM "$versionsTable" as "V"
-WHERE "V"."RecordID" IN $elementIds
-AND "V"."WasPublished" = ?
-GROUP BY "V"."RecordID"
-ORDER BY "V"."RecordID" DESC
-SQL;
+            SELECT "V"."RecordID", MAX("V"."Version")
+            FROM "$versionsTable" as "V"
+            WHERE "V"."RecordID" IN $elementIds
+            AND "V"."WasPublished" = ?
+            GROUP BY "V"."RecordID"
+            ORDER BY "V"."RecordID" DESC
+            SQL;
             $draftVersions = DB::prepared_query($query, [0])->map();
             $liveVersions = DB::prepared_query($query, [1])->map();
         }
@@ -375,7 +395,9 @@ SQL;
      */
     public function generateUniqueURLSegment($title = null)
     {
-        $source = $title ?? (!empty($this->URLSegment) ? $this->URLSegment : $this->Title);
+        $source =
+            $title ??
+            (!empty($this->URLSegment) ? $this->URLSegment : $this->Title);
         $this->URLSegment = URLSegmentFilter::create()->filter($source);
 
         if (!$this->URLSegment) {
@@ -421,13 +443,13 @@ SQL;
                 $data->VersionState = 'draft';
                 $data->VersionStateTitle = _t(
                     'SilverStripe\\Versioned\\VersionedGridFieldState\\VersionedGridFieldState.ADDEDTODRAFTHELP',
-                    'Item has not been published yet'
+                    'Item has not been published yet',
                 );
             } elseif ($this->isModifiedOnDraft()) {
                 $data->VersionState = 'modified';
                 $data->VersionStateTitle = $data->VersionStateTitle = _t(
                     'SilverStripe\\Versioned\\VersionedGridFieldState\\VersionedGridFieldState.MODIFIEDONDRAFTHELP',
-                    'Item has unpublished changes'
+                    'Item has unpublished changes',
                 );
             }
         }
@@ -446,7 +468,7 @@ SQL;
                 'Title',
                 _t(__CLASS__ . '.Title', 'Title'),
                 null,
-                255
+                255,
             ),
             HiddenField::create('RelationName', $relationName, $relationName),
         ]);
@@ -456,8 +478,8 @@ SQL;
                 'Root.Main',
                 ElementURLSegmentField::create(
                     'URLSegment',
-                    _t(__CLASS__ . '.URLSegment', 'Url-Segment')
-                )
+                    _t(__CLASS__ . '.URLSegment', 'Url-Segment'),
+                ),
                 // TextField::create('URLSegment', _t(__CLASS__ . '.URLSegment', 'URLSegment'), null, 255)
             );
         }
@@ -467,8 +489,8 @@ SQL;
                 'Root.Main',
                 CheckboxField::create(
                     'Visible',
-                    _t(__CLASS__ . '.Visible', 'Is element visible')
-                )
+                    _t(__CLASS__ . '.Visible', 'Is element visible'),
+                ),
             );
         }
     }
@@ -488,10 +510,12 @@ SQL;
         if (
             !$this->isInDB() &&
             $this->class === ElementBase::class &&
-            ($elementRelation = Controller::curr()?->getRequest()?->param('FieldName'))
+            ($elementRelation = Controller::curr()
+                ?->getRequest()
+                ?->param('FieldName'))
         ) {
             $relationNames = ElementsExtension::page_element_relation_names(
-                $this->Page()
+                $this->Page(),
             );
             if (isset($relationNames[$elementRelation])) {
                 $fields->addFieldToTab(
@@ -500,9 +524,9 @@ SQL;
                         'ClassName',
                         _t(__CLASS__ . '.ClassName', 'Type'),
                         ElementsExtension::map_classnames(
-                            $relationNames[$elementRelation]
-                        )
-                    )
+                            $relationNames[$elementRelation],
+                        ),
+                    ),
                 );
             }
         }
@@ -667,12 +691,12 @@ SQL;
             $fields->push(
                 FormAction::create(
                     'publishPage',
-                    _t(__CLASS__ . '.PublishPage', 'Publish page')
+                    _t(__CLASS__ . '.PublishPage', 'Publish page'),
                 )
                     ->setUseButtonTag(true)
                     ->addExtraClass(
-                        'btn action btn btn-primary font-icon-rocket'
-                    )
+                        'btn action btn btn-primary font-icon-rocket',
+                    ),
             );
         }
         return $fields;
@@ -716,7 +740,7 @@ SQL;
 
         return DBField::create_field(
             'HTMLVarchar',
-            implode($separator, $state)
+            implode($separator, $state),
         );
     }
 
@@ -806,25 +830,23 @@ SQL;
      * Render for template useage.
      *
      * @param int $IsPos
-     * @param bool $IsFirst
-     * @param bool $IsLast
+     * @param bool $IsStart
+     * @param bool $IsEnd
      * @param bool $IsEvenOdd
      */
     public function Render(
         $IsPos = null,
-        $IsFirst = null,
-        $IsLast = null,
-        $IsEvenOdd = null
+        $IsStart = null,
+        $IsEnd = null,
+        $IsEvenOdd = null,
     ) {
         $this->IsPos = $IsPos;
-        $this->IsFirst = $IsFirst;
-        $this->IsLast = $IsLast;
+        $this->IsStart = $IsStart;
+        $this->IsEnd = $IsEnd;
         $this->IsEvenOdd = $IsEvenOdd;
         try {
             $controller = Controller::curr();
-            return $controller
-                ->customise($this)
-                ->renderWith($this->ClassName);
+            return $controller->customise($this)->renderWith($this->ClassName);
         } catch (\Throwable $e) {
             // SS6: Controller::curr() returns null (no longer throws LogicException),
             // so null->customise() raises an Error not an Exception. Catch \Throwable
@@ -842,19 +864,19 @@ SQL;
             $parent
                 ->update([
                     'LastEdited' => DBDatetime::now()->format(
-                        DBDatetime::ISO_DATETIME
+                        DBDatetime::ISO_DATETIME,
                     ),
                 ])
                 ->write();
             $parent->publishRecursive();
             return _t(
                 __CLASS__ . '.PageAndElementsPublished',
-                'Page & elements published'
+                'Page & elements published',
             );
         }
         return _t(
             __CLASS__ . '.PageAndElementsPublishError',
-            'There was an error publishing the page'
+            'There was an error publishing the page',
         );
     }
 
@@ -867,7 +889,7 @@ SQL;
     protected function getByUrlSegment(
         string $class,
         string $str,
-        $excludeID = null
+        $excludeID = null,
     ) {
         if (!isset(static::$_cached_get_by_url[$str])) {
             $list = $class::get()->filter('URLSegment', $str);

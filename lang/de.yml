@@ -1,12 +1,4 @@
 de:
-  Arillo\Elements\History:
-    Added: 'Hinzugefügt'
-    Removed: 'Entfernt'
-    Modified: 'Geändert'
-    Error: 'Fehler'
-    DepthLimit: 'Maximale Verschachtelungstiefe erreicht'
-    Reordered: 'Reihenfolge der Elemente wurde geändert'
-
   Arillo\Elements\ElementsExtension:
     CMSTypeInfo: 'Typ'
     CMSSummary: 'Inhalt'

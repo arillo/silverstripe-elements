@@ -1,9 +1,0 @@
----
-Name: arillo-elements-history
-After:
-  - '#arillo-elements'
-  - 'silverstripe/versioned-admin'
----
-SilverStripe\VersionedAdmin\Forms\DataObjectVersionFormFactory:
-  extensions:
-    - Arillo\Elements\History\PageHistoryFormFactoryExtension

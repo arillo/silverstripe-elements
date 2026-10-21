@@ -398,7 +398,14 @@ class ElementBase extends DataObject implements CMSPreviewable
         $source =
             $title ??
             (!empty($this->URLSegment) ? $this->URLSegment : $this->Title);
-        $this->URLSegment = URLSegmentFilter::create()->filter($source);
+        // URLSegment is Varchar(255): SS6 validates the length on write(), so a
+        // long Title would make the next write (e.g. publish) throw.
+        $maxLength = 255;
+        $this->URLSegment = mb_substr(
+            URLSegmentFilter::create()->filter($source),
+            0,
+            $maxLength
+        );
 
         if (!$this->URLSegment) {
             $this->URLSegment = uniqid();
@@ -409,10 +416,13 @@ class ElementBase extends DataObject implements CMSPreviewable
         while (
             $this->getByUrlSegment(__CLASS__, $this->URLSegment, $this->ID)
         ) {
+            $suffix = '-' . $count;
             $this->URLSegment =
-                preg_replace('/-[0-9]+$/', '', $this->URLSegment) .
-                '-' .
-                $count;
+                mb_substr(
+                    preg_replace('/-[0-9]+$/', '', $this->URLSegment),
+                    0,
+                    $maxLength - strlen($suffix)
+                ) . $suffix;
             $count++;
         }
         return $this;
